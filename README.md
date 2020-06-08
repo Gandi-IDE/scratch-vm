@@ -1,3 +1,15 @@
+What works
+
+ - not much
+
+What doesn't
+
+ - most editor integrations
+ - some profiler integrations
+ - editing a script while its running will break things
+
+<!--
+
 ## scratch-vm
 #### Scratch VM is a library for representing, running, and maintaining the state of computer programs written using [Scratch Blocks](https://github.com/LLK/scratch-blocks).
 
@@ -120,3 +132,5 @@ npm run deploy -- -r <your repo url>
 
 ## Donate
 We provide [Scratch](https://scratch.mit.edu) free of charge, and want to keep it that way! Please consider making a [donation](https://secure.donationpay.org/scratchfoundation/) to support our continued engineering, design, community, and resource development efforts. Donations of any size are appreciated. Thank you!
+
+-->

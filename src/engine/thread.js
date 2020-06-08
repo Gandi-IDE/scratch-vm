@@ -1,3 +1,5 @@
+const Compiler = require('../compiler/compiler');
+
 /**
  * Recycle bin for empty stackFrame objects
  * @type Array<_StackFrame>
@@ -398,6 +400,12 @@ class Thread {
             if (--callCount < 0) return false;
         }
         return false;
+    }
+
+    compile() {
+        const compiler = new Compiler(this);
+        this.fn = compiler.compile();
+        this.generator = this.fn();
     }
 }
 
