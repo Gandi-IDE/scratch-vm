@@ -1591,7 +1591,15 @@ class Runtime extends EventEmitter {
         thread.pushStack(id);
         this.threads.push(thread);
 
-        thread.compile();
+        // Attempt to compile the script
+        // If compilation fails, fallback to the standard scratch-vm interpreter
+        try {
+            thread.compile();
+            thread.isCompiled = true;
+        } catch (e) {
+            log.error('Cannot compile thread', e);
+            thread.isCompiled = false;
+        }
 
         return thread;
     }

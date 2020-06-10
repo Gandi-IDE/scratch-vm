@@ -6,8 +6,15 @@ const inputs = {};
 
 const defaultExtensions = [
     require('./blocks/compiler_natives'),
-    require('./blocks/compiler_scratch3_control'),
+    require('./blocks/compiler_scratch3_motion'),
     require('./blocks/compiler_scratch3_looks'),
+    require('./blocks/compiler_scratch3_sounds'),
+    require('./blocks/compiler_scratch3_events'),
+    require('./blocks/compiler_scratch3_control'),
+    require('./blocks/compiler_scratch3_sensing'),
+    require('./blocks/compiler_scratch3_operators'),
+    require('./blocks/compiler_scratch3_data'),
+    require('./blocks/compiler_scratch3_procedures'),
 ];
 
 defaultExtensions.forEach((ext) => {
@@ -26,7 +33,7 @@ defaultExtensions.forEach((ext) => {
     }
 });
 
-class BLockUtil {
+class BlockUtil {
     constructor(compiler, block) {
         this.compiler = compiler;
         this.block = block;
@@ -41,13 +48,13 @@ class BLockUtil {
     }
 }
 
-class InputUtil extends BLockUtil {
+class InputUtil extends BlockUtil {
     constructor(compiler, block) {
         super(compiler, block);
     }
 }
 
-class StatementUtil extends BLockUtil {
+class StatementUtil extends BlockUtil {
     constructor(compiler, block) {
         super(compiler, block);
         this.source = '';
@@ -65,20 +72,26 @@ class StatementUtil extends BLockUtil {
         this.source += s;
     }
 
+    nextVariable() {
+        this.compiler.variables++;
+        return 'var' + this.compiler.variables;
+    }
+
     compileSubstack(inputName) {
         const inputValue = this.block.inputs[inputName];
+        if (!inputValue) {
+            // empty substack
+            return '';
+        }
         const substack = inputValue.block;
         return this.compiler.compileStack(substack);
     }
 }
 
 class Compiler {
-    /**
-    *
-    * @param {Thread} thread
-    */
     constructor(thread) {
         this.thread = thread;
+        this.variables = 0;
     }
 
     compileInput(parentBlock, inputName) {
@@ -110,6 +123,7 @@ class Compiler {
             const util = new StatementUtil(this, block);
             let compiler = statements[block.opcode];
             if (!compiler) {
+                log.error('unknown opcode', block);
                 throw new Error('unknown opcode: ' + block.opcode);
             }
 
@@ -126,6 +140,7 @@ class Compiler {
 
         const topBlockId = this.thread.topBlock;
         const topBlock = this.thread.target.blocks.getBlock(topBlockId);
+        if (!topBlock) throw new Error('not a hat');
 
         const script = this.compileStack(topBlock.next);
 

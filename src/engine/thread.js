@@ -189,6 +189,8 @@ class Thread {
         this.warpTimer = null;
 
         this.justReported = null;
+
+        this.isCompiled = false;
     }
 
     /**

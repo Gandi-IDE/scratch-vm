@@ -4,6 +4,7 @@ const log = require('../util/log');
 const Thread = require('./thread');
 const {Map} = require('immutable');
 const cast = require('../util/cast');
+const compilerExecute = require('../compiler/executor');
 
 /**
  * Single BlockUtility instance reused by execute for every pritimive ran.
@@ -397,7 +398,189 @@ const _prepareBlockProfiling = function (profiler, blockCached) {
  * @param {!Thread} thread Thread which to read and execute.
  */
 const execute = function (sequencer, thread) {
-    thread.generator.next();
+    if (thread.isCompiled) {
+        compilerExecute(sequencer, thread);
+        return;
+    }
+
+    const runtime = sequencer.runtime;
+
+    // store sequencer and thread so block functions can access them through
+    // convenience methods.
+    blockUtility.sequencer = sequencer;
+    blockUtility.thread = thread;
+
+    // Current block to execute is the one on the top of the stack.
+    const currentBlockId = thread.peekStack();
+    const currentStackFrame = thread.peekStackFrame();
+
+    let blockContainer = thread.blockContainer;
+    let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
+    if (blockCached === null) {
+        blockContainer = runtime.flyoutBlocks;
+        blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
+        // Stop if block or target no longer exists.
+        if (blockCached === null) {
+            // No block found: stop the thread; script no longer exists.
+            sequencer.retireThread(thread);
+            return;
+        }
+    }
+
+    const ops = blockCached._ops;
+    const length = ops.length;
+    let i = 0;
+
+    if (currentStackFrame.reported !== null) {
+        const reported = currentStackFrame.reported;
+        // Reinstate all the previous values.
+        for (; i < reported.length; i++) {
+            const {opCached: oldOpCached, inputValue} = reported[i];
+
+            const opCached = ops.find(op => op.id === oldOpCached);
+
+            if (opCached) {
+                const inputName = opCached._parentKey;
+                const argValues = opCached._parentValues;
+
+                if (inputName === 'BROADCAST_INPUT') {
+                    // Something is plugged into the broadcast input.
+                    // Cast it to a string. We don't need an id here.
+                    argValues.BROADCAST_OPTION.id = null;
+                    argValues.BROADCAST_OPTION.name = cast.toString(inputValue);
+                } else {
+                    argValues[inputName] = inputValue;
+                }
+            }
+        }
+
+        // Find the last reported block that is still in the set of operations.
+        // This way if the last operation was removed, we'll find the next
+        // candidate. If an earlier block that was performed was removed then
+        // we'll find the index where the last operation is now.
+        if (reported.length > 0) {
+            const lastExisting = reported.reverse().find(report => ops.find(op => op.id === report.opCached));
+            if (lastExisting) {
+                i = ops.findIndex(opCached => opCached.id === lastExisting.opCached) + 1;
+            } else {
+                i = 0;
+            }
+        }
+
+        // The reporting block must exist and must be the next one in the sequence of operations.
+        if (thread.justReported !== null && ops[i] && ops[i].id === currentStackFrame.reporting) {
+            const opCached = ops[i];
+            const inputValue = thread.justReported;
+
+            thread.justReported = null;
+
+            const inputName = opCached._parentKey;
+            const argValues = opCached._parentValues;
+
+            if (inputName === 'BROADCAST_INPUT') {
+                // Something is plugged into the broadcast input.
+                // Cast it to a string. We don't need an id here.
+                argValues.BROADCAST_OPTION.id = null;
+                argValues.BROADCAST_OPTION.name = cast.toString(inputValue);
+            } else {
+                argValues[inputName] = inputValue;
+            }
+
+            i += 1;
+        }
+
+        currentStackFrame.reporting = null;
+        currentStackFrame.reported = null;
+    }
+
+    const start = i;
+
+    for (; i < length; i++) {
+        const lastOperation = i === length - 1;
+        const opCached = ops[i];
+
+        const blockFunction = opCached._blockFunction;
+
+        // Update values for arguments (inputs).
+        const argValues = opCached._argValues;
+
+        // Fields are set during opCached initialization.
+
+        // Blocks should glow when a script is starting,
+        // not after it has finished (see #1404).
+        // Only blocks in blockContainers that don't forceNoGlow
+        // should request a glow.
+        if (!blockContainer.forceNoGlow) {
+            thread.requestScriptGlowInFrame = true;
+        }
+
+        // Inputs are set during previous steps in the loop.
+
+        const primitiveReportedValue = blockFunction(argValues, blockUtility);
+
+        // If it's a promise, wait until promise resolves.
+        if (isPromise(primitiveReportedValue)) {
+            handlePromise(primitiveReportedValue, sequencer, thread, opCached, lastOperation);
+
+            // Store the already reported values. They will be thawed into the
+            // future versions of the same operations by block id. The reporting
+            // operation if it is promise waiting will set its parent value at
+            // that time.
+            thread.justReported = null;
+            currentStackFrame.reporting = ops[i].id;
+            currentStackFrame.reported = ops.slice(0, i).map(reportedCached => {
+                const inputName = reportedCached._parentKey;
+                const reportedValues = reportedCached._parentValues;
+
+                if (inputName === 'BROADCAST_INPUT') {
+                    return {
+                        opCached: reportedCached.id,
+                        inputValue: reportedValues[inputName].BROADCAST_OPTION.name
+                    };
+                }
+                return {
+                    opCached: reportedCached.id,
+                    inputValue: reportedValues[inputName]
+                };
+            });
+
+            // We are waiting for a promise. Stop running this set of operations
+            // and continue them later after thawing the reported values.
+            break;
+        } else if (thread.status === Thread.STATUS_RUNNING) {
+            if (lastOperation) {
+                handleReport(primitiveReportedValue, sequencer, thread, opCached, lastOperation);
+            } else {
+                // By definition a block that is not last in the list has a
+                // parent.
+                const inputName = opCached._parentKey;
+                const parentValues = opCached._parentValues;
+
+                if (inputName === 'BROADCAST_INPUT') {
+                    // Something is plugged into the broadcast input.
+                    // Cast it to a string. We don't need an id here.
+                    parentValues.BROADCAST_OPTION.id = null;
+                    parentValues.BROADCAST_OPTION.name = cast.toString(primitiveReportedValue);
+                } else {
+                    parentValues[inputName] = primitiveReportedValue;
+                }
+            }
+        }
+    }
+
+    if (runtime.profiler !== null) {
+        if (blockCached._profiler !== runtime.profiler) {
+            _prepareBlockProfiling(runtime.profiler, blockCached);
+        }
+        // Determine the index that is after the last executed block. `i` is
+        // currently the block that was just executed. `i + 1` will be the block
+        // after that. `length` with the min call makes sure we don't try to
+        // reference an operation outside of the set of operations.
+        const end = Math.min(i + 1, length);
+        for (let p = start; p < end; p++) {
+            ops[p]._profilerFrame.count += 1;
+        }
+    }
 };
 
 module.exports = execute;

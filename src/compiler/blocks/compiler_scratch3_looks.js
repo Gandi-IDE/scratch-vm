@@ -1,16 +1,16 @@
 module.exports.getStatements = () => {
-  return {
-    looks_changeeffectby: changeEffect,
-  }
+    return {
+        looks_changeeffectby: changeEffect,
+    };
 };
 
 module.exports.getInputs = () => {
-  return {
-
-  };
+    return {
+        
+    };
 };
 
 const changeEffect = (util) => {
-  const CHANGE = util.getInput('CHANGE');
-  util.writeLn(`target.setEffect("color", target.effects.color + ${CHANGE});`);
+    const CHANGE = util.getInput('CHANGE');
+    util.writeLn(`target.setEffect("color", target.effects.color + ${CHANGE});`);
 };
