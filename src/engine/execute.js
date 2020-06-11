@@ -4,7 +4,7 @@ const log = require('../util/log');
 const Thread = require('./thread');
 const {Map} = require('immutable');
 const cast = require('../util/cast');
-const compilerExecute = require('../compiler/executor');
+const compilerExecute = require('../compiler/execute');
 
 /**
  * Single BlockUtility instance reused by execute for every pritimive ran.

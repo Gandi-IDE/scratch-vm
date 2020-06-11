@@ -1,5 +1,6 @@
 const log = require('../util/log');
 const Thread = require('../engine/thread');
+const _eval = require('./eval');
 
 const statements = {};
 const inputs = {};
@@ -34,6 +35,9 @@ defaultExtensions.forEach((ext) => {
 });
 
 class BlockUtil {
+    /**
+     * @param {Compiler} compiler 
+     */
     constructor(compiler, block) {
         this.compiler = compiler;
         this.block = block;
@@ -49,8 +53,8 @@ class BlockUtil {
 }
 
 class InputUtil extends BlockUtil {
-    constructor(compiler, block) {
-        super(compiler, block);
+    number(source) {
+        return new CompiledInput(source);
     }
 }
 
@@ -61,7 +65,7 @@ class StatementUtil extends BlockUtil {
     }
 
     yieldLoop() {
-        this.writeLn('yield;');
+        this.writeLn(`yield;`);
     }
 
     writeLn(s) {
@@ -88,28 +92,53 @@ class StatementUtil extends BlockUtil {
     }
 }
 
+class CompiledInput {
+    /**
+     * @param {string} source The input's source code.
+     */
+    constructor(source) {
+        this.source = source;
+    }
+
+    toString() {
+        return this.source;
+    }
+}
+
 class Compiler {
+    /**
+     * @param {Thread} thread 
+     */
     constructor(thread) {
         this.thread = thread;
+        this.target = thread.target;
         this.variables = 0;
     }
 
+    /**
+     * @returns {CompiledInput}
+     */
     compileInput(parentBlock, inputName) {
         const input = parentBlock.inputs[inputName];
         const inputId = input.block;
         const block = this.thread.target.blocks.getBlock(inputId);
 
-        const util = new InputUtil(this, block);
         let compiler = inputs[block.opcode];
         if (!compiler) {
+            log.error('unknown opcode', block);
             throw new Error('unknown opcode: ' + block.opcode);
         }
 
+        const util = new InputUtil(this, block);
         const result = compiler(util);
 
         return result;
     }
 
+    /**
+     * @param {string} startingId The ID of the first block in the stack.
+     * @returns {string}
+     */
     compileStack(startingId) {
         let blockId = startingId;
         let source = '';
@@ -120,36 +149,51 @@ class Compiler {
                 throw new Error('no block');
             }
 
-            const util = new StatementUtil(this, block);
             let compiler = statements[block.opcode];
             if (!compiler) {
                 log.error('unknown opcode', block);
                 throw new Error('unknown opcode: ' + block.opcode);
             }
 
+            const util = new StatementUtil(this, block);
             compiler(util);
             source += util.source;
             blockId = block.next;
         }
+
         return source;
     }
 
     compile() {
-        const target = this.thread.target;
+        const target = this.target;
         if (!target) throw new Error('no target');
 
         const topBlockId = this.thread.topBlock;
-        const topBlock = this.thread.target.blocks.getBlock(topBlockId);
+        const topBlock = this.target.blocks.getBlock(topBlockId);
         if (!topBlock) throw new Error('not a hat');
 
         const script = this.compileStack(topBlock.next);
+        if (script.length === 0) {
+            throw new Error('generated script was empty');
+        }
 
         log.info('compiled script', script);
 
-        // TODO: move this to execute.js
-        var fn = eval('(function* compiled_script() { ' + script + ' })');
-        return fn;
+        try {
+            const fn = _eval(this, `(function* compiled_script() {\n${script}\nthread.status = 4;\n})`);
+            if (typeof fn !== 'function') {
+                throw new Error('fn is not a function');
+            }
+            return fn;
+        } catch (e) {
+            log.error('error evaling', e, script);
+            throw e;
+        }
     }
 }
+
+Compiler.InputUtil = InputUtil;
+Compiler.StatementUtil = StatementUtil;
+Compiler.CompiledInput = CompiledInput;
 
 module.exports = Compiler;
