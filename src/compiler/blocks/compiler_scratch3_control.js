@@ -8,6 +8,7 @@ module.exports.getStatements = () => {
         control_forever: forever,
         control_if: if_,
         control_repeat: repeat,
+        control_repeat_until: repeatUntil,
     };
 };
 
@@ -45,5 +46,23 @@ const if_ = /** @param {StatementUtil} util */ (util) => {
     const SUBSTACK = util.substack('SUBSTACK');
     util.writeLn(`if (${CONDITION.asBoolean()}) {`);
     util.write(SUBSTACK);
+    util.writeLn(`}`);
+};
+
+const repeatUntil = /** @param {StatementUtil} util */ (util) => {
+    const CONDITION = util.input('CONDITION');
+    const SUBSTACK = util.substack('SUBSTACK');
+    util.writeLn(`while (!(${CONDITION.asBoolean()})) {`);
+    util.write(SUBSTACK);
+    util.yieldLoop();
+    util.writeLn(`}`);
+};
+
+const while_ = /** @param {StatementUtil} util */ (util) => {
+    const CONDITION = util.input('CONDITION');
+    const SUBSTACK = util.substack('SUBSTACK');
+    util.writeLn(`while (${CONDITION.asBoolean()}) {`);
+    util.write(SUBSTACK);
+    util.yieldLoop();
     util.writeLn(`}`);
 };

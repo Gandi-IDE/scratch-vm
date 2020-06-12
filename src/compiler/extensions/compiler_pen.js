@@ -5,7 +5,7 @@ const { InputUtil, StatementUtil, CompiledInput } = require('../compiler');
  */
 module.exports.getStatements = () => {
     return {
-        motion_gotoxy: goToXY,
+
     };
 };
 
@@ -16,10 +16,4 @@ module.exports.getInputs = () => {
     return {
 
     };
-};
-
-const goToXY = /** @param {StatementUtil} util */ (util) => {
-    const X = util.input('X');
-    const Y = util.input('Y');
-    util.writeLn(`target.setXY(${X.asNumber()}, ${Y.asNumber()});`);
 };

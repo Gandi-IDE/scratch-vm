@@ -9,6 +9,7 @@ Non-goals
  - generating human readable code
  - 100% compatibility with every script, block, extension
  - compiling every block and every script
+ - being compatible with js minifiers
 
 <!--
 

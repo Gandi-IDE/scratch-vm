@@ -18,6 +18,8 @@ const defaultExtensions = [
     require('./blocks/compiler_scratch3_operators'),
     require('./blocks/compiler_scratch3_data'),
     require('./blocks/compiler_scratch3_procedures'),
+    // TODO: do not load extensions immediately
+    require('./extensions/compiler_pen'),
 ];
 
 const TYPE_UNKNOWN = 0;
@@ -55,8 +57,17 @@ class BlockUtil {
     }
 
     /**
+     * Whether the target being compiled is a stage.
+     * @type {boolean}
+     */
+    get isStage() {
+        return !!this.target.isStage;
+    }
+
+    /**
      * Compile an input of this block.
      * @param {string} name The name of the input. (CONDITION, VALUE, etc.)
+     * @returns {CompiledInput}
      */
     input(name) {
         return this.compiler.compileInput(this.block, name);
@@ -66,6 +77,7 @@ class BlockUtil {
      * Get the raw text value of a field.
      * This value is *not* safe to include directly in scripts.
      * @param {string} name The name of the field. (VARIABLE, TEXT, etc.)
+     * @returns {string}
      */
     fieldUnsafe(name) {
         return this.block.fields[name].value;
@@ -75,6 +87,7 @@ class BlockUtil {
      * Make text safe to include inside a JavaScript string.
      * safe() does not put quotes around the string, you must do that yourself.
      * @param {string} string The text to make safe
+     * @returns {string}
      */
     safe(string) {
         return string
@@ -238,7 +251,7 @@ class Compiler {
 
         const topBlockId = this.thread.topBlock;
         const topBlock = this.target.blocks.getBlock(topBlockId);
-        // TODO: figure out how to run blocks from the drawer, they have their ID set to their opcode
+        // TODO: figure out how to run blocks from the flyout, they have their ID set to their opcode
         if (!topBlock) throw new Error('top block is missing');
 
         let startingBlock;
@@ -255,10 +268,10 @@ class Compiler {
         try {
             const fn = _eval(this, `(function* compiled_script() {\n${script}\nthread.status = 4;\n})`);
             if (typeof fn !== 'function') throw new Error('fn is not a function');
-            log.info('compiled script', script);
+            log.info(this.target.getName(), 'compiled script', script);
             return fn;
         } catch (e) {
-            log.error('error evaling', e, script);
+            log.error(this.target.getName(), 'error evaling', e, script);
             throw e;
         }
     }
