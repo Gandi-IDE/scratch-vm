@@ -1,5 +1,7 @@
 const log = require('../util/log');
 const Thread = require('../engine/thread');
+const Target = require('../engine/target');
+const Runtime = require('../engine/runtime');
 const _eval = require('./eval');
 
 const statements = {};
@@ -17,6 +19,11 @@ const defaultExtensions = [
     require('./blocks/compiler_scratch3_data'),
     require('./blocks/compiler_scratch3_procedures'),
 ];
+
+const TYPE_UNKNOWN = 0;
+const TYPE_NUMBER = 1;
+const TYPE_BOOLEAN = 2;
+const TYPE_STRING = 3;
 
 defaultExtensions.forEach((ext) => {
     const extensionInputs = ext.getInputs();
@@ -43,18 +50,57 @@ class BlockUtil {
         this.block = block;
     }
 
-    getInput(name) {
+    get target() {
+        return this.compiler.target;
+    }
+
+    /**
+     * Compile an input of this block.
+     * @param {string} name The name of the input. (CONDITION, VALUE, etc.)
+     */
+    input(name) {
         return this.compiler.compileInput(this.block, name);
     }
 
-    getFieldUnsafe(name) {
+    /**
+     * Get the raw text value of a field.
+     * This value is *not* safe to include directly in scripts.
+     * @param {string} name The name of the field. (VARIABLE, TEXT, etc.)
+     */
+    fieldUnsafe(name) {
         return this.block.fields[name].value;
+    }
+
+    /**
+     * Make text safe to include inside a JavaScript string.
+     * safe() does not put quotes around the string, you must do that yourself.
+     * @param {string} string The text to make safe
+     */
+    safe(string) {
+        return string
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, '\\\'')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r');
     }
 }
 
 class InputUtil extends BlockUtil {
+    unknown(source) {
+        return new CompiledInput(source, TYPE_UNKNOWN);
+    }
+
     number(source) {
-        return new CompiledInput(source);
+        return new CompiledInput(source, TYPE_NUMBER);
+    }
+
+    boolean(source) {
+        return new CompiledInput(source, TYPE_BOOLEAN);
+    }
+
+    string(source) {
+        return new CompiledInput(source, TYPE_STRING);
     }
 }
 
@@ -65,6 +111,7 @@ class StatementUtil extends BlockUtil {
     }
 
     yieldLoop() {
+        // TODO: do not yield in warp context
         this.writeLn(`yield;`);
     }
 
@@ -81,7 +128,7 @@ class StatementUtil extends BlockUtil {
         return 'var' + this.compiler.variables;
     }
 
-    compileSubstack(inputName) {
+    substack(inputName) {
         const inputValue = this.block.inputs[inputName];
         if (!inputValue) {
             // empty substack
@@ -95,13 +142,31 @@ class StatementUtil extends BlockUtil {
 class CompiledInput {
     /**
      * @param {string} source The input's source code.
+     * @param {number} type The input's type at runtime.
      */
-    constructor(source) {
+    constructor(source, type) {
         this.source = source;
+        this.type = type;
     }
 
     toString() {
         return this.source;
+    }
+
+    asNumber() {
+        if (this.type === TYPE_NUMBER) return this.source;
+        return '(+' + this.source + ')';
+    }
+
+    asBoolean() {
+        if (this.type === TYPE_BOOLEAN) return this.source;
+        return '!!(' + this.source + ')';
+    }
+
+    asString() {
+        if (this.type === TYPE_STRING) return this.source;
+        // TODO: toString() instead
+        return '(""+' + this.source + ')';
     }
 }
 
@@ -111,7 +176,10 @@ class Compiler {
      */
     constructor(thread) {
         this.thread = thread;
+        /** @type {Target} */
         this.target = thread.target;
+        /** @type {Runtime} */
+        this.runtime = this.target.runtime;
         this.variables = 0;
     }
 
@@ -170,20 +238,24 @@ class Compiler {
 
         const topBlockId = this.thread.topBlock;
         const topBlock = this.target.blocks.getBlock(topBlockId);
-        if (!topBlock) throw new Error('not a hat');
+        // TODO: figure out how to run blocks from the drawer, they have their ID set to their opcode
+        if (!topBlock) throw new Error('top block is missing');
 
-        const script = this.compileStack(topBlock.next);
-        if (script.length === 0) {
-            throw new Error('generated script was empty');
+        let startingBlock;
+        // if the top block is a hat, jump to the next block
+        if (this.runtime.getIsHat(topBlock.opcode)) {
+            startingBlock = topBlock.next;
+        } else {
+            startingBlock = topBlockId;
         }
 
-        log.info('compiled script', script);
+        const script = this.compileStack(startingBlock);
+        if (script.length === 0) throw new Error('generated script was empty');
 
         try {
             const fn = _eval(this, `(function* compiled_script() {\n${script}\nthread.status = 4;\n})`);
-            if (typeof fn !== 'function') {
-                throw new Error('fn is not a function');
-            }
+            if (typeof fn !== 'function') throw new Error('fn is not a function');
+            log.info('compiled script', script);
             return fn;
         } catch (e) {
             log.error('error evaling', e, script);
@@ -192,6 +264,7 @@ class Compiler {
     }
 }
 
+Compiler.BlockUtil = BlockUtil;
 Compiler.InputUtil = InputUtil;
 Compiler.StatementUtil = StatementUtil;
 Compiler.CompiledInput = CompiledInput;

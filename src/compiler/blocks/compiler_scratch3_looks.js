@@ -18,7 +18,7 @@ module.exports.getInputs = () => {
     };
 };
 
-const changeEffect = (util) => {
-    const CHANGE = util.getInput('CHANGE');
-    util.writeLn(`target.setEffect("color", target.effects.color + ${CHANGE});`);
+const changeEffect = /** @param {StatementUtil} util */ (util) => {
+    const CHANGE = util.input('CHANGE');
+    util.writeLn(`target.setEffect("color", target.effects.color + ${CHANGE.asNumber()});`);
 };

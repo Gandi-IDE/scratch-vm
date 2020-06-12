@@ -1577,6 +1577,7 @@ class Runtime extends EventEmitter {
      * @param {?object} opts optional arguments
      * @param {?boolean} opts.stackClick true if the script was activated by clicking on the stack
      * @param {?boolean} opts.updateMonitor true if the script should update a monitor value
+     * @param {?boolean} opts.enableCompiler true if the compiler may be used
      * @return {!Thread} The newly created thread.
      */
     _pushThread (id, target, opts) {
@@ -1591,14 +1592,16 @@ class Runtime extends EventEmitter {
         thread.pushStack(id);
         this.threads.push(thread);
 
-        // Attempt to compile the script
-        // If compilation fails, fallback to the standard scratch-vm interpreter
-        try {
-            thread.compile();
-            thread.isCompiled = true;
-        } catch (e) {
-            log.error('Cannot compile thread', e);
-            thread.isCompiled = false;
+        if (opts && opts.enableCompiler) {
+            // Attempt to compile the script
+            // If compilation fails, fallback to the standard scratch-vm interpreter
+            try {
+                thread.compile();
+                thread.isCompiled = true;
+            } catch (e) {
+                log.error('Cannot compile thread', e);
+                thread.isCompiled = false;
+            }
         }
 
         return thread;
@@ -1675,7 +1678,8 @@ class Runtime extends EventEmitter {
     toggleScript (topBlockId, opts) {
         opts = Object.assign({
             target: this._editingTarget,
-            stackClick: false
+            stackClick: false,
+            enableCompiler: true,
         }, opts);
         // Remove any existing thread.
         for (let i = 0; i < this.threads.length; i++) {

@@ -19,11 +19,17 @@ module.exports.getInputs = () => {
         math_integer: number,
         math_positive_number: number,
         math_whole_number: number,
+        text: text,
     };
 };
 
 const number = /** @param {InputUtil} util */ (util) => {
-    const NUM = util.getFieldUnsafe('NUM');
+    const NUM = util.fieldUnsafe('NUM');
     const number = Number(NUM);
     return util.number(number);
+};
+
+const text = /** @param {InputUtil} util */ (util) => {
+    const TEXT = util.fieldUnsafe('TEXT');
+    return util.string(`"${util.safe(TEXT)}"`);
 };

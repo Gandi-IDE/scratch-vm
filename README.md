@@ -1,12 +1,14 @@
 What works
 
- - not much
+ - a few *very* simple scripts can get compiled to javascript
+ - all other scripts just use the interpreter
 
-What doesn't
+Non-goals
 
- - most editor integrations
- - some profiler integrations
- - editing a script while its running will break things
+ - upstream merging into scratch-vm
+ - generating human readable code
+ - 100% compatibility with every script, block, extension
+ - compiling every block and every script
 
 <!--
 
