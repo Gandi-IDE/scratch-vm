@@ -179,7 +179,7 @@ class Sequencer {
      */
     stepThread (thread) {
         if (thread.isCompiled) {
-            compilerExecute(this, thread);
+            compilerExecute(thread);
             return;
         }
 

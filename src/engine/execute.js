@@ -399,7 +399,7 @@ const _prepareBlockProfiling = function (profiler, blockCached) {
  */
 const execute = function (sequencer, thread) {
     if (thread.isCompiled) {
-        compilerExecute(sequencer, thread);
+        compilerExecute(thread);
         return;
     }
 

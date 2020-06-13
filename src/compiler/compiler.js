@@ -115,6 +115,14 @@ class InputUtil extends BlockUtil {
     string(source) {
         return new CompiledInput(source, TYPE_STRING);
     }
+
+    fieldString(name) {
+        return new CompiledInput(`"${this.safe(this.fieldUnsafe(name))}"`, TYPE_STRING);
+    }
+
+    noop() {
+        return new CompiledInput('/* no-op */ undefined', TYPE_UNKNOWN);
+    }
 }
 
 class StatementUtil extends BlockUtil {
@@ -139,6 +147,10 @@ class StatementUtil extends BlockUtil {
     nextVariable() {
         this.compiler.variables++;
         return 'var' + this.compiler.variables;
+    }
+
+    noop() {
+        this.writeLn('/* no-op */');
     }
 
     substack(inputName) {
@@ -168,18 +180,17 @@ class CompiledInput {
 
     asNumber() {
         if (this.type === TYPE_NUMBER) return this.source;
-        return '(+' + this.source + ')';
+        return 'toNumber(' + this.source + ')';
     }
 
     asBoolean() {
         if (this.type === TYPE_BOOLEAN) return this.source;
-        return '!!(' + this.source + ')';
+        return 'toBoolean(' + this.source + ')';
     }
 
     asString() {
         if (this.type === TYPE_STRING) return this.source;
-        // TODO: toString() instead
-        return '(""+' + this.source + ')';
+        return 'toString(' + this.source + ')';
     }
 }
 
