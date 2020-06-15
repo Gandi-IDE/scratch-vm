@@ -191,6 +191,10 @@ class Thread {
         this.justReported = null;
 
         this.isCompiled = false;
+
+        this.functionJumps = [];
+
+        this.fn = null;
     }
 
     /**
@@ -406,8 +410,7 @@ class Thread {
 
     compile() {
         const compiler = new Compiler(this);
-        this.fn = compiler.compile();
-        this.generator = this.fn();
+        compiler.compile();
     }
 }
 

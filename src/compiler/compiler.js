@@ -2,7 +2,7 @@ const log = require('../util/log');
 const Thread = require('../engine/thread');
 const Target = require('../engine/target');
 const Runtime = require('../engine/runtime');
-const _eval = require('./eval');
+const execute = require('./execute');
 
 const statements = {};
 const inputs = {};
@@ -95,7 +95,9 @@ class BlockUtil {
             .replace(/'/g, '\\\'')
             .replace(/"/g, '\\"')
             .replace(/\n/g, '\\n')
-            .replace(/\r/g, '\\r');
+            .replace(/\r/g, '\\r')
+            .replace(/\{/g, '\\x7b')
+            .replace(/\}/g, '\\x7d');
     }
 }
 
@@ -131,9 +133,29 @@ class StatementUtil extends BlockUtil {
         this.source = '';
     }
 
-    yieldLoop() {
-        // TODO: do not yield in warp context
-        this.writeLn(`yield;`);
+    nextLabel() {
+        const label = this.compiler.labelCount;
+        this.compiler.labelCount++;
+        return label;
+    }
+
+    /**
+     * @param {number} [label]
+     */
+    putLabel(label) {
+        if (label === undefined) {
+            label = this.nextLabel();
+        }
+        this.write(`{{${label}}}`);
+        return label;
+    }
+
+    jump(label) {
+        this.writeLn(`jump(${label}); return;`);
+    }
+    
+    jumpLazy(label) {
+        this.writeLn(`jumpLazy(${label}); return;`);
     }
 
     writeLn(s) {
@@ -144,9 +166,9 @@ class StatementUtil extends BlockUtil {
         this.source += s;
     }
 
-    nextVariable() {
-        this.compiler.variables++;
-        return 'var' + this.compiler.variables;
+    nextLocalVariable() {
+        this.compiler.variableCount++;
+        return 'var' + this.compiler.variableCount;
     }
 
     noop() {
@@ -204,7 +226,8 @@ class Compiler {
         this.target = thread.target;
         /** @type {Runtime} */
         this.runtime = this.target.runtime;
-        this.variables = 0;
+        this.variableCount = 0;
+        this.labelCount = 0;
     }
 
     /**
@@ -256,6 +279,34 @@ class Compiler {
         return source;
     }
 
+    parseContinuations(script) {
+        const labels = {};
+        let index = 0;
+        let accumulator = 0;
+
+        while (true) {
+            const labelStart = script.indexOf('{{', index);
+            if (labelStart === -1) {
+                break;
+            }
+            const labelEnd = script.indexOf('}}', index);
+            const id = script.substring(labelStart + 2, labelEnd);
+            const length = labelEnd + 2 - labelStart;
+            accumulator += length;
+
+            labels[id] = labelEnd + 2 - accumulator;
+
+            index = labelEnd + 2;
+        }
+
+        const modifiedScript = script.replace(/{{\d+}}/g, '');
+
+        return {
+            labels,
+            script: modifiedScript,
+        };
+    }
+
     compile() {
         const target = this.target;
         if (!target) throw new Error('no target');
@@ -273,18 +324,24 @@ class Compiler {
             startingBlock = topBlockId;
         }
 
-        const script = this.compileStack(startingBlock);
-        if (script.length === 0) throw new Error('generated script was empty');
+        let script = '';
 
-        try {
-            const fn = _eval(this, `(function* compiled_script() {\n${script}\nthread.status = 4;\n})`);
-            if (typeof fn !== 'function') throw new Error('fn is not a function');
-            log.info(this.target.getName(), 'compiled script', script);
-            return fn;
-        } catch (e) {
-            log.error(this.target.getName(), 'error evaling', e, script);
-            throw e;
+        script += '{{' + this.labelCount++ + '}}';
+        script += this.compileStack(startingBlock);
+        script += 'target.runtime.sequencer.retireThread(thread);';
+
+        const parseResult = this.parseContinuations(script);
+        const parsedScript = parseResult.script;
+
+        for (let label of Object.keys(parseResult.labels)) {
+          this.thread.functionJumps[label] = execute.createContinuation(this, parsedScript.slice(parseResult.labels[label]));
         }
+  
+        log.info(`[${this.target.getName()}] compiled sb3 script`, script);
+
+        log.info(this.thread.functionJumps);
+
+        this.thread.fn = this.thread.functionJumps[0];
     }
 }
 
