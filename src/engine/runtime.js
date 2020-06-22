@@ -776,7 +776,6 @@ class Runtime extends EventEmitter {
 
     compilerRegisterExtension(name, extensionObject) {
         this[`ext_${name}`] = extensionObject;
-        console.log(name, extensionObject);
     }
 
     getMonitorState () {

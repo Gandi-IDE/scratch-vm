@@ -1,4 +1,5 @@
 const Thread = require('../engine/thread');
+const Timer = require('../util/timer');
 
 var R = {} // temporary!!!
 
@@ -105,6 +106,12 @@ const ioQuery = (runtime, device, func, args) => {
         const devObject = runtime.ioDevices[device];
         return devObject[func].apply(devObject, args);
     }
+};
+
+const timer = () => {
+    const timer = new Timer();
+    timer.start();
+    return timer;
 };
 
 /** @type {Function} */

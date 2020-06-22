@@ -10,6 +10,7 @@ module.exports.getStatements = () => {
         control_repeat: repeat,
         control_repeat_until: repeatUntil,
         control_while: while_,
+        control_wait: wait,
     };
 };
 
@@ -69,4 +70,13 @@ const while_ = /** @param {StatementUtil} util */ (util) => {
     util.write(SUBSTACK);
     util.writeLn(`}`);
     util.jumpLazy(label);
+};
+
+const wait = /** @param {StatementUtil} util */ (util) => {
+    const DURATION = util.input('DURATION');
+    util.writeLn(`enterState({ timer: timer(), duration: Math.max(0, 1000 * ${DURATION.asNumber()}) });`);
+    const label = util.putLabel();
+    util.writeLn('if (R.timer.timeElapsed() < R.duration) {')
+    util.jumpLazy(label);
+    util.writeLn('}');
 };
