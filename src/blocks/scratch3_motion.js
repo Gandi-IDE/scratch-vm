@@ -63,10 +63,13 @@ class Scratch3MotionBlocks {
 
     moveSteps (args, util) {
         const steps = Cast.toNumber(args.STEPS);
-        const radians = MathUtil.degToRad(90 - util.target.direction);
+        this._moveSteps(steps, util.target);
+    }
+    _moveSteps(steps, target) { // used by compiler
+        const radians = MathUtil.degToRad(90 - target.direction);
         const dx = steps * Math.cos(radians);
         const dy = steps * Math.sin(radians);
-        util.target.setXY(util.target.x + dx, util.target.y + dy);
+        target.setXY(target.x + dx, target.y + dy);
     }
 
     goToXY (args, util) {
@@ -184,7 +187,10 @@ class Scratch3MotionBlocks {
     }
 
     ifOnEdgeBounce (args, util) {
-        const bounds = util.target.getBounds();
+        this._ifOnEdgeBounce(util.target);
+    }
+    _ifOnEdgeBounce (target) { // used by compiler
+        const bounds = target.getBounds();
         if (!bounds) {
             return;
         }
@@ -220,7 +226,7 @@ class Scratch3MotionBlocks {
             return; // Not touching any edge.
         }
         // Point away from the nearest edge.
-        const radians = MathUtil.degToRad(90 - util.target.direction);
+        const radians = MathUtil.degToRad(90 - target.direction);
         let dx = Math.cos(radians);
         let dy = -Math.sin(radians);
         if (nearestEdge === 'left') {
@@ -233,10 +239,10 @@ class Scratch3MotionBlocks {
             dy = 0 - Math.max(0.2, Math.abs(dy));
         }
         const newDirection = MathUtil.radToDeg(Math.atan2(dy, dx)) + 90;
-        util.target.setDirection(newDirection);
+        target.setDirection(newDirection);
         // Keep within the stage.
-        const fencedPosition = util.target.keepInFence(util.target.x, util.target.y);
-        util.target.setXY(fencedPosition[0], fencedPosition[1]);
+        const fencedPosition = target.keepInFence(target.x, target.y);
+        target.setXY(fencedPosition[0], fencedPosition[1]);
     }
 
     setRotationStyle (args, util) {

@@ -148,15 +148,15 @@ class Scratch3ControlBlocks {
     }
 
     createClone (args, util) {
-        // Cast argument to string
-        args.CLONE_OPTION = Cast.toString(args.CLONE_OPTION);
-
+        this._createClone(Cast.toString(args.CLONE_OPTION), util.target);
+    }
+    _createClone (cloneOption, target) { // used by compiler
         // Set clone target
         let cloneTarget;
-        if (args.CLONE_OPTION === '_myself_') {
-            cloneTarget = util.target;
+        if (cloneOption === '_myself_') {
+            cloneTarget = target;
         } else {
-            cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
+            cloneTarget = this.runtime.getSpriteTargetByName(cloneOption);
         }
 
         // If clone target is not found, return

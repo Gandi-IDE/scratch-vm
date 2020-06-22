@@ -366,7 +366,7 @@ class Compiler {
           this.thread.functionJumps[label] = execute.createContinuation(this, parsedScript.slice(parseResult.labels[label]));
         }
   
-        log.info(`[${this.target.getName()}] compiled sb3 script`, script);
+        log.info(`[${this.target.getName()}] compiled script`, script);
 
         this.thread.fn = this.thread.functionJumps[totalLabels];
     }

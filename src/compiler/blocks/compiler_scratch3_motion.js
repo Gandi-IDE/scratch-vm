@@ -5,6 +5,10 @@ const { InputUtil, StatementUtil, CompiledInput } = require('../compiler');
  */
 module.exports.getStatements = () => {
     return {
+        motion_movesteps: moveSteps,
+        motion_turnright: turnRight,
+        motion_turnleft: turnLeft,
+        motion_ifonedgebounce: ifOnEdgeBounce,
         motion_gotoxy: goToXY,
         motion_pointindirection: pointInDirection,
     };
@@ -17,6 +21,25 @@ module.exports.getInputs = () => {
     return {
 
     };
+};
+
+const moveSteps = /** @param {StatementUtil} util */ (util) => {
+    const STEPS = util.input('STEPS');
+    util.writeLn(`runtime.ext_scratch3_motion._moveSteps(${STEPS.asNumber()}, target);`);
+};
+
+const turnRight = /** @param {StatementUtil} util */ (util) => {
+    const DEGREES = util.input('DEGREES');
+    util.writeLn(`target.setDirection(target.direction + ${DEGREES.asNumber()});`);
+};
+
+const turnLeft = /** @param {StatementUtil} util */ (util) => {
+    const DEGREES = util.input('DEGREES');
+    util.writeLn(`target.setDirection(target.direction - ${DEGREES.asNumber()});`);
+};
+
+const ifOnEdgeBounce = /** @param {StatementUtil} util */ (util) => {
+    util.writeLn('runtime.ext_scratch3_motion._ifOnEdgeBounce(target);');
 };
 
 const goToXY = /** @param {StatementUtil} util */ (util) => {

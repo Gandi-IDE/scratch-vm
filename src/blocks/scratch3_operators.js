@@ -78,13 +78,16 @@ class Scratch3OperatorsBlocks {
     }
 
     random (args) {
-        const nFrom = Cast.toNumber(args.FROM);
-        const nTo = Cast.toNumber(args.TO);
+        return this._random(args.FROM, args.TO);
+    }
+    _random(from, to) { // used by compiler
+        const nFrom = Cast.toNumber(from);
+        const nTo = Cast.toNumber(to);
         const low = nFrom <= nTo ? nFrom : nTo;
         const high = nFrom <= nTo ? nTo : nFrom;
         if (low === high) return low;
         // If both arguments are ints, truncate the result to an int.
-        if (Cast.isInt(args.FROM) && Cast.isInt(args.TO)) {
+        if (Cast.isInt(from) && Cast.isInt(to)) {
             return low + Math.floor(Math.random() * ((high + 1) - low));
         }
         return (Math.random() * (high - low)) + low;

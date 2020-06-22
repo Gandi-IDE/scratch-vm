@@ -774,7 +774,7 @@ class Runtime extends EventEmitter {
         }
     }
 
-    compilerRegisterExtension(name, extensionObject) {
+    compilerRegisterExtension (name, extensionObject) {
         this[`ext_${name}`] = extensionObject;
     }
 
@@ -1685,7 +1685,7 @@ class Runtime extends EventEmitter {
         opts = Object.assign({
             target: this._editingTarget,
             stackClick: false,
-            enableCompiler: true,
+            enableCompiler: true
         }, opts);
         // Remove any existing thread.
         for (let i = 0; i < this.threads.length; i++) {
@@ -1832,14 +1832,17 @@ class Runtime extends EventEmitter {
             }
             // Start the thread with this top block.
             newThreads.push(this._pushThread(topBlockId, target, {
-                enableCompiler: true,
+                enableCompiler: true
             }));
         }, optTarget);
         // For compatibility with Scratch 2, edge triggered hats need to be processed before
         // threads are stepped. See ScratchRuntime.as for original implementation
         newThreads.forEach(thread => {
-            execute(this.sequencer, thread);
-            thread.goToNextBlock();
+            // Compiler: do not step compiled threads, the hat block can't be executed
+            if (!thread.isCompiled) {
+                execute(this.sequencer, thread);
+                thread.goToNextBlock();
+            }
         });
         return newThreads;
     }
