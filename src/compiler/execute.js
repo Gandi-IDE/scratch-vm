@@ -10,6 +10,15 @@ var jumpLazy = (id) => {
     THREAD.fn = THREAD.functionJumps[id];
 };
 
+var enterState = (value) => {
+    R = value;
+    // TODO
+};
+
+var restoreState = () => {
+    // TODO
+};
+
 /**
  * Scratch cast to number.
  * @param {*} value The value to cast
@@ -98,11 +107,31 @@ const ioQuery = (runtime, device, func, args) => {
     }
 };
 
+/** @type {Function} */
+var IMMEDIATE;
+/** @type {Thread} */
+var THREAD;
+
+/**
+ * @param {Thread} thread 
+ */
+const execute = function (thread) {
+    THREAD = thread;
+
+    thread.fn();
+
+    while (IMMEDIATE) {
+        var fn = IMMEDIATE;
+        IMMEDIATE = null;
+        fn();
+    }
+};
+
 const evalCompiledScript = (compiler, _source) => {
-    // init data
     const thread = compiler.thread;
     const target = compiler.target;
-    const stage = target.runtime.getTargetForStage();
+    const runtime = target.runtime;
+    const stage = runtime.getTargetForStage();
 
     // no reason to access compiler
     compiler = null;
@@ -176,28 +205,6 @@ var createContinuation = (compiler, source) => {
     return evalCompiledScript(compiler, result);
 };
 
-/** @type {Function} */
-var IMMEDIATE;
-/** @type {Thread} */
-var THREAD;
-
-/**
- * @param {Thread} thread 
- */
-const execute = function (thread) {
-    THREAD = thread;
-
-    IMMEDIATE = thread.fn;
-    thread.fn = null;
-
-    while (IMMEDIATE) {
-        var fn = IMMEDIATE;
-        IMMEDIATE = null;
-        fn();
-    }
-};
-
-execute.evalCompiledScript = evalCompiledScript;
 execute.createContinuation = createContinuation;
 
 module.exports = execute;

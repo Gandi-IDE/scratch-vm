@@ -74,13 +74,21 @@ class BlockUtil {
     }
 
     /**
+     * Get the field data object.
+     * @param {string} name The name of the field. (VARIABLE, TEXT, etc.)
+     */
+    field(name) {
+        return this.block.fields[name];
+    }
+
+    /**
      * Get the raw text value of a field.
      * This value is *not* safe to include directly in scripts.
      * @param {string} name The name of the field. (VARIABLE, TEXT, etc.)
      * @returns {string}
      */
-    fieldUnsafe(name) {
-        return this.block.fields[name].value;
+    fieldValueUnsafe(name) {
+        return this.field(name).value;
     }
 
     /**
@@ -119,7 +127,7 @@ class InputUtil extends BlockUtil {
     }
 
     fieldString(name) {
-        return new CompiledInput(`"${this.safe(this.fieldUnsafe(name))}"`, TYPE_STRING);
+        return new CompiledInput(`"${this.safe(this.fieldValueUnsafe(name))}"`, TYPE_STRING);
     }
 
     noop() {
@@ -134,9 +142,7 @@ class StatementUtil extends BlockUtil {
     }
 
     nextLabel() {
-        const label = this.compiler.labelCount;
-        this.compiler.labelCount++;
-        return label;
+        return this.compiler.nextLabel();
     }
 
     /**
@@ -150,10 +156,19 @@ class StatementUtil extends BlockUtil {
         return label;
     }
 
+    /**
+     * Immediately jump to a label.
+     * @param {number} label 
+     */
     jump(label) {
         this.writeLn(`jump(${label}); return;`);
     }
     
+    /**
+     * Lazily jump to a label.
+     * If running in warp mode, this will be instant. Otherwise, it will run the next tick.
+     * @param {number} label 
+     */
     jumpLazy(label) {
         this.writeLn(`jumpLazy(${label}); return;`);
     }
@@ -164,6 +179,14 @@ class StatementUtil extends BlockUtil {
 
     write(s) {
         this.source += s;
+    }
+
+    enterState(state) {
+        this.writeLn(`enterState(${state});`);
+    }
+
+    restoreState() {
+        this.writeLn('restoreState();');
     }
 
     nextLocalVariable() {
@@ -279,6 +302,10 @@ class Compiler {
         return source;
     }
 
+    nextLabel() {
+        return this.labelCount++;
+    }
+
     parseContinuations(script) {
         const labels = {};
         let index = 0;
@@ -325,23 +352,23 @@ class Compiler {
         }
 
         let script = '';
-
-        script += '{{' + this.labelCount++ + '}}';
+        // must always place a label at the start, this will be the first label to run
+        script += '{{' + this.nextLabel() + '}}';
         script += this.compileStack(startingBlock);
+        // kill thread at the end of script
         script += 'target.runtime.sequencer.retireThread(thread);';
 
         const parseResult = this.parseContinuations(script);
         const parsedScript = parseResult.script;
 
-        for (let label of Object.keys(parseResult.labels)) {
+        const totalLabels = this.thread.functionJumps.length;
+        for (const label of Object.keys(parseResult.labels)) {
           this.thread.functionJumps[label] = execute.createContinuation(this, parsedScript.slice(parseResult.labels[label]));
         }
   
         log.info(`[${this.target.getName()}] compiled sb3 script`, script);
 
-        log.info(this.thread.functionJumps);
-
-        this.thread.fn = this.thread.functionJumps[0];
+        this.thread.fn = this.thread.functionJumps[totalLabels];
     }
 }
 

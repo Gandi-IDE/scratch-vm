@@ -362,7 +362,7 @@ class Scratch3LooksBlocks {
      * @param {boolean=} optZeroIndex Set to zero-index the requestedCostume.
      * @return {Array.<!Thread>} Any threads started by this switch.
      */
-    _setCostume (target, requestedCostume, optZeroIndex) {
+    _setCostume (target, requestedCostume, optZeroIndex) { // used by compiler
         if (typeof requestedCostume === 'number') {
             // Numbers should be treated as costume indices, always
             target.setCostume(optZeroIndex ? requestedCostume : requestedCostume - 1);
@@ -438,7 +438,7 @@ class Scratch3LooksBlocks {
     }
 
     switchCostume (args, util) {
-        this._setCostume(util.target, args.COSTUME);
+        this._setCostume(util.target, args.COSTUME); // used by compiler
     }
 
     nextCostume (args, util) {

@@ -22,7 +22,7 @@ module.exports.getInputs = () => {
 };
 
 const readVariableField = /** @param {BlockUtil} util */ (util) => {
-    const { id, value: name } = util.block.fields.VARIABLE;
+    const { id, value: name } = util.field('VARIABLE');
     return { id, name };
 };
 

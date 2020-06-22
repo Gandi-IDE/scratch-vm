@@ -768,8 +768,15 @@ class Runtime extends EventEmitter {
                 if (packageObject.getMonitored) {
                     this.monitorBlockInfo = Object.assign({}, this.monitorBlockInfo, packageObject.getMonitored());
                 }
+
+                this.compilerRegisterExtension(packageName, packageObject);
             }
         }
+    }
+
+    compilerRegisterExtension(name, extensionObject) {
+        this[`ext_${name}`] = extensionObject;
+        console.log(name, extensionObject);
     }
 
     getMonitorState () {

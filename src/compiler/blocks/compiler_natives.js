@@ -24,12 +24,12 @@ module.exports.getInputs = () => {
 };
 
 const number = /** @param {InputUtil} util */ (util) => {
-    const NUM = util.fieldUnsafe('NUM');
+    const NUM = util.fieldValueUnsafe('NUM');
     const number = Number(NUM);
     return util.number(number);
 };
 
 const text = /** @param {InputUtil} util */ (util) => {
-    const TEXT = util.fieldUnsafe('TEXT');
+    const TEXT = util.fieldValueUnsafe('TEXT');
     return util.string(`"${util.safe(TEXT)}"`);
 };

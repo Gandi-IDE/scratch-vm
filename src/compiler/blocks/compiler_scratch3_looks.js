@@ -12,6 +12,7 @@ module.exports.getStatements = () => {
         looks_gotofrontback: goToFrontBack,
         looks_goforwardbackwardlayers: goForwardBackwardsLayers,
         looks_setsizeto: setSize,
+        looks_switchcostumeto: switchCostume,
     };
 };
 
@@ -20,12 +21,12 @@ module.exports.getStatements = () => {
  */
 module.exports.getInputs = () => {
     return {
-        
+        looks_costume: costumeMenu,
     };
 };
 
 const changeEffect = /** @param {StatementUtil} util */ (util) => {
-    const EFFECT = util.fieldUnsafe('EFFECT').toLowerCase();
+    const EFFECT = util.fieldValueUnsafe('EFFECT').toLowerCase();
     const CHANGE = util.input('CHANGE');
     if (!util.target.effects.hasOwnProperty(EFFECT)) {
         return;
@@ -35,7 +36,7 @@ const changeEffect = /** @param {StatementUtil} util */ (util) => {
 };
 
 const setEffect = /** @param {StatementUtil} util */ (util) => {
-    const EFFECT = util.fieldUnsafe('EFFECT').toLowerCase();
+    const EFFECT = util.fieldValueUnsafe('EFFECT').toLowerCase();
     const VALUE = util.input('VALUE');
     if (!util.target.effects.hasOwnProperty(EFFECT)) {
         return;
@@ -45,20 +46,20 @@ const setEffect = /** @param {StatementUtil} util */ (util) => {
 };
 
 const hide = /** @param {StatementUtil} util */ (util) => {
-    // TODO: _renderBubble
     util.writeLn('target.setVisible(false);');
+    util.writeLn('runtime.ext_scratch3_looks._renderBubble(target);');
 };
 
 const show = /** @param {StatementUtil} util */ (util) => {
-    // TODO: _renderBubble
     util.writeLn('target.setVisible(true);');
+    util.writeLn('runtime.ext_scratch3_looks._renderBubble(target);');
 };
 
 const goToFrontBack = /** @param {StatementUtil} util */ (util) => {
     if (util.isStage) {
         return;
     }
-    const FRONT_BACK = util.fieldUnsafe('FRONT_BACK');
+    const FRONT_BACK = util.fieldValueUnsafe('FRONT_BACK');
     if (FRONT_BACK === 'front') {
         util.writeLn('target.goToFront();');
     } else {
@@ -70,7 +71,7 @@ const goForwardBackwardsLayers = /** @param {StatementUtil} util */ (util) => {
     if (util.isStage) {
         return;
     }
-    const FORWARD_BACKWARD = util.fieldUnsafe('FORWARD_BACKWARD');
+    const FORWARD_BACKWARD = util.fieldValueUnsafe('FORWARD_BACKWARD');
     const NUM = util.input('NUM');
     if (FORWARD_BACKWARD === 'forward') {
         util.writeLn(`target.goForwardLayers(${NUM.asNumber()});`);
@@ -82,4 +83,13 @@ const goForwardBackwardsLayers = /** @param {StatementUtil} util */ (util) => {
 const setSize = /** @param {StatementUtil} util */ (util) => {
     const SIZE = util.input('SIZE');
     util.writeLn(`target.setSize(${SIZE.asNumber()});`);
+};
+
+const switchCostume = /** @param {StatementUtil} util */ (util) => {
+    const COSTUME = util.input('COSTUME');
+    util.writeLn(`runtime.ext_scratch3_looks._setCostume(target, ${COSTUME});`);
+};
+
+const costumeMenu = /** @param {InputUtil} util */ (util) => {
+    return util.fieldString('COSTUME');
 };

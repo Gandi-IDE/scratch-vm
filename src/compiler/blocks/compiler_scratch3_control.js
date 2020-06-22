@@ -25,24 +25,22 @@ module.exports.getInputs = () => {
 const repeat = /** @param {StatementUtil} util */ (util) => {
     const TIMES = util.input('TIMES');
     const SUBSTACK = util.substack('SUBSTACK');
-    // util.writeLn('save();');
-    util.writeLn(`R.count = ${TIMES.asNumber()};`);
+    util.enterState(TIMES.asNumber());
     const label = util.putLabel();
-    util.writeLn('if (R.count >= 0.5) {');
-    util.writeLn('  R.count -= 1;');
+    util.writeLn('if (R >= 0.5) {');
+    util.writeLn('  R -= 1;');
     util.write(SUBSTACK);
     util.jumpLazy(label);
     util.writeLn('} else {');
-    // util.writeLn('  restore();');
+    util.restoreState();
     util.writeLn('}');
 };
 
 const forever = /** @param {StatementUtil} util */ (util) => {
     const SUBSTACK = util.substack('SUBSTACK');
-    util.writeLn('while (true) {');
+    const label = util.putLabel();
     util.write(SUBSTACK);
-    util.yieldLoop();
-    util.writeLn('}');
+    util.jumpLazy(label);
 };
 
 const if_ = /** @param {StatementUtil} util */ (util) => {
@@ -54,9 +52,21 @@ const if_ = /** @param {StatementUtil} util */ (util) => {
 };
 
 const repeatUntil = /** @param {StatementUtil} util */ (util) => {
-
+    const CONDITION = util.input('CONDITION');
+    const SUBSTACK = util.substack('SUBSTACK');
+    const label = util.putLabel();
+    util.writeLn(`if (!${CONDITION.asBoolean()}) {`);
+    util.write(SUBSTACK);
+    util.writeLn(`}`);
+    util.jumpLazy(label);
 };
 
 const while_ = /** @param {StatementUtil} util */ (util) => {
-
+    const CONDITION = util.input('CONDITION');
+    const SUBSTACK = util.substack('SUBSTACK');
+    const label = util.putLabel();
+    util.writeLn(`if (${CONDITION.asBoolean()}) {`);
+    util.write(SUBSTACK);
+    util.writeLn(`}`);
+    util.jumpLazy(label);
 };

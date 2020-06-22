@@ -192,8 +192,9 @@ class Thread {
 
         this.isCompiled = false;
 
+        // compiler data
+        // these values only make sense if isCompiled == true
         this.functionJumps = [];
-
         this.fn = null;
     }
 

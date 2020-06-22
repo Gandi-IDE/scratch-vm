@@ -1,14 +1,13 @@
 What works
 
- - a few *very* simple scripts can get compiled to javascript
- - all other scripts just use the interpreter
+ - not much really
 
 Non-goals
 
  - upstream merging into scratch-vm
  - generating human readable code
  - 100% compatibility with every script, block, extension
- - compiling every block and every script
+ - allow modifying compiled scripts while they are running
  - being compatible with js minifiers
 
 <!--
