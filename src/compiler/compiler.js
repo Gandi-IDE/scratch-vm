@@ -45,7 +45,7 @@ defaultExtensions.forEach((ext) => {
 
 class BlockUtil {
     /**
-     * @param {Compiler} compiler 
+     * @param {Compiler} compiler
      */
     constructor(compiler, block) {
         this.compiler = compiler;
@@ -158,16 +158,16 @@ class StatementUtil extends BlockUtil {
 
     /**
      * Immediately jump to a label.
-     * @param {number} label 
+     * @param {number} label
      */
     jump(label) {
         this.writeLn(`jump(${label}); return;`);
     }
-    
+
     /**
      * Lazily jump to a label.
      * If running in warp mode, this will be instant. Otherwise, it will run the next tick.
-     * @param {number} label 
+     * @param {number} label
      */
     jumpLazy(label) {
         this.writeLn(`jumpLazy(${label}); return;`);
@@ -241,7 +241,7 @@ class CompiledInput {
 
 class Compiler {
     /**
-     * @param {Thread} thread 
+     * @param {Thread} thread
      */
     constructor(thread) {
         this.thread = thread;
@@ -251,10 +251,19 @@ class Compiler {
         this.runtime = this.target.runtime;
         this.variableCount = 0;
         this.labelCount = 0;
-        // procedure code -> labels (fn[])
-        this.compiledProcedures = new Map();
         // procedure code -> top block (string)
         this.uncompiledProcedures = new Map();
+    }
+
+    dependProcedure(procedureCode) {
+        if (this.thread.procedures.hasOwnProperty(procedureCode)) {
+            return;
+        }
+        if (this.uncompiledProcedures.has(procedureCode)) {
+            return;
+        }
+        const definition = this.target.blocks.getProcedureDefinition(procedureCode);
+        this.uncompiledProcedures.set(procedureCode, definition);
     }
 
     /**
@@ -338,6 +347,24 @@ class Compiler {
         };
     }
 
+    compileHat(topBlock) {
+        let script = '';
+        script += '{{' + this.nextLabel() + '}}';
+        script += this.compileStack(topBlock);
+        script += 'end();';
+
+        const parseResult = this.parseContinuations(script);
+        const parsedScript = parseResult.script;
+
+        const startingLabelCount = this.thread.functionJumps.length;
+        for (const label of Object.keys(parseResult.labels)) {
+          this.thread.functionJumps[label] = execute.createContinuation(this, parsedScript.slice(parseResult.labels[label]));
+        }
+
+        log.info(`[${this.target.getName()}] compiled script`, script);
+        return startingLabelCount;
+    }
+
     compile() {
         const target = this.target;
         if (!target) throw new Error('no target');
@@ -355,24 +382,19 @@ class Compiler {
             startingBlock = topBlockId;
         }
 
-        let script = '';
-        // must always place a label at the start, this will be the first label to run
-        script += '{{' + this.nextLabel() + '}}';
-        script += this.compileStack(startingBlock);
-        // kill thread at the end of script
-        script += 'target.runtime.sequencer.retireThread(thread);';
+        this.thread.fn = this.thread.functionJumps[this.compileHat(startingBlock)];
 
-        const parseResult = this.parseContinuations(script);
-        const parsedScript = parseResult.script;
+        while (this.uncompiledProcedures.size > 0) {
+            const uncompiledProcedures = this.uncompiledProcedures;
+            this.uncompiledProcedures = new Map();
 
-        const totalLabels = this.thread.functionJumps.length;
-        for (const label of Object.keys(parseResult.labels)) {
-          this.thread.functionJumps[label] = execute.createContinuation(this, parsedScript.slice(parseResult.labels[label]));
+            for (const [name, hat] of uncompiledProcedures.entries()) {
+                console.log(name, hat);
+                const firstScriptBlock = this.target.blocks.getBlock(hat).next;
+                const label = this.compileHat(firstScriptBlock);
+                this.thread.procedures[name] = label;
+            }
         }
-  
-        log.info(`[${this.target.getName()}] compiled script`, script);
-
-        this.thread.fn = this.thread.functionJumps[totalLabels];
     }
 }
 

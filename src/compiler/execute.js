@@ -9,6 +9,21 @@ var jumpLazy = (id) => {
     THREAD.fn = THREAD.functionJumps[id];
 };
 
+var call = (procedureCode, resume) => {
+    THREAD.enterState(resume);
+    const procedureLabel = THREAD.procedures[procedureCode];
+    jumpLazy(procedureLabel);
+};
+
+var end = () => {
+    if (THREAD.stateStack.length) {
+        jumpLazy(THREAD.state);
+        THREAD.restoreState();
+    } else {
+        THREAD.target.runtime.sequencer.retireThread(THREAD);
+    }
+};
+
 /**
  * Scratch cast to number.
  * @param {*} value The value to cast
