@@ -1,16 +1,17 @@
 const Thread = require('../engine/thread');
 const Timer = require('../util/timer');
+const Cast = require('../util/cast');
 
 var jump = (id) => {
     IMMEDIATE = THREAD.functionJumps[id];
 };
 
 var jumpLazy = (id) => {
-    if (THREAD.warp) {
-        jump(id);
-    } else {
+    // if (THREAD.warp) {
+    //     jump(id);
+    // } else {
         THREAD.fn = THREAD.functionJumps[id];
-    }
+    // }
 };
 
 var call = (procedureCode, args, resume) => {
@@ -18,20 +19,22 @@ var call = (procedureCode, args, resume) => {
         args,
         resume,
     });
+    // TODO: check recursion
+    // TODO: warp
     const procedure = THREAD.procedures[procedureCode];
-    if (procedure.warp) {
+    if (procedure.warp || THREAD.warp) {
         THREAD.warp++;
     }
     jumpLazy(procedure.label);
 };
 
 var end = () => {
-    if (THREAD.callStack.length) {
-        THREAD.popCallStack();
+    if (THREAD.callStack.length > 1) {
+        jumpLazy(THREAD.call.resume); // TODO: should be jump
         if (THREAD.warp) {
             THREAD.warp--;
         }
-        jumpLazy(THREAD.call.resume);
+        THREAD.popCallStack();
     } else {
         THREAD.target.runtime.sequencer.retireThread(THREAD);
     }
@@ -129,6 +132,24 @@ const timer = () => {
     const timer = new Timer();
     timer.start();
     return timer;
+};
+
+const getListItem = (list, idx) => {
+    // TODO: write our own toListIndex
+    const index = Cast.toListIndex(idx, list.value.length, false);
+    if (index === Cast.LIST_INVALID) {
+        return '';
+    }
+    return list.value[index - 1];
+};
+
+var replaceItemOfList = (list, idx, value) => {
+    const index = Cast.toListIndex(idx, list.value.length, false);
+    if (index === Cast.LIST_INVALID) {
+        return;
+    }
+    list.value[index - 1] = value;
+    list._monitorUpToDate = false;
 };
 
 /** @type {Function} */

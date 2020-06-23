@@ -34,7 +34,6 @@ module.exports.getInputs = () => {
 const equals = /** @param {InputUtil} util */ (util) => {
     const OPERAND1 = util.input('OPERAND1');
     const OPERAND2 = util.input('OPERAND2');
-    // TODO: actual equality and things that aren't numbers
     return util.boolean(`(compare(${OPERAND1}, ${OPERAND2}) === 0)`);
 };
 

@@ -14,6 +14,7 @@ module.exports.getStatements = () => {
         control_wait: wait,
         control_create_clone_of: createClone,
         control_delete_this_clone: deleteClone,
+        control_stop: stop,
     };
 };
 
@@ -32,7 +33,7 @@ const repeat = /** @param {StatementUtil} util */ (util) => {
     util.enterState(TIMES.asNumber());
     const label = util.putLabel();
     util.writeLn(`if (thread.state >= 0.5) {`);
-    util.writeLn(`  thread.state -= 1;`);
+    util.writeLn(`  thread.state--;`);
     util.write(SUBSTACK);
     util.jumpLazy(label);
     util.writeLn('}');
@@ -71,8 +72,8 @@ const repeatUntil = /** @param {StatementUtil} util */ (util) => {
     const label = util.putLabel();
     util.writeLn(`if (!${CONDITION.asBoolean()}) {`);
     util.write(SUBSTACK);
-    util.writeLn(`}`);
     util.jumpLazy(label);
+    util.writeLn(`}`);
 };
 
 const while_ = /** @param {StatementUtil} util */ (util) => {
@@ -81,8 +82,8 @@ const while_ = /** @param {StatementUtil} util */ (util) => {
     const label = util.putLabel();
     util.writeLn(`if (${CONDITION.asBoolean()}) {`);
     util.write(SUBSTACK);
-    util.writeLn(`}`);
     util.jumpLazy(label);
+    util.writeLn(`}`);
 };
 
 const wait = /** @param {StatementUtil} util */ (util) => {
@@ -106,8 +107,22 @@ const createCloneMenu = /** @param {InputUtil} util */ (util) => {
 };
 
 const deleteClone = /** @param {StatementUtil} util */ (util) => {
-    if (util.target.isOriginal) return;
+    if (util.target.isOriginal) {
+        util.noop();
+        return;
+    }
     util.writeLn(`runtime.disposeTarget(target);`);
     util.writeLn(`runtime.stopForTarget(target);`);
     util.writeLn(`return;`);
+};
+
+const stop = /** @param {StatementUtil} util */ (util) => {
+    const STOP_OPTION = util.fieldValueUnsafe('STOP_OPTION');
+    if (STOP_OPTION === 'all') {
+        util.writeLn('target.runtime.stopAll();');
+    } else if (STOP_OPTION === 'other scripts in sprite' || STOP_OPTION === 'other scripts in stage') {
+        util.writeLn('target.runtime.stopForTarget(target, thread);');
+    } else if (STOP_OPTION === 'this script') {
+        util.writeLn('end(); return;');
+    }
 };

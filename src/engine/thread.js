@@ -215,12 +215,12 @@ class Thread {
     }
 
     pushCallStack(v) {
-        this.callStack.push(v);
+        this.callStack.push(this.call);
         this.call = v;
     }
 
     popCallStack() {
-        return this.call = this.callStack.pop();
+        this.call = this.callStack.pop();
     }
 
     /**

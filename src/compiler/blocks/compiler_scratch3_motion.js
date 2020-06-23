@@ -19,7 +19,8 @@ module.exports.getStatements = () => {
  */
 module.exports.getInputs = () => {
     return {
-
+        motion_xposition: getX,
+        motion_yposition: getY,
     };
 };
 
@@ -51,4 +52,14 @@ const goToXY = /** @param {StatementUtil} util */ (util) => {
 const pointInDirection = /** @param {StatementUtil} util */ (util) => {
     const DIRECTION = util.input('DIRECTION');
     util.writeLn(`target.setDirection(${DIRECTION.asNumber()});`);
+};
+
+const getX = /** @param {InputUtil} util */ (util) => {
+    // TODO: limitPrecision?
+    return util.number('target.x');
+};
+
+const getY = /** @param {InputUtil} util */ (util) => {
+    // TODO: limitPrecision?
+    return util.number('target.y');
 };

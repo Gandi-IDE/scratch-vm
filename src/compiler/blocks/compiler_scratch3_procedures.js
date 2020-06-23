@@ -20,6 +20,13 @@ module.exports.getInputs = () => {
 
 const call = /** @param {StatementUtil} util */ (util) => {
     const procedureCode = util.block.mutation.proccode;
+
+    // debugger block
+    if (procedureCode === 'debugger;') {
+        util.writeLn('debugger;');
+        return;
+    }
+
     const paramNamesIdsAndDefaults = util.target.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
     if (paramNamesIdsAndDefaults === null) {
         return;
