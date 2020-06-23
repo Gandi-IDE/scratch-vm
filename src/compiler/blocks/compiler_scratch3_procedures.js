@@ -5,7 +5,7 @@ const { InputUtil, StatementUtil, CompiledInput } = require('../compiler');
  */
 module.exports.getStatements = () => {
     return {
-
+        procedures_call: call,
     };
 };
 
@@ -16,4 +16,8 @@ module.exports.getInputs = () => {
     return {
 
     };
+};
+
+const call = /** @param {StatementUtil} util */ (util) => {
+    const proccode = util.block.mutation.proccode;
 };

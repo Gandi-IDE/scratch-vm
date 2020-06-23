@@ -182,11 +182,11 @@ class StatementUtil extends BlockUtil {
     }
 
     enterState(state) {
-        this.writeLn(`enterState(${state});`);
+        this.writeLn(`thread.enterState(${state});`);
     }
 
     restoreState() {
-        this.writeLn('restoreState();');
+        this.writeLn('thread.restoreState();');
     }
 
     nextLocalVariable() {
@@ -251,6 +251,10 @@ class Compiler {
         this.runtime = this.target.runtime;
         this.variableCount = 0;
         this.labelCount = 0;
+        // procedure code -> labels (fn[])
+        this.compiledProcedures = new Map();
+        // procedure code -> top block (string)
+        this.uncompiledProcedures = new Map();
     }
 
     /**

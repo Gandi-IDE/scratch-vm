@@ -1,23 +1,12 @@
 const Thread = require('../engine/thread');
 const Timer = require('../util/timer');
 
-var R = {} // temporary!!!
-
 var jump = (id) => {
     IMMEDIATE = THREAD.functionJumps[id];
 };
 
 var jumpLazy = (id) => {
     THREAD.fn = THREAD.functionJumps[id];
-};
-
-var enterState = (value) => {
-    R = value;
-    // TODO
-};
-
-var restoreState = () => {
-    // TODO
 };
 
 /**

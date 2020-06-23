@@ -196,6 +196,19 @@ class Thread {
         // these values only make sense if isCompiled == true
         this.functionJumps = [];
         this.fn = null;
+        this.state = {};
+        this.stateStack = [];
+        // name -> starting fn of procedures
+        this.procedures = {};
+    }
+
+    enterState(v) {
+        this.stateStack.push(this.state);
+        this.state = v;
+    }
+
+    restoreState() {
+        this.state = this.stateStack.pop();
     }
 
     /**

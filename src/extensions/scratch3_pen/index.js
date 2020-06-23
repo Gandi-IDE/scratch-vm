@@ -488,7 +488,7 @@ class Scratch3PenBlocks {
     /**
      * The pen "clear" block clears the pen layer's contents.
      */
-    clear () {
+    clear () { // used by compiler
         const penSkinId = this._getPenLayerID();
         if (penSkinId >= 0) {
             this.runtime.renderer.penClear(penSkinId);
@@ -558,8 +558,11 @@ class Scratch3PenBlocks {
      * @param {object} util - utility object provided by the runtime.
      */
     setPenColorToColor (args, util) {
-        const penState = this._getPenState(util.target);
-        const rgb = Cast.toRgbColorObject(args.COLOR);
+        this._setPenColorToColor(args.COLOR, util.target);
+    }
+    _setPenColorToColor (color, target) { // used by compiler
+        const penState = this._getPenState(target);
+        const rgb = Cast.toRgbColorObject(color);
         const hsv = Color.rgbToHsv(rgb);
         penState.color = (hsv.h / 360) * 100;
         penState.saturation = hsv.s * 100;
@@ -713,8 +716,11 @@ class Scratch3PenBlocks {
      * @param {object} util - utility object provided by the runtime.
      */
     setPenShadeToNumber (args, util) {
-        const penState = this._getPenState(util.target);
-        let newShade = Cast.toNumber(args.SHADE);
+        this._setPenShadeToNumber(Cast.toNumber(args.SHADE), util.target);
+    }
+    _setPenShadeToNumber (shade, target) {
+        const penState = this._getPenState(target);
+        let newShade = Cast.toNumber(shade);
 
         // Wrap clamp the new shade value the way scratch 2 did.
         newShade = newShade % 200;

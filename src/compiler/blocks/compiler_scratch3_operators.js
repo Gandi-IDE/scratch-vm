@@ -101,7 +101,7 @@ const multiply = /** @param {InputUtil} util */ (util) => {
 const divide = /** @param {InputUtil} util */ (util) => {
     const NUM1 = util.input('NUM1');
     const NUM2 = util.input('NUM2');
-    return util.number(`(${NUM1.asNumber()} / ${NUM2.asNumber()})`);
+    return util.number(`(${NUM1.asNumber()} / ${NUM2.asNumber()} || 0)`);
 };
 
 const mathop = /** @param {InputUtil} util */ (util) => {
@@ -111,7 +111,7 @@ const mathop = /** @param {InputUtil} util */ (util) => {
         case 'abs': return util.number(`Math.abs(${NUM})`);
         case 'floor': return util.number(`Math.floor(${NUM})`);
         case 'ceil': return util.number(`Math.ceil(${NUM})`);
-        case 'sqrt': return util.number(`Math.sqrt(${NUM})`);
+        case 'sqrt': return util.number(`(Math.sqrt(${NUM}) || 0)`);
         // TODO: consider rounding as Scratch 3 does
         case 'sin': return util.number(`Math.sin((Math.PI * ${NUM}) / 180)`);
         case 'cos': return util.number(`Math.cos((Math.PI * ${NUM}) / 180)`);

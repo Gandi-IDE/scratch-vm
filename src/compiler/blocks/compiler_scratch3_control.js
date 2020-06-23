@@ -31,13 +31,12 @@ const repeat = /** @param {StatementUtil} util */ (util) => {
     const SUBSTACK = util.substack('SUBSTACK');
     util.enterState(TIMES.asNumber());
     const label = util.putLabel();
-    util.writeLn('if (R >= 0.5) {');
-    util.writeLn('  R -= 1;');
+    util.writeLn(`if (thread.state >= 0.5) {`);
+    util.writeLn(`  thread.state -= 1;`);
     util.write(SUBSTACK);
     util.jumpLazy(label);
-    util.writeLn('} else {');
-    util.restoreState();
     util.writeLn('}');
+    util.restoreState();
 };
 
 const forever = /** @param {StatementUtil} util */ (util) => {
@@ -88,12 +87,13 @@ const while_ = /** @param {StatementUtil} util */ (util) => {
 
 const wait = /** @param {StatementUtil} util */ (util) => {
     const DURATION = util.input('DURATION');
-    util.writeLn(`enterState({ timer: timer(), duration: Math.max(0, 1000 * ${DURATION.asNumber()}) });`);
+    util.enterState(`{ timer: timer(), duration: Math.max(0, 1000 * ${DURATION.asNumber()}) }`);
     const label = util.putLabel();
     // TODO: always jumpLazy the first time
-    util.writeLn('if (R.timer.timeElapsed() < R.duration) {')
+    util.writeLn('if (thread.state.timer.timeElapsed() < thread.state.duration) {')
     util.jumpLazy(label);
     util.writeLn('}');
+    util.restoreState();
 };
 
 const createClone = /** @param {StatementUtil} util */ (util) => {
