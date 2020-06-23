@@ -14,7 +14,7 @@ module.exports.getStatements = () => {
  */
 module.exports.getInputs = () => {
     return {
-
+        argument_reporter_string_number: getStringArgument,
     };
 };
 
@@ -24,21 +24,29 @@ const call = /** @param {StatementUtil} util */ (util) => {
     if (paramNamesIdsAndDefaults === null) {
         return;
     }
+
     const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
     const labelId = util.nextLabel();
 
     util.compiler.dependProcedure(procedureCode);
 
-    util.writeLn(`call("${util.safe(procedureCode)}", ${labelId}); return;`);
+    util.write(`call("${util.safe(procedureCode)}", {`);
 
+    for (let i = 0; i < paramIds.length; i++) {
+        let value;
+        if (util.hasInput(paramIds[i])) {
+            value = util.input(paramIds[i]);
+        } else {
+            value = 0; // TODO
+        }
+        util.write(`"${util.safe(paramNames[i])}": ${value},`);
+    }
+
+    util.writeLn(`}, ${labelId}); return;`);
     util.putLabel(labelId);
+};
 
-    // for (let i = 0; i < paramIds.length; i++) {
-    //     if (args.hasOwnProperty(paramIds[i])) {
-    //         util.pushParam(paramNames[i], args[paramIds[i]]);
-    //     } else {
-    //         util.pushParam(paramNames[i], paramDefaults[i]);
-    //     }
-    // }
-
+const getStringArgument = /** @param {InputUtil} util */ (util) => {
+    const VALUE = util.fieldValueUnsafe('VALUE');
+    return util.unknown(`thread.call.args["${util.safe(VALUE)}"]`);
 };

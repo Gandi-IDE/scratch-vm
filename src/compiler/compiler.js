@@ -73,6 +73,10 @@ class BlockUtil {
         return this.compiler.compileInput(this.block, name);
     }
 
+    hasInput(name) {
+        return this.block.inputs.hasOwnProperty(name);
+    }
+
     /**
      * Get the field data object.
      * @param {string} name The name of the field. (VARIABLE, TEXT, etc.)
@@ -388,11 +392,25 @@ class Compiler {
             const uncompiledProcedures = this.uncompiledProcedures;
             this.uncompiledProcedures = new Map();
 
-            for (const [name, hat] of uncompiledProcedures.entries()) {
-                console.log(name, hat);
-                const firstScriptBlock = this.target.blocks.getBlock(hat).next;
-                const label = this.compileHat(firstScriptBlock);
-                this.thread.procedures[name] = label;
+            for (const [name, definitionId] of uncompiledProcedures.entries()) {
+                const definitionBlock = target.blocks.getBlock(definitionId);
+
+                const innerBlock = target.blocks.getBlock(definitionBlock.inputs.custom_block.block);
+                let isWarp = false;
+                if (innerBlock && innerBlock.mutation) {
+                    const warp = innerBlock.mutation.warp;
+                    if (typeof warp === 'boolean') {
+                        isWarp = warp;
+                    } else if (typeof warp === 'string') {
+                        isWarp = JSON.parse(warp);
+                    }
+                }
+
+                const label = this.compileHat(definitionBlock.next);
+                this.thread.procedures[name] = {
+                    warp: isWarp,
+                    label,
+                };
             }
         }
     }

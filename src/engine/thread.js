@@ -194,10 +194,13 @@ class Thread {
 
         // compiler data
         // these values only make sense if isCompiled == true
+        this.warp = 0;
         this.functionJumps = [];
         this.fn = null;
         this.state = null;
         this.stateStack = [];
+        this.call = null;
+        this.callStack = [];
         // name -> starting fn of procedures
         this.procedures = {};
     }
@@ -209,6 +212,15 @@ class Thread {
 
     restoreState() {
         this.state = this.stateStack.pop();
+    }
+
+    pushCallStack(v) {
+        this.callStack.push(v);
+        this.call = v;
+    }
+
+    popCallStack() {
+        return this.call = this.callStack.pop();
     }
 
     /**

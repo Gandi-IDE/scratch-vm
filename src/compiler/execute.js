@@ -6,19 +6,32 @@ var jump = (id) => {
 };
 
 var jumpLazy = (id) => {
-    THREAD.fn = THREAD.functionJumps[id];
+    if (THREAD.warp) {
+        jump(id);
+    } else {
+        THREAD.fn = THREAD.functionJumps[id];
+    }
 };
 
-var call = (procedureCode, resume) => {
-    THREAD.enterState(resume);
-    const procedureLabel = THREAD.procedures[procedureCode];
-    jumpLazy(procedureLabel);
+var call = (procedureCode, args, resume) => {
+    THREAD.pushCallStack({
+        args,
+        resume,
+    });
+    const procedure = THREAD.procedures[procedureCode];
+    if (procedure.warp) {
+        THREAD.warp++;
+    }
+    jumpLazy(procedure.label);
 };
 
 var end = () => {
-    if (THREAD.stateStack.length) {
-        jumpLazy(THREAD.state);
-        THREAD.restoreState();
+    if (THREAD.callStack.length) {
+        THREAD.popCallStack();
+        if (THREAD.warp) {
+            THREAD.warp--;
+        }
+        jumpLazy(THREAD.call.resume);
     } else {
         THREAD.target.runtime.sequencer.retireThread(THREAD);
     }
