@@ -7,11 +7,11 @@ var jump = (id) => {
 };
 
 var jumpLazy = (id) => {
-    // if (THREAD.warp) {
-    //     jump(id);
-    // } else {
+    if (THREAD.warp) {
+        jump(id);
+    } else {
         THREAD.fn = THREAD.functionJumps[id];
-    // }
+    }
 };
 
 var call = (procedureCode, args, resume) => {
@@ -20,7 +20,6 @@ var call = (procedureCode, args, resume) => {
         resume,
     });
     // TODO: check recursion
-    // TODO: warp
     const procedure = THREAD.procedures[procedureCode];
     if (procedure.warp || THREAD.warp) {
         THREAD.warp++;
@@ -30,7 +29,7 @@ var call = (procedureCode, args, resume) => {
 
 var end = () => {
     if (THREAD.callStack.length > 1) {
-        jumpLazy(THREAD.call.resume); // TODO: should be jump
+        jump(THREAD.call.resume);
         if (THREAD.warp) {
             THREAD.warp--;
         }
@@ -186,7 +185,8 @@ const evalCompiledScript = (compiler, _source) => {
 };
 
 var createContinuation = (compiler, source) => {
-    // TODO: make understandable
+    // TODO: optimize, refactor
+    // TODO: support more than just "} else {"
     var result = '(function continuation() {\n';
     var brackets = 0;
     var delBrackets = 0;
