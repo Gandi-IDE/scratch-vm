@@ -255,15 +255,36 @@ class Compiler {
         this.runtime = this.target.runtime;
         this.variableCount = 0;
         this.labelCount = 0;
-        // procedure code -> top block (string)
+        /**
+         * Procedures that are queued to be compiled.
+         * Map of procedure code to the ID of the definition block.
+         * @private
+         */
         this.uncompiledProcedures = new Map();
+        /**
+         * Procedures that are being compiled.
+         * Same structure as uncompiledProcedures.
+         * @private
+         */
+        this.compilingProcedures = new Map();
     }
 
+    /**
+     * Ask the compiler to queue the compilation of a procedure.
+     * This will do nothing if the procedure is already compiled or queued.
+     * @param {string} procedureCode The procedure's code
+     */
     dependProcedure(procedureCode) {
         if (this.thread.procedures.hasOwnProperty(procedureCode)) {
+            // already compiled
+            return;
+        }
+        if (this.compilingProcedures.has(procedureCode)) {
+            // being compiled
             return;
         }
         if (this.uncompiledProcedures.has(procedureCode)) {
+            // queued to be compiled
             return;
         }
         const definition = this.target.blocks.getProcedureDefinition(procedureCode);
@@ -378,27 +399,33 @@ class Compiler {
         // TODO: figure out how to run blocks from the flyout, they have their ID set to their opcode
         if (!topBlock) throw new Error('top block is missing');
 
+        // Compile the initial script to be started.
+        // We skip hat blocks, as they do not have code that can be run.
         let startingBlock;
-        // if the top block is a hat, jump to the next block
         if (this.runtime.getIsHat(topBlock.opcode)) {
             startingBlock = topBlock.next;
         } else {
             startingBlock = topBlockId;
         }
+        const startingFunction = this.compileHat(startingBlock);
+        this.thread.fn = this.thread.functionJumps[startingFunction];
 
-        this.thread.fn = this.thread.functionJumps[this.compileHat(startingBlock)];
-
+        // Compile any required procedures.
+        // As procedures can depend on other procedures, this process may take several iterations.
         while (this.uncompiledProcedures.size > 0) {
-            const uncompiledProcedures = this.uncompiledProcedures;
+            this.compilingProcedures = this.uncompiledProcedures;
             this.uncompiledProcedures = new Map();
 
-            for (const [name, definitionId] of uncompiledProcedures.entries()) {
+            for (const [procedureCode, definitionId] of this.compilingProcedures.entries()) {
                 const definitionBlock = target.blocks.getBlock(definitionId);
+                const innerDefinition = target.blocks.getBlock(definitionBlock.inputs.custom_block.block);
+                const bodyStart = definitionBlock.next;
 
-                const innerBlock = target.blocks.getBlock(definitionBlock.inputs.custom_block.block);
+                // Extract the function's warp mode.
+                // See Sequencer.stepToProcedure
                 let isWarp = false;
-                if (innerBlock && innerBlock.mutation) {
-                    const warp = innerBlock.mutation.warp;
+                if (innerDefinition && innerDefinition.mutation) {
+                    const warp = innerDefinition.mutation.warp;
                     if (typeof warp === 'boolean') {
                         isWarp = warp;
                     } else if (typeof warp === 'string') {
@@ -406,10 +433,10 @@ class Compiler {
                     }
                 }
 
-                const label = this.compileHat(definitionBlock.next);
-                this.thread.procedures[name] = {
+                const procedureLabel = this.compileHat(bodyStart);
+                this.thread.procedures[procedureCode] = {
                     warp: isWarp,
-                    label,
+                    label: procedureLabel,
                 };
             }
         }

@@ -214,15 +214,6 @@ class Thread {
         this.state = this.stateStack.pop();
     }
 
-    pushCallStack(v) {
-        this.callStack.push(this.call);
-        this.call = v;
-    }
-
-    popCallStack() {
-        this.call = this.callStack.pop();
-    }
-
     /**
      * Thread status for initialized or running thread.
      * This is the default state for a thread - execution should run normally,

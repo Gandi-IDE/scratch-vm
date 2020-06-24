@@ -1,6 +1,5 @@
 const Thread = require('../engine/thread');
 const Timer = require('../util/timer');
-const Cast = require('../util/cast');
 
 var jump = (id) => {
     IMMEDIATE = THREAD.functionJumps[id];
@@ -15,10 +14,11 @@ var jumpLazy = (id) => {
 };
 
 var call = (procedureCode, args, resume) => {
-    THREAD.pushCallStack({
+    THREAD.callStack.push(THREAD.call);
+    THREAD.call = {
         args,
         resume,
-    });
+    };
     // TODO: check recursion
     const procedure = THREAD.procedures[procedureCode];
     if (procedure.warp || THREAD.warp) {
@@ -33,14 +33,19 @@ var end = () => {
         if (THREAD.warp) {
             THREAD.warp--;
         }
-        THREAD.popCallStack();
+        THREAD.call = THREAD.callStack.pop();
     } else {
-        THREAD.target.runtime.sequencer.retireThread(THREAD);
+        retire();
     }
+};
+
+var retire = () => {
+    THREAD.target.runtime.sequencer.retireThread(THREAD);
 };
 
 /**
  * Scratch cast to number.
+ * Similar to Cast.toNumber()
  * @param {*} value The value to cast
  * @returns {number}
  */
@@ -50,7 +55,8 @@ const toNumber = (value) => {
 };
 
 /**
- * Scratch cast to boolean
+ * Scratch cast to boolean.
+ * Similar to Cast.toBoolean()
  * @param {*} value The value to cast
  * @returns {boolean}
  */
@@ -68,7 +74,8 @@ const toBoolean = (value) => {
 };
 
 /**
- * Scratch cast to string
+ * Scratch cast to string.
+ * Similar to Cast.toString()
  * @param {*} value The value to cast
  * @returns {string}
  */
@@ -78,6 +85,7 @@ const toString = (value) => {
 
 /**
  * Check if a value is considered whitespace.
+ * Similar to Cast.isWhiteSpace()
  * @param {*} val Value to check
  * @returns {boolean}
  */
@@ -87,6 +95,7 @@ const isWhiteSpace = (val) => {
 
 /**
  * Compare two values using Scratch casting.
+ * Similar to Cast.compare()
  * @param {*} v1 First value to compare.
  * @param {*} v2 Second value to compare.
  * @returns {number} Negative if v1 < v2, 0 if equal, positive if v1 > v2
@@ -127,36 +136,74 @@ const ioQuery = (runtime, device, func, args) => {
     }
 };
 
+/**
+ * Create and start a timer.
+ */
 const timer = () => {
     const timer = new Timer();
     timer.start();
     return timer;
 };
 
+/**
+ * Convert a Scratch list index to a JavaScript list index.
+ * "all" is not considered as a list index.
+ * Similar to Cast.toListIndex()
+ * @param {number} index Scratch list index.
+ * @param {number} length Length of the list.
+ * @returns {number} 0 based list index, or -1 if invalid.
+ */
+var toListIndex = (index, length) => {
+    if (typeof index !== 'number') {
+        if (index === 'last') {
+            if (length > 0) {
+                return length;
+            }
+            return -1;
+        } else if (index === 'random' || index === 'any') {
+            if (length > 0) {
+                return 1 + Math.floor(Math.random() * length);
+            }
+            return -1;
+        }
+    }
+    index = Math.floor(toNumber(index));
+    if (index < 1 || index > length) {
+        return -1;
+    }
+    return index - 1;
+};
+
 const getListItem = (list, idx) => {
-    // TODO: write our own toListIndex
-    const index = Cast.toListIndex(idx, list.value.length, false);
-    if (index === Cast.LIST_INVALID) {
+    const index = toListIndex(idx, list.value.length);
+    if (index === -1) {
         return '';
     }
-    return list.value[index - 1];
+    return list.value[index];
 };
 
 var replaceItemOfList = (list, idx, value) => {
-    const index = Cast.toListIndex(idx, list.value.length, false);
-    if (index === Cast.LIST_INVALID) {
+    const index = toListIndex(idx, list.value.length);
+    if (index === -1) {
         return;
     }
-    list.value[index - 1] = value;
+    list.value[index] = value;
     list._monitorUpToDate = false;
 };
 
-/** @type {Function} */
+/**
+ * If set, the executor will immediately start executing this function when the current function returns.
+ * @type {Function}
+ */
 var IMMEDIATE;
-/** @type {Thread} */
+/**
+ * The currently running thread.
+ * @type {Thread}
+ */
 var THREAD;
 
 /**
+ * Step a compiled thread.
  * @param {Thread} thread 
  */
 const execute = function (thread) {
@@ -172,12 +219,15 @@ const execute = function (thread) {
 };
 
 const evalCompiledScript = (compiler, _source) => {
+    // TODO: this is something that definitely deserves unit tests
+
+    // Create some of the data that the script will need to execute.
     const thread = compiler.thread;
     const target = compiler.target;
     const runtime = target.runtime;
     const stage = runtime.getTargetForStage();
 
-    // no reason to access compiler
+    // no reason to access compiler anymore
     compiler = null;
 
     // eval will grab references to all variables in this context
@@ -187,6 +237,7 @@ const evalCompiledScript = (compiler, _source) => {
 var createContinuation = (compiler, source) => {
     // TODO: optimize, refactor
     // TODO: support more than just "} else {"
+    // TODO: this is something that definitely deserves unit tests
     var result = '(function continuation() {\n';
     var brackets = 0;
     var delBrackets = 0;
