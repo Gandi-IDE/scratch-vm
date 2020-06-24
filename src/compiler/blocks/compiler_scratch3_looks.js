@@ -5,6 +5,7 @@ const { InputUtil, StatementUtil, CompiledInput } = require('../compiler');
  */
 module.exports.getStatements = () => {
     return {
+        looks_say: say,
         looks_changeeffectby: changeEffect,
         looks_seteffectto: setEffect,
         looks_hide: hide,
@@ -25,6 +26,11 @@ module.exports.getInputs = () => {
         looks_costume: costumeMenu,
         looks_costumenumbername: getCostumeNumberName,
     };
+};
+
+const say = /** @param {StatementUtil} util */ (util) => {
+    const MESSAGE = util.input('MESSAGE');
+    util.writeLn(`runtime.ext_scratch3_looks._say(${MESSAGE}, target);`);
 };
 
 const changeEffect = /** @param {StatementUtil} util */ (util) => {

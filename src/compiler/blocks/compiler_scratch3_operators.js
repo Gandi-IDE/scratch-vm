@@ -113,7 +113,7 @@ const mathop = /** @param {InputUtil} util */ (util) => {
         case 'abs': return util.number(`Math.abs(${NUM})`);
         case 'floor': return util.number(`Math.floor(${NUM})`);
         case 'ceiling': return util.number(`Math.ceil(${NUM})`);
-        case 'sqrt': return util.number(`(Math.sqrt(${NUM}) || 0)`);
+        case 'sqrt': return util.number(`Math.sqrt(${NUM})`).nanable();
         // TODO: consider rounding as Scratch 3 does
         case 'sin': return util.number(`Math.sin((Math.PI * ${NUM}) / 180)`);
         case 'cos': return util.number(`Math.cos((Math.PI * ${NUM}) / 180)`);

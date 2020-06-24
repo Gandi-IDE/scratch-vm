@@ -55,6 +55,15 @@ const toNumber = (value) => {
 };
 
 /**
+ * Convert a number to something other than NaN.
+ * @param {number} number The value to convert.
+ * @returns {number}
+ */
+const toNotNaN = (number) => {
+    return number || 0;
+};
+
+/**
  * Scratch cast to boolean.
  * Similar to Cast.toBoolean()
  * @param {*} value The value to cast

@@ -27,6 +27,9 @@ const TYPE_NUMBER = 1;
 const TYPE_BOOLEAN = 2;
 const TYPE_STRING = 3;
 
+const FLAG_NULLABLE = 1;
+const FLAG_NANABLE = 2;
+
 defaultExtensions.forEach((ext) => {
     const extensionInputs = ext.getInputs();
     for (const op in extensionInputs) {
@@ -226,8 +229,39 @@ class CompiledInput {
      * @param {number} type The input's type at runtime.
      */
     constructor(source, type) {
+        /**
+         * The input's source code.
+         * @readonly
+         * @private
+         */
         this.source = source;
+        /**
+         * The input's type.
+         * @readonly
+         * @private
+         */
         this.type = type;
+        /**
+         * Internal flags.
+         * @private
+         */
+        this.flags = 0;
+    }
+
+    /**
+     * Enable the NULLABLE flag.
+     */
+    nullable() {
+        this.flags |= FLAG_NULLABLE;
+        return this;
+    }
+
+    /**
+     * Enable the NANABLE flag.
+     */
+    nanable() {
+        this.flags |= FLAG_NANABLE;
+        return this;
     }
 
     toString() {
@@ -235,7 +269,12 @@ class CompiledInput {
     }
 
     asNumber() {
-        if (this.type === TYPE_NUMBER) return this.source;
+        if (this.type === TYPE_NUMBER) {
+            if (this.flags & FLAG_NANABLE) {
+                return 'toNotNaN(' + this.source + ')';
+            }
+            return this.source;
+        }
         return 'toNumber(' + this.source + ')';
     }
 
