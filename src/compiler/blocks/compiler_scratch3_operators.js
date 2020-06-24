@@ -28,6 +28,9 @@ module.exports.getInputs = () => {
         operator_divide: divide,
         operator_mathop: mathop,
         operator_random: random,
+        operator_letter_of: letterOf,
+        operator_mod: mod,
+        operator_length: length,
     };
 };
 
@@ -109,7 +112,7 @@ const mathop = /** @param {InputUtil} util */ (util) => {
     switch (OPERATOR) {
         case 'abs': return util.number(`Math.abs(${NUM})`);
         case 'floor': return util.number(`Math.floor(${NUM})`);
-        case 'ceil': return util.number(`Math.ceil(${NUM})`);
+        case 'ceiling': return util.number(`Math.ceil(${NUM})`);
         case 'sqrt': return util.number(`(Math.sqrt(${NUM}) || 0)`);
         // TODO: consider rounding as Scratch 3 does
         case 'sin': return util.number(`Math.sin((Math.PI * ${NUM}) / 180)`);
@@ -129,6 +132,23 @@ const mathop = /** @param {InputUtil} util */ (util) => {
 const random = /** @param {InputUtil} util */ (util) => {
     const FROM = util.input('FROM');
     const TO = util.input('TO');
-    // lack of type casts intentional
+    // lack of type casts intentional, as random needs to see whether decimals are necessary
     return util.number(`runtime.ext_scratch3_operators._random(${FROM}, ${TO})`);
+};
+
+const letterOf = /** @param {InputUtil} util */ (util) => {
+    const STRING = util.input('STRING');
+    const LETTER = util.input('LETTER');
+    return util.string(`((${STRING.asString()})[(${LETTER.asNumber()} | 0) - 1] || "")`);
+};
+
+const mod = /** @param {InputUtil} util */ (util) => {
+    const NUM1 = util.input('NUM1');
+    const NUM2 = util.input('NUM2');
+    return util.number(`mod(${NUM1.asNumber()}, ${NUM2.asNumber})`);
+};
+
+const length = /** @param {InputUtil} util */ (util) => {
+    const STRING = util.input('STRING');
+    return util.number(`${STRING.asString()}.length`);
 };

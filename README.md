@@ -1,6 +1,7 @@
 What works
 
- - not much really
+ - not much
+ - scripts are recompiled on every run, makes many projects unplayable
 
 Non-goals
 

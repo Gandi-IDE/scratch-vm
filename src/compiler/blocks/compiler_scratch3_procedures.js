@@ -15,6 +15,7 @@ module.exports.getStatements = () => {
 module.exports.getInputs = () => {
     return {
         argument_reporter_string_number: getStringArgument,
+        argument_reporter_boolean: getBooleanArgument,
     };
 };
 
@@ -44,7 +45,12 @@ const call = /** @param {StatementUtil} util */ (util) => {
         if (util.hasInput(paramIds[i])) {
             value = util.input(paramIds[i]);
         } else {
-            value = 0; // TODO
+            const defaultValue = paramDefaults[i];
+            if (typeof defaultValue === 'boolean' || typeof defaultValue === 'number') {
+                value = defaultValue;
+            } else {
+                value = `"${util.safe(defaultValue)}"`;
+            }
         }
         util.write(`"${util.safe(paramNames[i])}": ${value},`);
     }
@@ -56,4 +62,9 @@ const call = /** @param {StatementUtil} util */ (util) => {
 const getStringArgument = /** @param {InputUtil} util */ (util) => {
     const VALUE = util.fieldValueUnsafe('VALUE');
     return util.unknown(`thread.call.args["${util.safe(VALUE)}"]`);
+};
+
+const getBooleanArgument = /** @param {InputUtil} util */ (util) => {
+    const VALUE = util.fieldValueUnsafe('VALUE');
+    return util.boolean(`toBoolean(thread.call.args["${util.safe(VALUE)}"])`);
 };

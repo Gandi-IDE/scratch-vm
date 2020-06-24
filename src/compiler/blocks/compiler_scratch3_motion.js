@@ -11,6 +11,10 @@ module.exports.getStatements = () => {
         motion_ifonedgebounce: ifOnEdgeBounce,
         motion_gotoxy: goToXY,
         motion_pointindirection: pointInDirection,
+        motion_setx: setX,
+        motion_changexby: changeX,
+        motion_sety: setY,
+        motion_changeyby: changeY,
     };
 };
 
@@ -62,4 +66,24 @@ const getX = /** @param {InputUtil} util */ (util) => {
 const getY = /** @param {InputUtil} util */ (util) => {
     // TODO: limitPrecision?
     return util.number('target.y');
+};
+
+const setX = /** @param {StatementUtil} util */ (util) => {
+    const X = util.input('X');
+    util.writeLn(`target.setXY(${X.asNumber()}, target.y);`);
+};
+
+const changeX = /** @param {StatementUtil} util */ (util) => {
+    const DX = util.input('DX');
+    util.writeLn(`target.setXY(target.x + ${DX.asNumber()}, target.y);`);
+};
+
+const setY = /** @param {StatementUtil} util */ (util) => {
+    const Y = util.input('Y');
+    util.writeLn(`target.setXY(target.x, ${Y.asNumber()});`);
+};
+
+const changeY = /** @param {StatementUtil} util */ (util) => {
+    const DY = util.input('DY');
+    util.writeLn(`target.setXY(target.x, target.y + ${DY.asNumber()});`);
 };

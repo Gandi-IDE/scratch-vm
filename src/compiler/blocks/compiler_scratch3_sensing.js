@@ -19,6 +19,9 @@ module.exports.getInputs = () => {
         sensing_timer: getTimer,
         sensing_mousex: getMouseX,
         sensing_mousey: getMouseY,
+        sensing_keypressed: getKeyPressed,
+        sensing_mousedown: getMouseDown,
+        sensing_keyoptions: keyOption,
     };
 };
 
@@ -45,4 +48,17 @@ const getMouseX = /** @param {InputUtil} util */ (util) => {
 
 const getMouseY = /** @param {InputUtil} util */ (util) => {
     return util.number('ioQuery(runtime, "mouse", "getScratchY")');
+};
+
+const getMouseDown = /** @param {InputUtil} util */ (util) => {
+    return util.boolean('ioQuery(runtime, "mouse", "getIsDown")');
+};
+
+const getKeyPressed = /** @param {InputUtil} util */ (util) => {
+    const KEY_OPTION = util.input('KEY_OPTION');
+    return util.boolean(`ioQuery(runtime, "keyboard", "getKeyIsDown", [${KEY_OPTION}])`);
+};
+
+const keyOption = /** @param {InputUtil} util */ (util) => {
+    return util.fieldString('KEY_OPTION');
 };

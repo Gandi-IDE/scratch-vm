@@ -27,7 +27,10 @@ module.exports.getInputs = () => {
 const number = /** @param {InputUtil} util */ (util) => {
     const NUM = util.fieldValueUnsafe('NUM');
     const number = Number(NUM);
-    return util.number(number);
+    if (!Number.isNaN(number)) {
+        return util.number(number);
+    }
+    return util.fieldString('NUM');
 };
 
 const text = /** @param {InputUtil} util */ (util) => {
@@ -37,8 +40,9 @@ const text = /** @param {InputUtil} util */ (util) => {
 
 const colour = /** @param {InputUtil} util */ (util) => {
     const COLOUR = util.fieldValueUnsafe('COLOUR');
-    if (/^[0-9a-f]{6,8}$/.test(COLOUR)) {
-        return util.number('0x' + COLOUR);
+    const hex = COLOUR.substr(1);
+    if (/^[0-9a-f]{6,8}$/.test(hex)) {
+        return util.number('0x' + hex);
     }
     return util.fieldString('COLOUR');
 };

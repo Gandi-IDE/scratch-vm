@@ -14,6 +14,7 @@ module.exports.getStatements = () => {
         control_wait: wait,
         control_create_clone_of: createClone,
         control_delete_this_clone: deleteClone,
+        control_wait_until: waitUntil,
         control_stop: stop,
     };
 };
@@ -125,4 +126,12 @@ const stop = /** @param {StatementUtil} util */ (util) => {
     } else if (STOP_OPTION === 'this script') {
         util.writeLn('end(); return;');
     }
+};
+
+const waitUntil = /** @param {StatementUtil} util */ (util) => {
+    const CONDITION = util.input('CONDITION');
+    const label = util.putLabel();
+    util.writeLn(`if (!${CONDITION.asBoolean()}) {`);
+    util.jumpLazy(label);
+    util.writeLn(`}`);
 };

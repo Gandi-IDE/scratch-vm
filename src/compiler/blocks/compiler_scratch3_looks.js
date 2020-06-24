@@ -13,6 +13,7 @@ module.exports.getStatements = () => {
         looks_goforwardbackwardlayers: goForwardBackwardsLayers,
         looks_setsizeto: setSize,
         looks_switchcostumeto: switchCostume,
+        looks_cleargraphiceffects: clearEffects,
     };
 };
 
@@ -22,6 +23,7 @@ module.exports.getStatements = () => {
 module.exports.getInputs = () => {
     return {
         looks_costume: costumeMenu,
+        looks_costumenumbername: getCostumeNumberName,
     };
 };
 
@@ -92,4 +94,16 @@ const switchCostume = /** @param {StatementUtil} util */ (util) => {
 
 const costumeMenu = /** @param {InputUtil} util */ (util) => {
     return util.fieldString('COSTUME');
+};
+
+const getCostumeNumberName = /** @param {InputUtil} util */ (util) => {
+    const NUMBER_NAME = util.fieldValueUnsafe('NUMBER_NAME');
+    if (NUMBER_NAME === 'number') {
+        return util.number('(target.currentCostume + 1)');
+    }
+    return util.string('target.getCostumes()[target.currentCostume].name');
+};
+
+const clearEffects = /** @param {StatementUtil} util */ (util) => {
+    util.writeLn(`target.clearEffects();`);
 };

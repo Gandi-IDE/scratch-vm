@@ -24,11 +24,11 @@ var call = (procedureCode, args, resume) => {
     if (procedure.warp || THREAD.warp) {
         THREAD.warp++;
     }
-    jumpLazy(procedure.label);
+    jump(procedure.label);
 };
 
 var end = () => {
-    if (THREAD.callStack.length > 1) {
+    if (THREAD.callStack.length) {
         jump(THREAD.call.resume);
         if (THREAD.warp) {
             THREAD.warp--;
@@ -128,12 +128,9 @@ const compare = (v1, v2) => {
 };
 
 const ioQuery = (runtime, device, func, args) => {
-    if (
-        runtime.ioDevices[device] &&
-        runtime.ioDevices[device][func]) {
-        const devObject = runtime.ioDevices[device];
-        return devObject[func].apply(devObject, args);
-    }
+    // We will assume that the device always exists.
+    const devObject = runtime.ioDevices[device];
+    return devObject[func].apply(devObject, args);
 };
 
 /**
@@ -189,6 +186,25 @@ var replaceItemOfList = (list, idx, value) => {
     }
     list.value[index] = value;
     list._monitorUpToDate = false;
+};
+
+var deleteOfList = (list, idx) => {
+    if (idx === 'all') {
+        list.value = [];
+        return;
+    }
+    const index = toListIndex(idx, list.value.length);
+    if (index === -1) {
+        return;
+    }
+    list.value.splice(index - 1, 1);
+    list._monitorUpToDate = false;
+};
+
+var mod = (n, modulus) => {
+    let result = n % modulus;
+    if (result / modulus < 0) result += modulus;
+    return result;
 };
 
 /**

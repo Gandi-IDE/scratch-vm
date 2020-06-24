@@ -14,6 +14,7 @@ module.exports.getStatements = () => {
         data_deletealloflist: deleteAllOfList,
         data_addtolist: addToList,
         data_replaceitemoflist: replaceItemOfList,
+        data_deleteoflist: deleteOfList,
     };
 };
 
@@ -119,6 +120,13 @@ const lengthOfList = /** @param {InputUtil} util */ (util) => {
 const deleteAllOfList = /** @param {StatementUtil} util */ (util) => {
     const LIST = listReference(util);
     util.writeLn(`${LIST}.value = [];`);
+};
+
+const deleteOfList = /** @param {StatementUtil} util */ (util) => {
+    const LIST = listReference(util);
+    // do not cast INDEX because of some special string values
+    const INDEX = util.input('INDEX');
+    util.writeLn(`deleteOfList(${LIST}, ${INDEX});`);
 };
 
 const addToList = /** @param {StatementUtil} util */ (util) => {

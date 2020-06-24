@@ -12,7 +12,7 @@ const defaultExtensions = [
     require('./blocks/compiler_scratch3_motion'),
     require('./blocks/compiler_scratch3_looks'),
     require('./blocks/compiler_scratch3_sounds'),
-    require('./blocks/compiler_scratch3_events'),
+    require('./blocks/compiler_scratch3_event'),
     require('./blocks/compiler_scratch3_control'),
     require('./blocks/compiler_scratch3_sensing'),
     require('./blocks/compiler_scratch3_operators'),
@@ -70,11 +70,18 @@ class BlockUtil {
      * @returns {CompiledInput}
      */
     input(name) {
+        if (!this.hasInput(name)) {
+            return new CompiledInput('""', TYPE_STRING);
+        }
         return this.compiler.compileInput(this.block, name);
     }
 
+    /**
+     * Return whether this block has an input of a given name.
+     * @param {string} name The name of the input. (CONDITION, VALUE, etc.)
+     */
     hasInput(name) {
-        return this.block.inputs.hasOwnProperty(name);
+        return this.block.inputs.hasOwnProperty(name) && this.block.inputs[name].block !== null;
     }
 
     /**
