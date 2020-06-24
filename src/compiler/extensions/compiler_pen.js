@@ -6,6 +6,7 @@ const {InputUtil, StatementUtil, CompiledInput} = require('../compiler');
 module.exports.getStatements = () => {
     return {
         pen_clear: clear,
+        pen_stamp: stamp,
         pen_setPenColorToColor: setPenColor,
         pen_penDown: penDown,
         pen_penUp: penUp,
@@ -33,6 +34,10 @@ const penState = `${pen}._getPenState(target)`;
 
 const clear = /** @param {StatementUtil} util */ (util) => {
     util.writeLn(`${pen}.clear();`);
+};
+
+const stamp = /** @param {StatementUtil} util */ (util) => {
+    util.writeLn(`${pen}._stamp(target);`);
 };
 
 const setPenColor = /** @param {StatementUtil} util */ (util) => {

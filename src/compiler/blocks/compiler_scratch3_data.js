@@ -15,6 +15,7 @@ module.exports.getStatements = () => {
         data_addtolist: addToList,
         data_replaceitemoflist: replaceItemOfList,
         data_deleteoflist: deleteOfList,
+        data_insertatlist: insertAtList,
     };
 };
 
@@ -148,4 +149,11 @@ const replaceItemOfList = /** @param {StatementUtil} util */ (util) => {
     const INDEX = util.input('INDEX');
     const ITEM = util.input('ITEM');
     util.writeLn(`replaceItemOfList(${LIST}, ${INDEX}, ${ITEM});`);
+};
+
+const insertAtList = /** @param {StatementUtil} util */ (util) => {
+    const LIST = listReference(util);
+    const INDEX = util.input('INDEX');
+    const ITEM = util.input('ITEM');
+    util.writeLn(`insertAtList(${LIST}, ${INDEX}, ${ITEM});`);
 };

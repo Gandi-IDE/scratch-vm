@@ -502,9 +502,11 @@ class Scratch3PenBlocks {
      * @param {object} util - utility object provided by the runtime.
      */
     stamp (args, util) {
+        this._stamp(util.target);
+    }
+    _stamp (target) { // used by compiler
         const penSkinId = this._getPenLayerID();
         if (penSkinId >= 0) {
-            const target = util.target;
             this.runtime.renderer.penStamp(penSkinId, target.drawableID);
             this.runtime.requestRedraw();
         }

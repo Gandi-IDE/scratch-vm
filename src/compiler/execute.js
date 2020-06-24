@@ -188,6 +188,15 @@ var replaceItemOfList = (list, idx, value) => {
     list._monitorUpToDate = false;
 };
 
+var insertAtList = (list, idx, value) => {
+    const index = toListIndex(idx, list.value.length + 1);
+    if (index === -1) {
+        return;
+    }
+    list.value.splice(index - 1, 0, value);
+    list._monitorUpToDate = false;
+};
+
 var deleteOfList = (list, idx) => {
     if (idx === 'all') {
         list.value = [];
