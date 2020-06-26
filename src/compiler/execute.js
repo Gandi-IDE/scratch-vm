@@ -224,6 +224,7 @@ const ioQuery = (device, func, args) => {
 
 /**
  * Create and start a timer.
+ * @returns {Timer}
  */
 const timer = () => {
     const timer = new Timer();
@@ -239,7 +240,7 @@ const timer = () => {
  * @param {number} length Length of the list.
  * @returns {number} 0 based list index, or -1 if invalid.
  */
-var listToIndex = (index, length) => {
+var listIndex = (index, length) => {
     if (typeof index !== 'number') {
         if (index === 'last') {
             if (length > 0) {
@@ -248,7 +249,7 @@ var listToIndex = (index, length) => {
             return -1;
         } else if (index === 'random' || index === '*') {
             if (length > 0) {
-                return 1 + Math.floor(Math.random() * length);
+                return Math.floor(Math.random() * length);
             }
             return -1;
         }
@@ -266,7 +267,7 @@ var listToIndex = (index, length) => {
  * @param {*} idx The 1-indexed index in the list.
  */
 const listGet = (list, idx) => {
-    const index = listToIndex(idx, list.value.length);
+    const index = listIndex(idx, list.value.length);
     if (index === -1) {
         return '';
     }
@@ -280,7 +281,7 @@ const listGet = (list, idx) => {
  * @param {*} value The new value.
  */
 const listReplace = (list, idx, value) => {
-    const index = listToIndex(idx, list.value.length);
+    const index = listIndex(idx, list.value.length);
     if (index === -1) {
         return;
     }
@@ -295,7 +296,7 @@ const listReplace = (list, idx, value) => {
  * @param {any} value The value to insert.
  */
 const listInsert = (list, idx, value) => {
-    const index = listToIndex(idx, list.value.length + 1);
+    const index = listIndex(idx, list.value.length + 1);
     if (index === -1) {
         return;
     }
@@ -313,7 +314,7 @@ const listDelete = (list, idx) => {
         list.value = [];
         return;
     }
-    const index = listToIndex(idx, list.value.length);
+    const index = listIndex(idx, list.value.length);
     if (index === -1) {
         return;
     }
@@ -325,10 +326,11 @@ const listDelete = (list, idx) => {
  * Return whether a list contains a value.
  * @param {import('../engine/variable')} list The list.
  * @param {any} item The value to search for.
+ * @returns {boolean}
  */
 const listContains = (list, item) => {
     // TODO: evaluate whether indexOf is worthwhile here
-    if (list.value.indexOf(item) >= 0) {
+    if (list.value.indexOf(item) !== 0) {
         return true;
     }
     for (let i = 0; i < list.value.length; i++) {
@@ -336,6 +338,7 @@ const listContains = (list, item) => {
             return true;
         }
     }
+    return false;
 };
 
 /**
@@ -398,9 +401,7 @@ const evalCompiledScript = (compiler, _source) => {
     compiler = null;
 
     // eval will grab references to all variables in this context
-    try{
     return eval(_source);
-    }catch(e){debugger;}
 };
 
 const createContinuation = (compiler, source) => {
