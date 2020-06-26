@@ -428,7 +428,7 @@ class Scratch3LooksBlocks {
      * @param {boolean=} optZeroIndex Set to zero-index the requestedBackdrop.
      * @return {Array.<!Thread>} Any threads started by this switch.
      */
-    _setBackdrop (stage, requestedBackdrop, optZeroIndex) {
+    _setBackdrop (stage, requestedBackdrop, optZeroIndex) { // used by compiler
         if (typeof requestedBackdrop === 'number') {
             // Numbers should be treated as backdrop indices, always
             stage.setCostume(optZeroIndex ? requestedBackdrop : requestedBackdrop - 1);

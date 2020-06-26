@@ -167,12 +167,16 @@ class StatementUtil extends BlockUtil {
         this.source = '';
     }
 
+    /**
+     * @returns {number}
+     */
     nextLabel() {
         return this.compiler.nextLabel();
     }
 
     /**
      * @param {number} [label]
+     * @returns {number}
      */
     putLabel(label) {
         if (label === undefined) {
@@ -199,18 +203,45 @@ class StatementUtil extends BlockUtil {
         this.writeLn(`jumpLazy(${label}); return;`);
     }
 
+    /**
+     * Writes the necessary JS to yield the current thread until all given threads have finished executing.
+     * @param {string} threads The threads to wait for (eg. "thread.state")
+     */
+    waitUntilThreadsComplete(threads) {
+        this.enterState(threads);
+        const label = this.putLabel();
+        this.writeLn(`if (waitThreads(thread.state)) {`);
+        this.jumpLazy(label);
+        this.writeLn(`}`);
+    }
+
+    /**
+     * Write JS to this statement, followed by a newline.
+     * @param {string} s The source to write.
+     */
     writeLn(s) {
         this.source += s + '\n';
     }
 
+    /**
+     * Write JS to this statement.
+     * @param {string} s The source to write.
+     */
     write(s) {
         this.source += s;
     }
 
+    /**
+     * Replace thread.state with a new state. The old state is saved so it can be restored later.
+     * @param {string} state JS to become new state.
+     */
     enterState(state) {
         this.writeLn(`thread.enterState(${state});`);
     }
 
+    /**
+     * Replace thread.state with the previous state.
+     */
     restoreState() {
         this.writeLn('thread.restoreState();');
     }
@@ -219,6 +250,11 @@ class StatementUtil extends BlockUtil {
         this.writeLn('/* no-op */');
     }
 
+    /**
+     * Compile a substack.
+     * @param {string} inputName The name of the substack.
+     * @returns {string}
+     */
     substack(inputName) {
         const inputValue = this.block.inputs[inputName];
         if (!inputValue) {

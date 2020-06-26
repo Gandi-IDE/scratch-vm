@@ -66,11 +66,47 @@ const end = () => {
  * Start hats by opcode.
  * @param {string} requestedHat The opcode of the hat to start.
  * @param {*} optMatchFields Fields to match.
- * @returns A list of threads that were started.
+ * @returns {Array} A list of threads that were started.
  */
 const startHats = (requestedHat, optMatchFields) => {
     const threads = target.runtime.startHats(requestedHat, optMatchFields, undefined);
     return threads;
+};
+
+/**
+ * Implements "thread waiting", where scripts are halted until all the scripts have finished executing.
+ * Threads are considered "active" if they are still in the thread list, even if they have STATUS_DONE.
+ * The current thread's status may be changed to STATUS_YIELD_TICK if all active threads are waiting.
+ * @param {Array} threads The list of threads.
+ * @returns {boolean} true if the script should keep waiting on threads to complete
+ */
+const waitThreads = (threads) => {
+    const runtime = thread.target.runtime;
+
+    // determine whether any threads are running
+    var anyRunning = false;
+    for (var i = 0; i < threads.length; i++) {
+        if (runtime.threads.indexOf(threads[i]) !== -1) {
+            anyRunning = true;
+            break;
+        }
+    }
+    if (!anyRunning) {
+        return false;
+    }
+
+    var allWaiting = true;
+    for (var i = 0; i < threads.length; i++) {
+        if (!runtime.isWaitingThread(threads[i])) {
+            allWaiting = false;
+            break;
+        }
+    }
+    if (allWaiting) {
+        thread.status = 3; // STATUS_YIELD_TICK
+    }
+
+    return true;
 };
 
 /**
@@ -362,7 +398,9 @@ const evalCompiledScript = (compiler, _source) => {
     compiler = null;
 
     // eval will grab references to all variables in this context
+    try{
     return eval(_source);
+    }catch(e){debugger;}
 };
 
 const createContinuation = (compiler, source) => {

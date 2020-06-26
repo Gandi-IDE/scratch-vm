@@ -15,6 +15,7 @@ module.exports.getStatements = () => {
         looks_setsizeto: setSize,
         looks_switchcostumeto: switchCostume,
         looks_cleargraphiceffects: clearEffects,
+        looks_switchbackdropto: switchBackdrop,
     };
 };
 
@@ -24,6 +25,7 @@ module.exports.getStatements = () => {
 module.exports.getInputs = () => {
     return {
         looks_costume: costumeMenu,
+        looks_backdrops: backdropMenu,
         looks_costumenumbername: getCostumeNumberName,
     };
 };
@@ -95,11 +97,16 @@ const setSize = /** @param {StatementUtil} util */ (util) => {
 
 const switchCostume = /** @param {StatementUtil} util */ (util) => {
     const COSTUME = util.input('COSTUME');
+    // do not cast COSTUME: behavior depends on type
     util.writeLn(`runtime.ext_scratch3_looks._setCostume(target, ${COSTUME});`);
 };
 
 const costumeMenu = /** @param {InputUtil} util */ (util) => {
     return util.fieldString('COSTUME');
+};
+
+const backdropMenu = /** @param {InputUtil} util */ (util) => {
+    return util.fieldString('BACKDROP');
 };
 
 const getCostumeNumberName = /** @param {InputUtil} util */ (util) => {
@@ -112,4 +119,10 @@ const getCostumeNumberName = /** @param {InputUtil} util */ (util) => {
 
 const clearEffects = /** @param {StatementUtil} util */ (util) => {
     util.writeLn(`target.clearEffects();`);
+};
+
+const switchBackdrop = /** @param {StatementUtil} util */ (util) => {
+    const BACKDROP = util.input('BACKDROP');
+    // do not cast BACKDROP: behavior depends on type
+    util.writeLn(`runtime.ext_scratch3_looks._setBackdrop(stage, ${BACKDROP});`);
 };

@@ -224,7 +224,7 @@ class Thread {
      * @const
      */
     static get STATUS_RUNNING () {
-        return 0;
+        return 0; // used by compiler
     }
 
     /**
@@ -233,7 +233,7 @@ class Thread {
      * @const
      */
     static get STATUS_PROMISE_WAIT () {
-        return 1;
+        return 1; // used by compiler
     }
 
     /**
@@ -241,7 +241,7 @@ class Thread {
      * @const
      */
     static get STATUS_YIELD () {
-        return 2;
+        return 2; // used by compiler
     }
 
     /**
@@ -250,7 +250,7 @@ class Thread {
      * @const
      */
     static get STATUS_YIELD_TICK () {
-        return 3;
+        return 3; // used by compiler
     }
 
     /**
@@ -259,7 +259,7 @@ class Thread {
      * @const
      */
     static get STATUS_DONE () {
-        return 4;
+        return 4; // used by compiler
     }
 
     /**
