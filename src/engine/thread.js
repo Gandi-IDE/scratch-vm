@@ -195,13 +195,15 @@ class Thread {
         // compiler data
         // these values only make sense if isCompiled == true
         this.warp = 0;
-        this.functionJumps = [];
+        this.jumps = [];
         this.fn = null;
         this.state = null;
         this.stateStack = [];
         this.call = null;
         this.callStack = [];
-        // name -> starting fn of procedures
+        /**
+         * @type {Object.<string, import('../compiler/compiler').CompiledProcedure>}
+         */
         this.procedures = {};
     }
 
@@ -425,9 +427,33 @@ class Thread {
         return false;
     }
 
-    compile() {
-        const compiler = new Compiler(this);
-        compiler.compile();
+    /**
+     * @param {ScriptCache} cache
+     */
+    tryCompile(cache) {
+        let result;
+
+        const topBlock = this.topBlock;
+        if (cache.hasEntry(topBlock)) {
+            if (cache.isError(topBlock)) {
+                return;
+            }
+            result = cache.getResult(topBlock);
+        } else {
+            try {
+                const compiler = new Compiler(this);
+                result = compiler.compile();
+                cache.setResult(topBlock, result);
+            } catch (e) {
+                cache.setError(topBlock);
+                return;
+            }
+        }
+
+        this.jumps = result.jumps;
+        this.procedures = result.procedures;
+        this.fn = result.startingFunction;
+        this.isCompiled = true;
     }
 }
 

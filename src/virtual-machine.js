@@ -1139,6 +1139,11 @@ class VirtualMachine extends EventEmitter {
      * @param {!Blockly.Event} e Any Blockly event.
      */
     blockListener (e) {
+        // Reset script cache when scripts edited.
+        // TODO: do not do full resets
+        // TODO: do not reset for some more trivial actions
+        this.runtime.compiledScriptCache.reset();
+
         if (this.editingTarget) {
             this.editingTarget.blocks.blocklyListen(e);
         }

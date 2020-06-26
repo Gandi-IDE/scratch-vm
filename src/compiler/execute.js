@@ -2,45 +2,45 @@ const Thread = require('../engine/thread');
 const Timer = require('../util/timer');
 
 var jump = (id) => {
-    IMMEDIATE = THREAD.functionJumps[id];
+    immediate = thread.jumps[id];
 };
 
 var jumpLazy = (id) => {
-    if (THREAD.warp) {
+    if (thread.warp) {
         jump(id);
     } else {
-        THREAD.fn = THREAD.functionJumps[id];
+        thread.fn = thread.jumps[id];
     }
 };
 
 var call = (procedureCode, args, resume) => {
-    THREAD.callStack.push(THREAD.call);
-    THREAD.call = {
+    thread.callStack.push(thread.call);
+    thread.call = {
         args,
         resume,
     };
     // TODO: check recursion
-    const procedure = THREAD.procedures[procedureCode];
-    if (procedure.warp || THREAD.warp) {
-        THREAD.warp++;
+    const procedure = thread.procedures[procedureCode];
+    if (procedure.warp || thread.warp) {
+        thread.warp++;
     }
     jump(procedure.label);
 };
 
 var end = () => {
-    if (THREAD.callStack.length) {
-        jump(THREAD.call.resume);
-        if (THREAD.warp) {
-            THREAD.warp--;
+    if (thread.callStack.length) {
+        jump(thread.call.resume);
+        if (thread.warp) {
+            thread.warp--;
         }
-        THREAD.call = THREAD.callStack.pop();
+        thread.call = thread.callStack.pop();
     } else {
         retire();
     }
 };
 
 var retire = () => {
-    THREAD.target.runtime.sequencer.retireThread(THREAD);
+    thread.target.runtime.sequencer.retireThread(thread);
 };
 
 /**
@@ -229,36 +229,38 @@ var mod = (n, modulus) => {
  * If set, the executor will immediately start executing this function when the current function returns.
  * @type {Function}
  */
-var IMMEDIATE;
+var immediate;
 /**
  * The currently running thread.
  * @type {Thread}
  */
-var THREAD;
+var thread;
+/**
+ * The target of the current thread.
+ * @type {Target}
+ */
+var target;
 
 /**
  * Step a compiled thread.
- * @param {Thread} thread 
+ * @param {Thread} _thread 
  */
-const execute = function (thread) {
-    THREAD = thread;
+const execute = (_thread) => {
+    thread = _thread;
+    target = thread.target;
 
-    thread.fn();
+    _thread.fn();
 
-    while (IMMEDIATE) {
-        var fn = IMMEDIATE;
-        IMMEDIATE = null;
+    while (immediate) {
+        var fn = immediate;
+        immediate = null;
         fn();
     }
 };
 
 const evalCompiledScript = (compiler, _source) => {
-    // TODO: this is something that definitely deserves unit tests
-
-    // Create some of the data that the script will need to execute.
-    const thread = compiler.thread;
-    const target = compiler.target;
-    const runtime = target.runtime;
+    // Cache some of the data that the script will need to execute.
+    const runtime = compiler.target.runtime;
     const stage = runtime.getTargetForStage();
 
     // no reason to access compiler anymore

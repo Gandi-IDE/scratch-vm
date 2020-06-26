@@ -3,6 +3,7 @@ const Thread = require('../engine/thread');
 const Target = require('../engine/target');
 const Runtime = require('../engine/runtime');
 const execute = require('./execute');
+const Blocks = require('../engine/blocks');
 
 const statements = {};
 const inputs = {};
@@ -289,27 +290,73 @@ class CompiledInput {
     }
 }
 
+/**
+ * @typedef {Function} Jump
+ */
+
+/**
+ * @typedef {Object} CompiledProcedure
+ * @property {boolean} warp
+ * @property {number} label
+ */
+
+/**
+ * @typedef {Object} CompilationResult
+ * @property {Function} startingFunction
+ * @property {Jump[]} jumps
+ * @property {Object.<string, CompiledProcedure>} procedures
+ */
+
 class Compiler {
     /**
      * @param {Thread} thread
      */
     constructor(thread) {
-        this.thread = thread;
         /** @type {Target} */
         this.target = thread.target;
+        if (!this.target) {
+            throw new Error('Missing target');
+        }
+
         /** @type {Runtime} */
         this.runtime = this.target.runtime;
+
+        /** @type {Blocks} */
+        this.blocks = this.target.blocks;
+
+        /** @type {string} */
+        this.topBlock = thread.topBlock;
+
+        /** @type {number} */
         this.variableCount = 0;
+
+        /** @type {number} */
         this.labelCount = 0;
+
+        /**
+         * Function jump points.
+         * @type {Jump[]}
+         */
+        this.jumps = [];
+
+        /**
+         * Compiled procedures.
+         * @type {Object.<string, CompiledProcedure>}
+         */
+        this.procedures = {};
+
         /**
          * Procedures that are queued to be compiled.
          * Map of procedure code to the ID of the definition block.
+         * @type {Map.<string, string>}
          * @private
          */
         this.uncompiledProcedures = new Map();
+
         /**
          * Procedures that are being compiled.
          * Same structure as uncompiledProcedures.
+         * @type {Map.<string, string>}
          * @private
          */
         this.compilingProcedures = new Map();
@@ -321,7 +368,7 @@ class Compiler {
      * @param {string} procedureCode The procedure's code
      */
     dependProcedure(procedureCode) {
-        if (this.thread.procedures.hasOwnProperty(procedureCode)) {
+        if (this.procedures.hasOwnProperty(procedureCode)) {
             // already compiled
             return;
         }
@@ -343,7 +390,7 @@ class Compiler {
     compileInput(parentBlock, inputName) {
         const input = parentBlock.inputs[inputName];
         const inputId = input.block;
-        const block = this.thread.target.blocks.getBlock(inputId);
+        const block = this.blocks.getBlock(inputId);
 
         let compiler = inputs[block.opcode];
         if (!compiler) {
@@ -366,7 +413,7 @@ class Compiler {
         let source = '';
 
         while (blockId !== null) {
-            const block = this.thread.target.blocks.getBlock(blockId);
+            const block = this.blocks.getBlock(blockId);
             if (!block) {
                 throw new Error('no block');
             }
@@ -427,21 +474,23 @@ class Compiler {
         const parseResult = this.parseContinuations(script);
         const parsedScript = parseResult.script;
 
-        const startingLabelCount = this.thread.functionJumps.length;
+        const startingLabelCount = this.jumps.length;
         for (const label of Object.keys(parseResult.labels)) {
-          this.thread.functionJumps[label] = execute.createContinuation(this, parsedScript.slice(parseResult.labels[label]));
+          this.jumps[label] = execute.createContinuation(this, parsedScript.slice(parseResult.labels[label]));
         }
 
         log.info(`[${this.target.getName()}] compiled script`, script);
         return startingLabelCount;
     }
 
+    /**
+     * @returns {CompilationResult}
+     */
     compile() {
         const target = this.target;
         if (!target) throw new Error('no target');
 
-        const topBlockId = this.thread.topBlock;
-        const topBlock = this.target.blocks.getBlock(topBlockId);
+        const topBlock = this.target.blocks.getBlock(this.topBlock);
         // TODO: figure out how to run blocks from the flyout, they have their ID set to their opcode
         if (!topBlock) throw new Error('top block is missing');
 
@@ -451,10 +500,9 @@ class Compiler {
         if (this.runtime.getIsHat(topBlock.opcode)) {
             startingBlock = topBlock.next;
         } else {
-            startingBlock = topBlockId;
+            startingBlock = this.topBlock;
         }
         const startingFunction = this.compileHat(startingBlock);
-        this.thread.fn = this.thread.functionJumps[startingFunction];
 
         // Compile any required procedures.
         // As procedures can depend on other procedures, this process may take several iterations.
@@ -480,12 +528,18 @@ class Compiler {
                 }
 
                 const procedureLabel = this.compileHat(bodyStart);
-                this.thread.procedures[procedureCode] = {
+                this.procedures[procedureCode] = {
                     warp: isWarp,
                     label: procedureLabel,
                 };
             }
         }
+
+        return {
+            jumps: this.jumps,
+            startingFunction: this.jumps[startingFunction],
+            procedures: this.procedures,
+        };
     }
 }
 
