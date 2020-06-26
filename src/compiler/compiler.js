@@ -215,11 +215,6 @@ class StatementUtil extends BlockUtil {
         this.writeLn('thread.restoreState();');
     }
 
-    nextLocalVariable() {
-        this.compiler.variableCount++;
-        return 'var' + this.compiler.variableCount;
-    }
-
     noop() {
         this.writeLn('/* no-op */');
     }
@@ -341,9 +336,6 @@ class Compiler {
 
         /** @type {string} */
         this.topBlock = thread.topBlock;
-
-        /** @type {number} */
-        this.variableCount = 0;
 
         /** @type {number} */
         this.labelCount = 0;

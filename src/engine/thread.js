@@ -446,7 +446,7 @@ class Thread {
                 result = compiler.compile();
                 cache.setResult(topBlock, result);
             } catch (e) {
-                log.error('cannot compile script', e);
+                log.error('cannot compile script', this.target.getName(), e);
                 cache.setError(topBlock);
                 return;
             }

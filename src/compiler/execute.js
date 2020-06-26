@@ -1,11 +1,25 @@
 const Thread = require('../engine/thread');
 const Timer = require('../util/timer');
 
-var jump = (id) => {
+// All the functions defined here will be available to compiled scripts.
+// The JSDoc annotations define the function's contract.
+// Most of these functions are only used at runtime by generated scripts. Despite what your editor may say, they are not unused.
+
+/**
+ * Immediately jump to a label.
+ * @param {number} id The label to jump to.
+ */
+const jump = (id) => {
     immediate = thread.jumps[id];
 };
 
-var jumpLazy = (id) => {
+/**
+ * Jump to a label.
+ * If in warp mode, this will be instant (like jump())
+ * Otherwise, this jump will occur in the next tick loop.
+ * @param {number} id The label to jump to.
+ */
+const jumpLazy = (id) => {
     if (thread.warp) {
         jump(id);
     } else {
@@ -13,7 +27,13 @@ var jumpLazy = (id) => {
     }
 };
 
-var call = (procedureCode, args, resume) => {
+/**
+ * Call into a procedure.
+ * @param {string} procedureCode The procedure's name
+ * @param {*} args The arguments to pass to the procedure.
+ * @param {number} resume The label to return to when the procedure completes.
+ */
+const call = (procedureCode, args, resume) => {
     thread.callStack.push(thread.call);
     thread.call = {
         args,
@@ -27,7 +47,10 @@ var call = (procedureCode, args, resume) => {
     jump(procedure.label);
 };
 
-var end = () => {
+/**
+ * End a script or procedure call.
+ */
+const end = () => {
     if (thread.callStack.length) {
         jump(thread.call.resume);
         if (thread.warp) {
@@ -39,7 +62,21 @@ var end = () => {
     }
 };
 
-var retire = () => {
+/**
+ * Start hats by opcode.
+ * @param {string} requestedHat The opcode of the hat to start.
+ * @param {*} optMatchFields Fields to match.
+ * @returns A list of threads that were started.
+ */
+const startHats = (requestedHat, optMatchFields) => {
+    const threads = target.runtime.startHats(requestedHat, optMatchFields, undefined);
+    return threads;
+};
+
+/**
+ * End the current script.
+ */
+const retire = () => {
     thread.target.runtime.sequencer.retireThread(thread);
 };
 
@@ -55,7 +92,7 @@ const toNumber = (value) => {
 };
 
 /**
- * Convert a number to something other than NaN.
+ * Converts a number to ensure that NaN becomes 0.
  * @param {number} number The value to convert.
  * @returns {number}
  */
@@ -136,9 +173,16 @@ const compare = (v1, v2) => {
     return n1 - n2;
 };
 
-const ioQuery = (runtime, device, func, args) => {
+/**
+ * Perform an IO query
+ * @param {string} device
+ * @param {string} func
+ * @param {*} args
+ * @returns {*}
+ */
+const ioQuery = (device, func, args) => {
     // We will assume that the device always exists.
-    const devObject = runtime.ioDevices[device];
+    const devObject = target.runtime.ioDevices[device];
     return devObject[func].apply(devObject, args);
 };
 
@@ -159,14 +203,14 @@ const timer = () => {
  * @param {number} length Length of the list.
  * @returns {number} 0 based list index, or -1 if invalid.
  */
-var toListIndex = (index, length) => {
+var listToIndex = (index, length) => {
     if (typeof index !== 'number') {
         if (index === 'last') {
             if (length > 0) {
                 return length;
             }
             return -1;
-        } else if (index === 'random' || index === 'any') {
+        } else if (index === 'random' || index === '*') {
             if (length > 0) {
                 return 1 + Math.floor(Math.random() * length);
             }
@@ -180,16 +224,27 @@ var toListIndex = (index, length) => {
     return index - 1;
 };
 
-const getListItem = (list, idx) => {
-    const index = toListIndex(idx, list.value.length);
+/**
+ * Get a value from a list.
+ * @param {import('../engine/variable')} list The list
+ * @param {*} idx The 1-indexed index in the list.
+ */
+const listGet = (list, idx) => {
+    const index = listToIndex(idx, list.value.length);
     if (index === -1) {
         return '';
     }
     return list.value[index];
 };
 
-var replaceItemOfList = (list, idx, value) => {
-    const index = toListIndex(idx, list.value.length);
+/**
+ * Replace a value in a list.
+ * @param {import('../engine/variable')} list The list
+ * @param {*} idx List index, Scratch style.
+ * @param {*} value The new value.
+ */
+const listReplace = (list, idx, value) => {
+    const index = listToIndex(idx, list.value.length);
     if (index === -1) {
         return;
     }
@@ -197,8 +252,14 @@ var replaceItemOfList = (list, idx, value) => {
     list._monitorUpToDate = false;
 };
 
-var insertAtList = (list, idx, value) => {
-    const index = toListIndex(idx, list.value.length + 1);
+/**
+ * Insert a value in a list.
+ * @param {import('../engine/variable')} list The list.
+ * @param {any} idx The Scratch index in the list.
+ * @param {any} value The value to insert.
+ */
+const listInsert = (list, idx, value) => {
+    const index = listToIndex(idx, list.value.length + 1);
     if (index === -1) {
         return;
     }
@@ -206,12 +267,17 @@ var insertAtList = (list, idx, value) => {
     list._monitorUpToDate = false;
 };
 
-var deleteOfList = (list, idx) => {
+/**
+ * Delete a value from a list.
+ * @param {import('../engine/variable')} list The list.
+ * @param {any} idx The Scratch index in the list.
+ */
+const listDelete = (list, idx) => {
     if (idx === 'all') {
         list.value = [];
         return;
     }
-    const index = toListIndex(idx, list.value.length);
+    const index = listToIndex(idx, list.value.length);
     if (index === -1) {
         return;
     }
@@ -219,7 +285,30 @@ var deleteOfList = (list, idx) => {
     list._monitorUpToDate = false;
 };
 
-var mod = (n, modulus) => {
+/**
+ * Return whether a list contains a value.
+ * @param {import('../engine/variable')} list The list.
+ * @param {any} item The value to search for.
+ */
+const listContains = (list, item) => {
+    // TODO: evaluate whether indexOf is worthwhile here
+    if (list.value.indexOf(item) >= 0) {
+        return true;
+    }
+    for (let i = 0; i < list.value.length; i++) {
+        if (compare(list.value[i], item) === 0) {
+            return true;
+        }
+    }
+};
+
+/**
+ * Implements Scratch modulo (floored division instead of truncated division)
+ * @param {number} n
+ * @param {number} modulus
+ * @returns {number}
+ */
+const mod = (n, modulus) => {
     let result = n % modulus;
     if (result / modulus < 0) result += modulus;
     return result;
@@ -243,7 +332,7 @@ var target;
 
 /**
  * Step a compiled thread.
- * @param {Thread} _thread 
+ * @param {Thread} _thread
  */
 const execute = (_thread) => {
     thread = _thread;
@@ -258,6 +347,12 @@ const execute = (_thread) => {
     }
 };
 
+/**
+ * Evaluate a continuation from its source code.
+ * Prepares the necessary environment.
+ * @param {Compiler} compiler
+ * @param {string} _source
+ */
 const evalCompiledScript = (compiler, _source) => {
     // Cache some of the data that the script will need to execute.
     const runtime = compiler.target.runtime;
@@ -270,7 +365,7 @@ const evalCompiledScript = (compiler, _source) => {
     return eval(_source);
 };
 
-var createContinuation = (compiler, source) => {
+const createContinuation = (compiler, source) => {
     // TODO: optimize, refactor
     // TODO: support more than just "} else {"
     // TODO: this is something that definitely deserves unit tests

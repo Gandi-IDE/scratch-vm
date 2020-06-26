@@ -35,28 +35,28 @@ const touchingObjectMenu = /** @param {InputUtil} util */ (util) => {
 };
 
 const resetTimer = /** @param {StatementUtil} util */ (util) => {
-    util.writeLn('ioQuery(runtime, "clock", "resetProjectTimer");');
+    util.writeLn('ioQuery("clock", "resetProjectTimer");');
 };
 
 const getTimer = /** @param {InputUtil} util */ (util) => {
-    return util.number('ioQuery(runtime, "clock", "projectTimer")');
+    return util.number('ioQuery("clock", "projectTimer")');
 };
 
 const getMouseX = /** @param {InputUtil} util */ (util) => {
-    return util.number('ioQuery(runtime, "mouse", "getScratchX")');
+    return util.number('ioQuery("mouse", "getScratchX")');
 };
 
 const getMouseY = /** @param {InputUtil} util */ (util) => {
-    return util.number('ioQuery(runtime, "mouse", "getScratchY")');
+    return util.number('ioQuery("mouse", "getScratchY")');
 };
 
 const getMouseDown = /** @param {InputUtil} util */ (util) => {
-    return util.boolean('ioQuery(runtime, "mouse", "getIsDown")');
+    return util.boolean('ioQuery("mouse", "getIsDown")');
 };
 
 const getKeyPressed = /** @param {InputUtil} util */ (util) => {
     const KEY_OPTION = util.input('KEY_OPTION');
-    return util.boolean(`ioQuery(runtime, "keyboard", "getKeyIsDown", [${KEY_OPTION}])`);
+    return util.boolean(`ioQuery("keyboard", "getKeyIsDown", [${KEY_OPTION}])`);
 };
 
 const keyOption = /** @param {InputUtil} util */ (util) => {

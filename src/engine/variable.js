@@ -47,7 +47,7 @@ class Variable {
      * @const {string}
      */
     static get SCALAR_TYPE () {
-        return '';
+        return ''; // used by compiler
     }
 
     /**
@@ -55,7 +55,7 @@ class Variable {
      * @const {string}
      */
     static get LIST_TYPE () {
-        return 'list';
+        return 'list'; // used by compiler
     }
 
     /**
