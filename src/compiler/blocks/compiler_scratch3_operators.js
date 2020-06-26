@@ -103,7 +103,7 @@ const multiply = /** @param {InputUtil} util */ (util) => {
 const divide = /** @param {InputUtil} util */ (util) => {
     const NUM1 = util.input('NUM1');
     const NUM2 = util.input('NUM2');
-    return util.number(`(${NUM1.asNumber()} / ${NUM2.asNumber()} || 0)`);
+    return util.number(`(${NUM1.asNumber()} / ${NUM2.asNumber()})`).nanable();
 };
 
 const mathop = /** @param {InputUtil} util */ (util) => {
@@ -145,7 +145,7 @@ const letterOf = /** @param {InputUtil} util */ (util) => {
 const mod = /** @param {InputUtil} util */ (util) => {
     const NUM1 = util.input('NUM1');
     const NUM2 = util.input('NUM2');
-    return util.number(`mod(${NUM1.asNumber()}, ${NUM2.asNumber})`);
+    return util.number(`mod(${NUM1.asNumber()}, ${NUM2.asNumber()})`);
 };
 
 const length = /** @param {InputUtil} util */ (util) => {

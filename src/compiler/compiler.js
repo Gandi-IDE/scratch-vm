@@ -47,6 +47,17 @@ defaultExtensions.forEach((ext) => {
     }
 });
 
+/**
+ * Prevents the use of toString() on an object by throwing an error.
+ * Useful to make sure that a method is always called, never stringified.
+ * @param {Object} obj 
+ */
+const disableToString = (obj) => {
+    obj.toString = () => {
+        throw new Error(`toString unexpectedly called on ${obj.name || 'object'}, did you forget to call it?`);
+    };
+};
+
 class BlockUtil {
     /**
      * @param {Compiler} compiler
@@ -289,6 +300,10 @@ class CompiledInput {
         return 'toString(' + this.source + ')';
     }
 }
+
+disableToString(CompiledInput.prototype.asNumber);
+disableToString(CompiledInput.prototype.asString);
+disableToString(CompiledInput.prototype.asBoolean);
 
 /**
  * @typedef {Function} Jump

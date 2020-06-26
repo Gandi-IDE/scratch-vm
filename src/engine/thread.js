@@ -1,4 +1,5 @@
 const Compiler = require('../compiler/compiler');
+const log = require('../util/log');
 
 /**
  * Recycle bin for empty stackFrame objects
@@ -445,6 +446,7 @@ class Thread {
                 result = compiler.compile();
                 cache.setResult(topBlock, result);
             } catch (e) {
+                log.error('cannot compile script', e);
                 cache.setError(topBlock);
                 return;
             }

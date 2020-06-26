@@ -1,7 +1,7 @@
 What works
 
- - not much
- - scripts are recompiled on every run, makes many projects unplayable
+ - some scripts can go fast
+ - scripts can be cached after being compiled once
 
 Non-goals
 

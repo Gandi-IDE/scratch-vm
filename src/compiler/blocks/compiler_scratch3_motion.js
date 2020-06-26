@@ -15,6 +15,7 @@ module.exports.getStatements = () => {
         motion_changexby: changeX,
         motion_sety: setY,
         motion_changeyby: changeY,
+        motion_setrotationstyle: setRotationStyle,
     };
 };
 
@@ -86,4 +87,9 @@ const setY = /** @param {StatementUtil} util */ (util) => {
 const changeY = /** @param {StatementUtil} util */ (util) => {
     const DY = util.input('DY');
     util.writeLn(`target.setXY(target.x, target.y + ${DY.asNumber()});`);
+};
+
+const setRotationStyle = /** @param {StatementUtil} util */ (util) => {
+    const STYLE = util.fieldValueUnsafe('STYLE');
+    util.writeLn(`target.setRotationStyle("${util.safe(STYLE)}");`);
 };
