@@ -28,8 +28,7 @@ const TYPE_NUMBER = 1;
 const TYPE_BOOLEAN = 2;
 const TYPE_STRING = 3;
 
-const FLAG_NULLABLE = 1;
-const FLAG_NANABLE = 2;
+const FLAG_NANABLE = 1;
 
 defaultExtensions.forEach((ext) => {
     const extensionInputs = ext.getInputs();
@@ -49,8 +48,8 @@ defaultExtensions.forEach((ext) => {
 
 /**
  * Prevents the use of toString() on an object by throwing an error.
- * Useful to make sure that a method is always called, never stringified.
- * @param {Object} obj 
+ * Useful to make sure that a method is always called, never accidentally stringified.
+ * @param {Object} obj
  */
 const disableToString = (obj) => {
     obj.toString = () => {
@@ -66,6 +65,13 @@ class BlockUtil {
         this.compiler = compiler;
         this.block = block;
     }
+
+    // Expose some constants that are likely to be of use to blocks.
+    get TYPE_UNKNOWN() { return TYPE_UNKNOWN; }
+    get TYPE_NUMBER() { return TYPE_NUMBER; }
+    get TYPE_BOOLEAN() { return TYPE_BOOLEAN; }
+    get TYPE_STRING() { return TYPE_STRING; }
+    get FLAG_NANABLE() { return FLAG_NANABLE; }
 
     get target() {
         return this.compiler.target;
@@ -281,7 +287,6 @@ class CompiledInput {
         /**
          * The input's type.
          * @readonly
-         * @private
          */
         this.type = type;
         /**
@@ -292,18 +297,11 @@ class CompiledInput {
     }
 
     /**
-     * Enable the NULLABLE flag.
+     * Enable a flag.
+     * @param {number} flag The value of the flag to enable.
      */
-    nullable() {
-        this.flags |= FLAG_NULLABLE;
-        return this;
-    }
-
-    /**
-     * Enable the NANABLE flag.
-     */
-    nanable() {
-        this.flags |= FLAG_NANABLE;
+    setFlag(flag) {
+        this.flags |= flag;
         return this;
     }
 

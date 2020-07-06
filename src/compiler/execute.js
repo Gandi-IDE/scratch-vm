@@ -123,8 +123,7 @@ const retire = () => {
  * @returns {number}
  */
 const toNumber = (value) => {
-    // The only falsey values that Number can return is 0 and NaN, both of which are treated as 0.
-    return Number(value) || 0;
+    return +value || 0;
 };
 
 /**
@@ -152,7 +151,7 @@ const toBoolean = (value) => {
         }
         return true;
     }
-    return Boolean(value);
+    return !!value;
 };
 
 /**
@@ -183,16 +182,16 @@ const isWhiteSpace = (val) => {
  * @returns {number} Negative if v1 < v2, 0 if equal, positive if v1 > v2
  */
 const compare = (v1, v2) => {
-    let n1 = Number(v1);
-    let n2 = Number(v2);
+    let n1 = +v1;
+    let n2 = +v2;
     if (n1 === 0 && isWhiteSpace(v1)) {
         n1 = NaN;
     } else if (n2 === 0 && isWhiteSpace(v2)) {
         n2 = NaN;
     }
     if (isNaN(n1) || isNaN(n2)) {
-        const s1 = String(v1).toLowerCase();
-        const s2 = String(v2).toLowerCase();
+        const s1 = ('' + v1).toLowerCase();
+        const s2 = ('' + v2).toLowerCase();
         if (s1 < s2) {
             return -1;
         } else if (s1 > s2) {
@@ -253,8 +252,9 @@ var listIndex = (index, length) => {
             }
             return -1;
         }
+        index = toNumber(index);
     }
-    index = Math.floor(toNumber(index));
+    index = Math.floor(index);
     if (index < 1 || index > length) {
         return -1;
     }
