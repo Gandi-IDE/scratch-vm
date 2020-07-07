@@ -230,6 +230,13 @@ class StatementUtil extends BlockUtil {
     }
 
     /**
+     * Stop this thread.
+     */
+    retire() {
+        this.writeLn('retire(); yield;');
+    }
+
+    /**
      * Get a local variable.
      */
     var() {
@@ -471,15 +478,19 @@ class Compiler {
         // Increase warp level
         if (hints.isWarp) {
             script += 'thread.warp++;\n';
-        } else {
+        } else if (hints.isProcedure) {
             script += 'if (thread.warp) thread.warp++;\n';
         }
 
         script += this.compileStack(topBlock);
 
-        // Decrease warp level
-        script += 'endCall();';
-        script += '\n}';
+        if (hints.isProcedure) {
+            script += 'endCall();\n';
+        } else {
+            script += 'retire();\n';
+        }
+
+        script += '}';
 
         const fn = execute.createScriptFactory(script);
         log.info(`[${this.target.getName()}] compiled script`, script);

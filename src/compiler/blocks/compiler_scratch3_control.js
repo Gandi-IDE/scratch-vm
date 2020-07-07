@@ -111,18 +111,23 @@ const deleteClone = /** @param {StatementUtil} util */ (util) => {
     util.writeLn(`if (!target.isOriginal) {`)
     util.writeLn(`  runtime.disposeTarget(target);`);
     util.writeLn(`  runtime.stopForTarget(target);`);
-    util.writeLn(`  return;`);
+    util.retire();
     util.writeLn(`}`);
 };
 
 const stop = /** @param {StatementUtil} util */ (util) => {
     const STOP_OPTION = util.fieldValueUnsafe('STOP_OPTION');
     if (STOP_OPTION === 'all') {
-        util.writeLn('target.runtime.stopAll();');
+        util.writeLn('runtime.stopAll();');
+        util.retire();
     } else if (STOP_OPTION === 'other scripts in sprite' || STOP_OPTION === 'other scripts in stage') {
-        util.writeLn('target.runtime.stopForTarget(target, thread);');
+        util.writeLn('runtime.stopForTarget(target, thread);');
     } else if (STOP_OPTION === 'this script') {
-        util.writeLn('endCall(); return;');
+        if (util.hints.isProcedure) {
+            util.writeLn('endCall(); return;');
+        } else {
+            util.retire();
+        }
     }
 };
 
