@@ -392,8 +392,6 @@ class Runtime extends EventEmitter {
          * @type {function}
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
-
-        this.compiledScriptCache = new (require('../compiler/cache'))();
     }
 
     /**
@@ -1616,8 +1614,7 @@ class Runtime extends EventEmitter {
         this.threads.push(thread);
 
         if (opts && opts.enableCompiler) {
-            // Attempt to compile the script
-            thread.tryCompile(this.compiledScriptCache);
+            thread.tryCompile();
         }
 
         return thread;

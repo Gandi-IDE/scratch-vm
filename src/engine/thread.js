@@ -423,25 +423,30 @@ class Thread {
     }
 
     /**
-     * @param {import('../compiler/cache')} cache
+     * Attempt to compile this thread.
      */
-    tryCompile(cache) {
-        let result;
+    tryCompile() {
+        const blocks = this.target.blocks;
+        const topBlock = this.topBlock;
 
-        const topBlock = this.target.id + '|' + this.topBlock;
-        if (cache.hasEntry(topBlock)) {
-            if (cache.isCachedAsError(topBlock)) {
-                return;
-            }
-            result = cache.getResult(topBlock);
+        const cachedResult = blocks.getCompiledScript(topBlock);
+
+        if (cachedResult === null) {
+            // cannot be compiled
+            return;
+        }
+
+        let result;
+        if (cachedResult) {
+            result = cachedResult;
         } else {
             try {
                 const compiler = new Compiler(this);
                 result = compiler.compile();
-                cache.cacheResult(topBlock, result);
+                blocks.setCompiledScript(topBlock, result);
             } catch (e) {
                 log.error('cannot compile script', this.target.getName(), e);
-                cache.cacheError(topBlock);
+                blocks.setCompiledScript(topBlock, null);
                 return;
             }
         }

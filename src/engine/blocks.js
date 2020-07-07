@@ -81,7 +81,13 @@ class Blocks {
              * A cache of hat opcodes to collection of theads to execute.
              * @type {object.<string, object>}
              */
-            scripts: {}
+            scripts: {},
+
+            /**
+             * A cache of top block (usually hat, but not always) opcodes to compiled scripts.
+             * @type {object.<string, object>}
+             */
+            compiledScripts: {},
         };
 
         /**
@@ -94,6 +100,27 @@ class Blocks {
          * @type {boolean}
          */
         this.forceNoGlow = optNoGlow || false;
+    }
+
+    /**
+     * Get the cached compiled script of a block.
+     * @param {string} blockId ID of the block
+     * @returns null if cannot be compiled, undefined if no entry, otherwise the result
+     */
+    getCompiledScript(blockId) {
+        if (this._cache.compiledScripts.hasOwnProperty(blockId)) {
+            return this._cache.compiledScripts[blockId];
+        }
+        return undefined;
+    }
+
+    /**
+     * Set the cached compiled script of a block.
+     * @param {string} blockId ID of the top block
+     * @param {*} value The value to store, null if error, otherwise the result
+     */
+    setCompiledScript(blockId, value) {
+        this._cache.compiledScripts[blockId] = value;
     }
 
     /**
@@ -517,6 +544,7 @@ class Blocks {
         this._cache._executeCached = {};
         this._cache._monitored = null;
         this._cache.scripts = {};
+        this._cache.compiledScripts = {};
     }
 
     /**
