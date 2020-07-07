@@ -21,7 +21,7 @@ class ScriptCache {
         return this.cache.hasOwnProperty(id);
     }
 
-    isError(id) {
+    isCachedAsError(id) {
         return this.cache[id].error;
     }
 
@@ -29,14 +29,14 @@ class ScriptCache {
         return this.cache[id].compilationResult;
     }
 
-    setError(id) {
+    cacheError(id) {
         this.cache[id] = {
             compilationResult: null,
             error: true,
         };
     }
 
-    setResult(id, result) {
+    cacheResult(id, result) {
         this.cache[id] = {
             compilationResult: result,
             error: false,

@@ -195,21 +195,20 @@ class Thread {
 
         // compiler data
         // these values only make sense if isCompiled == true
+        /**
+         * Warp level
+         * @type {number}
+         */
         this.warp = 0;
+        /**
+         * The thread's generator.
+         * @type {Generator}
+         */
         this.generator = null;
         /**
-         * @type {Object.<string, import('../compiler/compiler').CompiledProcedure>}
+         * @type {Object.<string, import('../compiler/compiler').CompiledScript>}
          */
         this.procedures = {};
-    }
-
-    enterState(v) {
-        this.stateStack.push(this.state);
-        this.state = v;
-    }
-
-    restoreState() {
-        this.state = this.stateStack.pop();
     }
 
     /**
@@ -431,7 +430,7 @@ class Thread {
 
         const topBlock = this.topBlock;
         if (cache.hasEntry(topBlock)) {
-            if (cache.isError(topBlock)) {
+            if (cache.isCachedAsError(topBlock)) {
                 return;
             }
             result = cache.getResult(topBlock);
@@ -439,10 +438,10 @@ class Thread {
             try {
                 const compiler = new Compiler(this);
                 result = compiler.compile();
-                cache.setResult(topBlock, result);
+                cache.cacheResult(topBlock, result);
             } catch (e) {
                 log.error('cannot compile script', this.target.getName(), e);
-                cache.setError(topBlock);
+                cache.cacheError(topBlock);
                 return;
             }
         }

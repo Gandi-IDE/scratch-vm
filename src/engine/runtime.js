@@ -30,8 +30,6 @@ const Video = require('../io/video');
 const StringUtil = require('../util/string-util');
 const uid = require('../util/uid');
 
-const ScriptCache = require('../compiler/cache');
-
 const defaultBlockPackages = {
     scratch3_control: require('../blocks/scratch3_control'),
     scratch3_event: require('../blocks/scratch3_event'),
@@ -395,7 +393,7 @@ class Runtime extends EventEmitter {
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
 
-        this.compiledScriptCache = new ScriptCache();
+        this.compiledScriptCache = new (require('../compiler/cache'))();
     }
 
     /**

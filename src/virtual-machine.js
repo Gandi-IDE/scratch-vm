@@ -1140,8 +1140,8 @@ class VirtualMachine extends EventEmitter {
      */
     blockListener (e) {
         // Reset script cache when scripts edited.
-        // TODO: do not do full resets
         // TODO: do not reset for some more trivial actions
+        // TODO: move to blocks.resetCaches
         this.runtime.compiledScriptCache.reset();
 
         if (this.editingTarget) {
