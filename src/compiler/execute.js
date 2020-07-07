@@ -317,11 +317,7 @@ var thread;
  */
 const execute = (_thread) => {
     thread = _thread;
-
-    var r = _thread.generator.next();
-    if (r.done) {
-        retire();
-    }
+    _thread.generator.next();
 };
 
 /**
