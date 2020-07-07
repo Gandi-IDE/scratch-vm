@@ -31,29 +31,19 @@ module.exports.getInputs = () => {
 const repeat = /** @param {StatementUtil} util */ (util) => {
     const TIMES = util.input('TIMES');
     const SUBSTACK = util.substack('SUBSTACK');
-    util.enterState(TIMES.asNumber());
-    util.writeLn(`while (thread.state >= 0.5) { thread.state--;`)
+    const i = util.var();
+    util.writeLn(`for (var ${i} = ${TIMES}; ${i} >= 0.5; ${i}--) {`)
     util.write(SUBSTACK);
-    util.yieldLoop();
-    util.writeLn(`}`)
-    // const label = util.putLabel();
-    // util.writeLn(`if (thread.state >= 0.5) {`);
-    // util.writeLn(`  thread.state--;`);
-    // util.write(SUBSTACK);
-    // util.jumpLazy(label);
-    // util.writeLn('}');
-    util.restoreState();
+    util.yieldNotWarp();
+    util.writeLn(`}`);
 };
 
 const forever = /** @param {StatementUtil} util */ (util) => {
     const SUBSTACK = util.substack('SUBSTACK');
     util.writeLn('while (true) {');
     util.write(SUBSTACK);
-    util.yieldLoop();
+    util.yieldNotWarp();
     util.writeLn('}');
-    // const label = util.putLabel();
-    // util.write(SUBSTACK);
-    // util.jumpLazy(label);
 };
 
 const if_ = /** @param {StatementUtil} util */ (util) => {
@@ -80,13 +70,8 @@ const repeatUntil = /** @param {StatementUtil} util */ (util) => {
     const SUBSTACK = util.substack('SUBSTACK');
     util.writeLn(`while (!${CONDITION.asBoolean()}) {`);
     util.write(SUBSTACK);
-    util.yieldLoop();
+    util.yieldNotWarp();
     util.writeLn('}');
-    // const label = util.putLabel();
-    // util.writeLn(`if (!${CONDITION.asBoolean()}) {`);
-    // util.write(SUBSTACK);
-    // util.jumpLazy(label);
-    // util.writeLn(`}`);
 };
 
 const while_ = /** @param {StatementUtil} util */ (util) => {
@@ -94,24 +79,22 @@ const while_ = /** @param {StatementUtil} util */ (util) => {
     const SUBSTACK = util.substack('SUBSTACK');
     util.writeLn(`while (${CONDITION.asBoolean()}) {`);
     util.write(SUBSTACK);
-    util.yieldLoop();
+    util.yieldNotWarp();
     util.writeLn('}');
-    // const label = util.putLabel();
-    // util.writeLn(`if (${CONDITION.asBoolean()}) {`);
-    // util.write(SUBSTACK);
-    // util.jumpLazy(label);
-    // util.writeLn(`}`);
 };
 
 const wait = /** @param {StatementUtil} util */ (util) => {
     const DURATION = util.input('DURATION');
-    util.enterState(`{ timer: timer(), duration: Math.max(0, 1000 * ${DURATION.asNumber()}) }`);
-    const label = util.putLabel();
-    // TODO: always jumpLazy the first time
-    util.writeLn('if (thread.state.timer.timeElapsed() < thread.state.duration) {')
-    util.jumpLazy(label);
+    const timer = util.var();
+    const duration = util.var();
+    // always yield once
+    // TODO: YIELD_TICK instead
+    util.yieldNotWarp();
+    util.writeLn(`var ${timer} = timer();`);
+    util.writeLn(`var ${duration} = Math.max(0, 1000 * ${DURATION.asNumber()})`);
+    util.writeLn(`while (${timer}.timeElapsed() < ${duration}) {`)
+    util.yieldNotWarp();
     util.writeLn('}');
-    util.restoreState();
 };
 
 const createClone = /** @param {StatementUtil} util */ (util) => {
@@ -124,13 +107,12 @@ const createCloneMenu = /** @param {InputUtil} util */ (util) => {
 };
 
 const deleteClone = /** @param {StatementUtil} util */ (util) => {
-    if (util.target.isOriginal) {
-        util.noop();
-        return;
-    }
-    util.writeLn(`runtime.disposeTarget(target);`);
-    util.writeLn(`runtime.stopForTarget(target);`);
-    util.writeLn(`return;`);
+    // TODO: actually stop thread
+    util.writeLn(`if (!target.isOriginal) {`)
+    util.writeLn(`  runtime.disposeTarget(target);`);
+    util.writeLn(`  runtime.stopForTarget(target);`);
+    util.writeLn(`  return;`);
+    util.writeLn(`}`);
 };
 
 const stop = /** @param {StatementUtil} util */ (util) => {
@@ -140,14 +122,13 @@ const stop = /** @param {StatementUtil} util */ (util) => {
     } else if (STOP_OPTION === 'other scripts in sprite' || STOP_OPTION === 'other scripts in stage') {
         util.writeLn('target.runtime.stopForTarget(target, thread);');
     } else if (STOP_OPTION === 'this script') {
-        util.writeLn('return;');
+        util.writeLn('endCall(); return;');
     }
 };
 
 const waitUntil = /** @param {StatementUtil} util */ (util) => {
     const CONDITION = util.input('CONDITION');
-    const label = util.putLabel();
-    util.writeLn(`if (!${CONDITION.asBoolean()}) {`);
-    util.jumpLazy(label);
-    util.writeLn(`}`);
+    util.writeLn(`while (!${CONDITION.asBoolean()}) {`);
+    util.yieldNotWarp();
+    util.writeLn('}');
 };

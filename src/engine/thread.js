@@ -196,13 +196,7 @@ class Thread {
         // compiler data
         // these values only make sense if isCompiled == true
         this.warp = 0;
-        this.jumps = [];
-        this.fn = null;
         this.generator = null;
-        this.state = null;
-        this.stateStack = [];
-        this.call = null;
-        this.callStack = [];
         /**
          * @type {Object.<string, import('../compiler/compiler').CompiledProcedure>}
          */
@@ -430,7 +424,7 @@ class Thread {
     }
 
     /**
-     * @param {ScriptCache} cache
+     * @param {import('../compiler/cache')} cache
      */
     tryCompile(cache) {
         let result;
@@ -454,9 +448,8 @@ class Thread {
         }
 
         this.procedures = result.procedures;
-        this.fn = result.startingFunction;
         this.isCompiled = true;
-        this.generator = this.fn();
+        this.generator = result.startingFunction();
     }
 }
 

@@ -1,9 +1,10 @@
 const log = require('../util/log');
 const Thread = require('../engine/thread');
-const Target = require('../engine/target');
 const Runtime = require('../engine/runtime');
-const execute = require('./execute');
 const Blocks = require('../engine/blocks');
+const RenderedTarget = require('../sprites/rendered-target');
+
+const execute = require('./execute');
 
 const statements = {};
 const inputs = {};
@@ -73,6 +74,10 @@ class BlockUtil {
     get TYPE_STRING() { return TYPE_STRING; }
     get FLAG_NANABLE() { return FLAG_NANABLE; }
 
+    /**
+     * The target being compiled.
+     * Note: This target might not represent the `target` found at runtime, as scripts can be shared between clones.
+     */
     get target() {
         return this.compiler.target;
     }
@@ -173,38 +178,23 @@ class StatementUtil extends BlockUtil {
         this.source = '';
     }
 
-    yieldLoop() {
-        this.writeLn('if (thread.warp === 0) { debugger; yield; }');
+    /**
+     * Yield script if not running in warp mode.
+     * Does not change thread state.
+     */
+    yieldNotWarp() {
+        this.writeLn('if (thread.warp === 0) yield;');
     }
 
-    // /**
-    //  * Immediately jump to a label.
-    //  * @param {number} label
-    //  */
-    // jump(label) {
-    //     this.writeLn(`jump(${label}); return;`);
-    // }
-
-    // /**
-    //  * Lazily jump to a label.
-    //  * If running in warp mode, this will be instant. Otherwise, it will run the next tick.
-    //  * @param {number} label
-    //  */
-    // jumpLazy(label) {
-    //     this.writeLn(`jumpLazy(${label}); return;`);
-    // }
-
-    // /**
-    //  * Writes the necessary JS to yield the current thread until all given threads have finished executing.
-    //  * @param {string} threads The threads to wait for (eg. "thread.state")
-    //  */
-    // waitUntilThreadsComplete(threads) {
-    //     this.enterState(threads);
-    //     const label = this.putLabel();
-    //     this.writeLn(`if (waitThreads(thread.state)) {`);
-    //     this.jumpLazy(label);
-    //     this.writeLn(`}`);
-    // }
+    /**
+     * Pause script execution until threads complete.
+     * @param {string} threads Threads to wait for, should be a call to startHats()
+     */
+    waitUntilThreadsComplete(threads) {
+        const v = this.var();
+        this.writeLn(`var ${v} = ${threads};`);
+        this.writeLn(`while (waitThreads(${v})) yield;`);
+    }
 
     /**
      * Write JS to this statement, followed by a newline.
@@ -223,22 +213,17 @@ class StatementUtil extends BlockUtil {
     }
 
     /**
-     * Replace thread.state with a new state. The old state is saved so it can be restored later.
-     * @param {string} state JS to become new state.
+     * Explicitly do nothing.
      */
-    enterState(state) {
-        this.writeLn(`thread.enterState(${state});`);
+    noop() {
+        this.writeLn('/* no-op */');
     }
 
     /**
-     * Replace thread.state with the previous state.
+     * Get a local variable.
      */
-    restoreState() {
-        this.writeLn('thread.restoreState();');
-    }
-
-    noop() {
-        this.writeLn('/* no-op */');
+    var() {
+        return this.compiler.nextVariable();
     }
 
     /**
@@ -320,19 +305,13 @@ disableToString(CompiledInput.prototype.asString);
 disableToString(CompiledInput.prototype.asBoolean);
 
 /**
- * @typedef {Function} Jump
- */
-
-/**
- * @typedef {Object} CompiledProcedure
- * @property {boolean} warp
- * @property {Function} fn
+ * @typedef {Function} CompiledScript
  */
 
 /**
  * @typedef {Object} CompilationResult
  * @property {Function} startingFunction
- * @property {Object.<string, CompiledProcedure>} procedures
+ * @property {Object.<string, CompiledScript>} procedures
  */
 
 class Compiler {
@@ -340,7 +319,7 @@ class Compiler {
      * @param {Thread} thread
      */
     constructor(thread) {
-        /** @type {Target} */
+        /** @type {RenderedTarget} */
         this.target = thread.target;
         if (!this.target) {
             throw new Error('Missing target');
@@ -357,9 +336,14 @@ class Compiler {
 
         /**
          * Compiled procedures.
-         * @type {Object.<string, CompiledProcedure>}
+         * @type {Object.<string, CompiledScript>}
          */
         this.procedures = {};
+
+        /**
+         * Number of local variables created.
+         */
+        this.variableCount = 0;
 
         /**
          * Procedures that are queued to be compiled.
@@ -449,7 +433,11 @@ class Compiler {
         return source;
     }
 
-    compileHat(topBlock) {
+    /**
+     * Compile a script.
+     * @param {string} topBlock The ID of the top block of the script. This should not be the ID of the hat block.
+     */
+    compileScript(topBlock) {
         let script = '(function*(C) {\n';
         if (this.isWarp) {
             script += 'thread.warp++;\n';
@@ -457,28 +445,22 @@ class Compiler {
             script += 'if (thread.warp) thread.warp++;\n';
         }
         script += this.compileStack(topBlock);
-        if (this.isWarp) {
-            script += 'thread.warp--;\n';
-        } else {
-            script += 'debugger;\n';
-            script += 'if (thread.warp) thread.warp--; if (thread.warp === 0) yield;\n';
-        }
+        script += 'endCall();\n';
         script += '\n});';
-        // script += 'end();';
-
-        // const parseResult = this.parseContinuations(script);
-        // const parsedScript = parseResult.script;
-
-        // const startingLabelCount = this.jumps.length;
-        // for (const label of Object.keys(parseResult.labels)) {
-        //   this.jumps[label] = execute.createContinuation(this, parsedScript.slice(parseResult.labels[label]));
-        // }
 
         const fn = execute.evalCompiledScript(this, script);
 
         log.info(`[${this.target.getName()}] compiled script`, script);
 
         return fn;
+    }
+
+    /**
+     * Get the name of the next local variable.
+     */
+    nextVariable() {
+        this.variableCount++;
+        return 'a' + this.variableCount;
     }
 
     /**
@@ -500,7 +482,7 @@ class Compiler {
         } else {
             startingBlock = this.topBlock;
         }
-        const startingFunction = this.compileHat(startingBlock);
+        const startingFunction = this.compileScript(startingBlock);
 
         // Compile any required procedures.
         // As procedures can depend on other procedures, this process may take several iterations.
@@ -527,12 +509,8 @@ class Compiler {
 
                 this.isWarp = isWarp;
 
-                const procedureFn = this.compileHat(bodyStart);
-
-                this.procedures[procedureCode] = {
-                    warp: isWarp,
-                    fn: procedureFn,
-                };
+                const compiledProcedure = this.compileScript(bodyStart);
+                this.procedures[procedureCode] = compiledProcedure;
             }
         }
 

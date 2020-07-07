@@ -37,7 +37,7 @@ const call = /** @param {StatementUtil} util */ (util) => {
 
     util.compiler.dependProcedure(procedureCode);
 
-    util.write(`yield* thread.procedures["${util.safe(procedureCode)}"].fn({`);
+    util.write(`yield* thread.procedures["${util.safe(procedureCode)}"]({`);
 
     for (let i = 0; i < paramIds.length; i++) {
         let value;

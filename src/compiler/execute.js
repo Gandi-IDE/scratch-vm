@@ -5,62 +5,14 @@ const Timer = require('../util/timer');
 // The JSDoc annotations define the function's contract.
 // Most of these functions are only used at runtime by generated scripts. Despite what your editor may say, they are not unused.
 
-// /**
-//  * Immediately jump to a label.
-//  * @param {number} id The label to jump to.
-//  */
-// const jump = (id) => {
-//     immediate = thread.jumps[id];
-// };
-
-// /**
-//  * Jump to a label.
-//  * If in warp mode, this will be instant (like jump())
-//  * Otherwise, this jump will occur in the next tick loop.
-//  * @param {number} id The label to jump to.
-//  */
-// const jumpLazy = (id) => {
-//     if (thread.warp) {
-//         jump(id);
-//     } else {
-//         thread.fn = thread.jumps[id];
-//     }
-// };
-
-// /**
-//  * Call into a procedure.
-//  * @param {string} procedureCode The procedure's name
-//  * @param {*} args The arguments to pass to the procedure.
-//  * @param {number} resume The label to return to when the procedure completes.
-//  */
-// const call = (procedureCode, args, resume) => {
-//     thread.callStack.push(thread.call);
-//     thread.call = {
-//         args,
-//         resume,
-//     };
-//     // TODO: check recursion
-//     const procedure = thread.procedures[procedureCode];
-//     if (procedure.warp || thread.warp) {
-//         thread.warp++;
-//     }
-//     jump(procedure.label);
-// };
-
-// /**
-//  * End a script or procedure call.
-//  */
-// const end = () => {
-//     if (thread.callStack.length) {
-//         jump(thread.call.resume);
-//         if (thread.warp) {
-//             thread.warp--;
-//         }
-//         thread.call = thread.callStack.pop();
-//     } else {
-//         retire();
-//     }
-// };
+/**
+ * End a procedure call.
+ */
+const endCall = () => {
+    if (thread.warp) {
+        thread.warp--;
+    }
+};
 
 /**
  * Start hats by opcode.
@@ -353,11 +305,6 @@ const mod = (n, modulus) => {
     return result;
 };
 
-// /**
-//  * If set, the executor will immediately start executing this function when the current function returns.
-//  * @type {Function}
-//  */
-// var immediate;
 /**
  * The currently running thread.
  * @type {Thread}
@@ -377,19 +324,10 @@ const execute = (_thread) => {
     thread = _thread;
     target = thread.target;
 
-    _thread.generator.next();
-    
-    // while (_thread.warp) {
-    //     _thread.generator.next();
-    // }
-
-    // _thread.fn();
-
-    // while (immediate) {
-    //     var fn = immediate;
-    //     immediate = null;
-    //     fn();
-    // }
+    var r = _thread.generator.next();
+    if (r.done) {
+        retire();
+    }
 };
 
 /**
