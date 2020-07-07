@@ -340,6 +340,7 @@ const evalCompiledScript = (compiler, _source) => {
     // Cache some of the data that the script will need to execute.
     const runtime = compiler.target.runtime;
     const stage = runtime.getTargetForStage();
+    const stageVariables = stage.variables;
 
     // no reason to access compiler anymore
     compiler = null;

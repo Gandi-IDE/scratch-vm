@@ -4,6 +4,7 @@ const Runtime = require('../engine/runtime');
 const Blocks = require('../engine/blocks');
 const RenderedTarget = require('../sprites/rendered-target');
 
+const CompilerHints = require('./hints');
 const execute = require('./execute');
 
 const statements = {};
@@ -88,6 +89,13 @@ class BlockUtil {
      */
     get isStage() {
         return !!this.target.isStage;
+    }
+
+    /**
+     * Get the compiler hints.
+     */
+    get hints() {
+        return this.compiler.hints;
     }
 
     /**
@@ -183,7 +191,9 @@ class StatementUtil extends BlockUtil {
      * Does not change thread state.
      */
     yieldNotWarp() {
-        this.writeLn('if (thread.warp === 0) yield;');
+        if (!this.hints.isWarp) {
+            this.writeLn('if (thread.warp === 0) yield;');
+        }
     }
 
     /**
@@ -346,6 +356,13 @@ class Compiler {
         this.variableCount = 0;
 
         /**
+         * Compiler optimization/behavior hints.
+         * This is set by compileScript.
+         * @type {CompilerHints}
+         */
+        this.hints = undefined;
+
+        /**
          * Procedures that are queued to be compiled.
          * Map of procedure code to the ID of the definition block.
          * @type {Map.<string, string>}
@@ -436,22 +453,36 @@ class Compiler {
     /**
      * Compile a script.
      * @param {string} topBlock The ID of the top block of the script. This should not be the ID of the hat block.
+     * @param {CompilerHints} hints
      */
-    compileScript(topBlock) {
-        let script = '(function*(C) {\n';
-        if (this.isWarp) {
+    compileScript(topBlock, hints) {
+        // blocks will read hints from here
+        this.hints = hints;
+
+        let script = '';
+
+        script += '(function*_(';
+        // Procedures accept arguments
+        if (hints.isProcedure) {
+            script += 'C';
+        }
+        script += ') {\n';
+
+        // Increase warp level
+        if (hints.isWarp) {
             script += 'thread.warp++;\n';
         } else {
             script += 'if (thread.warp) thread.warp++;\n';
         }
+
         script += this.compileStack(topBlock);
+
+        // Decrease warp level
         script += 'endCall();\n';
         script += '\n});';
 
         const fn = execute.evalCompiledScript(this, script);
-
         log.info(`[${this.target.getName()}] compiled script`, script);
-
         return fn;
     }
 
@@ -482,7 +513,7 @@ class Compiler {
         } else {
             startingBlock = this.topBlock;
         }
-        const startingFunction = this.compileScript(startingBlock);
+        const startingFunction = this.compileScript(startingBlock, new CompilerHints());
 
         // Compile any required procedures.
         // As procedures can depend on other procedures, this process may take several iterations.
@@ -507,9 +538,11 @@ class Compiler {
                     }
                 }
 
-                this.isWarp = isWarp;
+                const hints = new CompilerHints();
+                hints.isProcedure = true;
+                hints.isWarp = isWarp;
 
-                const compiledProcedure = this.compileScript(bodyStart);
+                const compiledProcedure = this.compileScript(bodyStart, hints);
                 this.procedures[procedureCode] = compiledProcedure;
             }
         }

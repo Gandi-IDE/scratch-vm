@@ -52,7 +52,7 @@ const findVariable = (util, id, name, type) => {
     if (target.runtime && !target.isStage) {
         const stage = target.runtime.getTargetForStage();
         if (stage && stage.variables.hasOwnProperty(id)) {
-            return `stage.variables["${util.safe(id)}"]`;
+            return `stageVariables["${util.safe(id)}"]`;
         }
     }
     // Search for it by name and type
