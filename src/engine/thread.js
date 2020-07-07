@@ -428,7 +428,7 @@ class Thread {
     tryCompile(cache) {
         let result;
 
-        const topBlock = this.topBlock;
+        const topBlock = this.target.id + '|' + this.topBlock;
         if (cache.hasEntry(topBlock)) {
             if (cache.isCachedAsError(topBlock)) {
                 return;

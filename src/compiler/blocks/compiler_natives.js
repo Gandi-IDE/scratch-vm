@@ -28,7 +28,7 @@ const number = /** @param {InputUtil} util */ (util) => {
     const NUM = util.fieldValueUnsafe('NUM');
     const number = Number(NUM);
     if (!Number.isNaN(number)) {
-        return util.number(number);
+        return util.number('' + number);
     }
     return util.fieldString('NUM');
 };
