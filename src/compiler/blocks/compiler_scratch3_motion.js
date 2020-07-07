@@ -24,6 +24,7 @@ module.exports.getStatements = () => {
  */
 module.exports.getInputs = () => {
     return {
+        motion_direction: getDirection,
         motion_xposition: getX,
         motion_yposition: getY,
     };
@@ -92,4 +93,8 @@ const changeY = /** @param {StatementUtil} util */ (util) => {
 const setRotationStyle = /** @param {StatementUtil} util */ (util) => {
     const STYLE = util.fieldValueUnsafe('STYLE');
     util.writeLn(`target.setRotationStyle("${util.safe(STYLE)}");`);
+};
+
+const getDirection = /** @param {InputUtil} util */ (util) => {
+    return util.number('target.direction');
 };

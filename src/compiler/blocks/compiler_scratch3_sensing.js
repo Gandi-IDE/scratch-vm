@@ -22,6 +22,7 @@ module.exports.getInputs = () => {
         sensing_keypressed: getKeyPressed,
         sensing_mousedown: getMouseDown,
         sensing_keyoptions: keyOption,
+        sensing_username: getUsername,
     };
 };
 
@@ -61,4 +62,8 @@ const getKeyPressed = /** @param {InputUtil} util */ (util) => {
 
 const keyOption = /** @param {InputUtil} util */ (util) => {
     return util.fieldString('KEY_OPTION');
+};
+
+const getUsername = /** @param {InputUtil} util */ (util) => {
+    return util.string('ioQuery("userData", "getUsername")');
 };

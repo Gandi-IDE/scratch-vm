@@ -27,6 +27,7 @@ module.exports.getInputs = () => {
         looks_costume: costumeMenu,
         looks_backdrops: backdropMenu,
         looks_costumenumbername: getCostumeNumberName,
+        looks_size: getSize,
     };
 };
 
@@ -125,4 +126,8 @@ const switchBackdrop = /** @param {StatementUtil} util */ (util) => {
     const BACKDROP = util.input('BACKDROP');
     // do not cast BACKDROP: behavior depends on type
     util.writeLn(`runtime.ext_scratch3_looks._setBackdrop(stage, ${BACKDROP});`);
+};
+
+const getSize = /** @param {InputUtil} util */ (util) => {
+    return util.number('Math.round(target.size)');
 };
