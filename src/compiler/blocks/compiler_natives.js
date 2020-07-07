@@ -1,4 +1,5 @@
 const { InputUtil, StatementUtil, CompiledInput } = require('../compiler');
+const Cast = require('../../util/cast');
 
 /**
  * @returns {Object.<string, (util: StatementUtil) => void>}
@@ -35,6 +36,19 @@ const number = /** @param {InputUtil} util */ (util) => {
 
 const text = /** @param {InputUtil} util */ (util) => {
     const TEXT = util.fieldValueUnsafe('TEXT');
+    // Attempt to convert numbers stored as text to actual numbers for performance.
+    const textAsNumber = +TEXT;
+    if (!Number.isNaN(textAsNumber) && !Cast.isWhiteSpace(TEXT)) {
+        // To make sure nothing breaks, numbers that:
+        //  - do not have the same stringified form as the original text
+        //    (this would break "letter 4 of 50.00")
+        //  - are used by the name of a costume
+        //    (set costume works different on numbers)
+        // are not converted.
+        if (textAsNumber.toString() === TEXT && util.target.getCostumeIndexByName(TEXT) === -1) {
+            return util.number(TEXT);
+        }
+    }
     return util.string(`"${util.safe('' + TEXT)}"`);
 };
 
