@@ -461,7 +461,7 @@ class Compiler {
 
         let script = '';
 
-        script += '(function*_(';
+        script += 'function* g(';
         // Procedures accept arguments
         if (hints.isProcedure) {
             script += 'C';
@@ -478,10 +478,10 @@ class Compiler {
         script += this.compileStack(topBlock);
 
         // Decrease warp level
-        script += 'endCall();\n';
-        script += '\n});';
+        script += 'endCall();';
+        script += '\n}';
 
-        const fn = execute.evalCompiledScript(this, script);
+        const fn = execute.createScriptFactory(script);
         log.info(`[${this.target.getName()}] compiled script`, script);
         return fn;
     }

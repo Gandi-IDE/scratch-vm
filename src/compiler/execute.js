@@ -333,22 +333,21 @@ const execute = (_thread) => {
 /**
  * Evaluate a continuation from its source code.
  * Prepares the necessary environment.
- * @param {Compiler} compiler
- * @param {string} _source
+ * @param {string} source
  */
-const evalCompiledScript = (compiler, _source) => {
-    // Cache some of the data that the script will need to execute.
-    const runtime = compiler.target.runtime;
-    const stage = runtime.getTargetForStage();
-    const stageVariables = stage.variables;
+const createScriptFactory = (source) => {
+    // we cache some very frequently accessed variables up here, it does a lot to help performance.
+    source = `(function f(target) {
+var runtime = target.runtime;
+var stage = runtime.getTargetForStage();
+var stageVariables = stage.variables;
+var targetVariables = target.variables;
+return ${source};
+});`;
 
-    // no reason to access compiler anymore
-    compiler = null;
-
-    // eval will grab references to all variables in this context
-    return eval(_source);
+    return eval(source);
 };
 
-execute.evalCompiledScript = evalCompiledScript;
+execute.createScriptFactory = createScriptFactory;
 
 module.exports = execute;

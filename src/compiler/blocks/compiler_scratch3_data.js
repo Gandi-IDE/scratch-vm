@@ -47,7 +47,7 @@ const findVariable = (util, id, name, type) => {
     const target = util.target;
     // Search for it by ID
     if (target.variables.hasOwnProperty(id)) {
-        return `target.variables["${util.safe(id)}"]`;
+        return `targetVariables["${util.safe(id)}"]`;
     }
     if (target.runtime && !target.isStage) {
         const stage = target.runtime.getTargetForStage();
@@ -60,7 +60,7 @@ const findVariable = (util, id, name, type) => {
         if (target.variables.hasOwnProperty(varId)) {
             const currVar = target.variables[varId];
             if (currVar.name === name && currVar.type === type) {
-                return `target.variables["${util.safe(varId)}"]`;
+                return `targetVariables["${util.safe(varId)}"]`;
             }
         }
     }
