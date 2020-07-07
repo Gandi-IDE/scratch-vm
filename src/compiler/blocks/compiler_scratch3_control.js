@@ -32,20 +32,28 @@ const repeat = /** @param {StatementUtil} util */ (util) => {
     const TIMES = util.input('TIMES');
     const SUBSTACK = util.substack('SUBSTACK');
     util.enterState(TIMES.asNumber());
-    const label = util.putLabel();
-    util.writeLn(`if (thread.state >= 0.5) {`);
-    util.writeLn(`  thread.state--;`);
+    util.writeLn(`while (thread.state >= 0.5) { thread.state--;`)
     util.write(SUBSTACK);
-    util.jumpLazy(label);
-    util.writeLn('}');
+    util.yieldLoop();
+    util.writeLn(`}`)
+    // const label = util.putLabel();
+    // util.writeLn(`if (thread.state >= 0.5) {`);
+    // util.writeLn(`  thread.state--;`);
+    // util.write(SUBSTACK);
+    // util.jumpLazy(label);
+    // util.writeLn('}');
     util.restoreState();
 };
 
 const forever = /** @param {StatementUtil} util */ (util) => {
     const SUBSTACK = util.substack('SUBSTACK');
-    const label = util.putLabel();
+    util.writeLn('while (true) {');
     util.write(SUBSTACK);
-    util.jumpLazy(label);
+    util.yieldLoop();
+    util.writeLn('}');
+    // const label = util.putLabel();
+    // util.write(SUBSTACK);
+    // util.jumpLazy(label);
 };
 
 const if_ = /** @param {StatementUtil} util */ (util) => {
@@ -70,21 +78,29 @@ const ifElse = /** @param {StatementUtil} util */ (util) => {
 const repeatUntil = /** @param {StatementUtil} util */ (util) => {
     const CONDITION = util.input('CONDITION');
     const SUBSTACK = util.substack('SUBSTACK');
-    const label = util.putLabel();
-    util.writeLn(`if (!${CONDITION.asBoolean()}) {`);
+    util.writeLn(`while (!${CONDITION.asBoolean()}) {`);
     util.write(SUBSTACK);
-    util.jumpLazy(label);
-    util.writeLn(`}`);
+    util.yieldLoop();
+    util.writeLn('}');
+    // const label = util.putLabel();
+    // util.writeLn(`if (!${CONDITION.asBoolean()}) {`);
+    // util.write(SUBSTACK);
+    // util.jumpLazy(label);
+    // util.writeLn(`}`);
 };
 
 const while_ = /** @param {StatementUtil} util */ (util) => {
     const CONDITION = util.input('CONDITION');
     const SUBSTACK = util.substack('SUBSTACK');
-    const label = util.putLabel();
-    util.writeLn(`if (${CONDITION.asBoolean()}) {`);
+    util.writeLn(`while (${CONDITION.asBoolean()}) {`);
     util.write(SUBSTACK);
-    util.jumpLazy(label);
-    util.writeLn(`}`);
+    util.yieldLoop();
+    util.writeLn('}');
+    // const label = util.putLabel();
+    // util.writeLn(`if (${CONDITION.asBoolean()}) {`);
+    // util.write(SUBSTACK);
+    // util.jumpLazy(label);
+    // util.writeLn(`}`);
 };
 
 const wait = /** @param {StatementUtil} util */ (util) => {
@@ -124,7 +140,7 @@ const stop = /** @param {StatementUtil} util */ (util) => {
     } else if (STOP_OPTION === 'other scripts in sprite' || STOP_OPTION === 'other scripts in stage') {
         util.writeLn('target.runtime.stopForTarget(target, thread);');
     } else if (STOP_OPTION === 'this script') {
-        util.writeLn('end(); return;');
+        util.writeLn('return;');
     }
 };
 

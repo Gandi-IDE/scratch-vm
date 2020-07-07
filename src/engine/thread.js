@@ -198,6 +198,7 @@ class Thread {
         this.warp = 0;
         this.jumps = [];
         this.fn = null;
+        this.generator = null;
         this.state = null;
         this.stateStack = [];
         this.call = null;
@@ -452,10 +453,10 @@ class Thread {
             }
         }
 
-        this.jumps = result.jumps;
         this.procedures = result.procedures;
         this.fn = result.startingFunction;
         this.isCompiled = true;
+        this.generator = this.fn();
     }
 }
 

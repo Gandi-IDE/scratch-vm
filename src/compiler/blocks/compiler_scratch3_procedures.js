@@ -34,11 +34,10 @@ const call = /** @param {StatementUtil} util */ (util) => {
     }
 
     const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
-    const labelId = util.nextLabel();
 
     util.compiler.dependProcedure(procedureCode);
 
-    util.write(`call("${util.safe(procedureCode)}", {`);
+    util.write(`yield* thread.procedures["${util.safe(procedureCode)}"].fn({`);
 
     for (let i = 0; i < paramIds.length; i++) {
         let value;
@@ -55,16 +54,15 @@ const call = /** @param {StatementUtil} util */ (util) => {
         util.write(`"${util.safe(paramNames[i])}": ${value},`);
     }
 
-    util.writeLn(`}, ${labelId}); return;`);
-    util.putLabel(labelId);
+    util.writeLn(`});`);
 };
 
 const getStringArgument = /** @param {InputUtil} util */ (util) => {
     const VALUE = util.fieldValueUnsafe('VALUE');
-    return util.unknown(`thread.call.args["${util.safe(VALUE)}"]`);
+    return util.unknown(`C["${util.safe(VALUE)}"]`);
 };
 
 const getBooleanArgument = /** @param {InputUtil} util */ (util) => {
     const VALUE = util.fieldValueUnsafe('VALUE');
-    return util.boolean(`toBoolean(thread.call.args["${util.safe(VALUE)}"])`);
+    return util.boolean(`toBoolean(C["${util.safe(VALUE)}"])`);
 };

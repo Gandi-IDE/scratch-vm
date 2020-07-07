@@ -173,53 +173,38 @@ class StatementUtil extends BlockUtil {
         this.source = '';
     }
 
-    /**
-     * @returns {number}
-     */
-    nextLabel() {
-        return this.compiler.nextLabel();
+    yieldLoop() {
+        this.writeLn('if (thread.warp === 0) { debugger; yield; }');
     }
 
-    /**
-     * @param {number} [label]
-     * @returns {number}
-     */
-    putLabel(label) {
-        if (label === undefined) {
-            label = this.nextLabel();
-        }
-        this.write(`{{${label}}}`);
-        return label;
-    }
+    // /**
+    //  * Immediately jump to a label.
+    //  * @param {number} label
+    //  */
+    // jump(label) {
+    //     this.writeLn(`jump(${label}); return;`);
+    // }
 
-    /**
-     * Immediately jump to a label.
-     * @param {number} label
-     */
-    jump(label) {
-        this.writeLn(`jump(${label}); return;`);
-    }
+    // /**
+    //  * Lazily jump to a label.
+    //  * If running in warp mode, this will be instant. Otherwise, it will run the next tick.
+    //  * @param {number} label
+    //  */
+    // jumpLazy(label) {
+    //     this.writeLn(`jumpLazy(${label}); return;`);
+    // }
 
-    /**
-     * Lazily jump to a label.
-     * If running in warp mode, this will be instant. Otherwise, it will run the next tick.
-     * @param {number} label
-     */
-    jumpLazy(label) {
-        this.writeLn(`jumpLazy(${label}); return;`);
-    }
-
-    /**
-     * Writes the necessary JS to yield the current thread until all given threads have finished executing.
-     * @param {string} threads The threads to wait for (eg. "thread.state")
-     */
-    waitUntilThreadsComplete(threads) {
-        this.enterState(threads);
-        const label = this.putLabel();
-        this.writeLn(`if (waitThreads(thread.state)) {`);
-        this.jumpLazy(label);
-        this.writeLn(`}`);
-    }
+    // /**
+    //  * Writes the necessary JS to yield the current thread until all given threads have finished executing.
+    //  * @param {string} threads The threads to wait for (eg. "thread.state")
+    //  */
+    // waitUntilThreadsComplete(threads) {
+    //     this.enterState(threads);
+    //     const label = this.putLabel();
+    //     this.writeLn(`if (waitThreads(thread.state)) {`);
+    //     this.jumpLazy(label);
+    //     this.writeLn(`}`);
+    // }
 
     /**
      * Write JS to this statement, followed by a newline.
@@ -341,13 +326,12 @@ disableToString(CompiledInput.prototype.asBoolean);
 /**
  * @typedef {Object} CompiledProcedure
  * @property {boolean} warp
- * @property {number} label
+ * @property {Function} fn
  */
 
 /**
  * @typedef {Object} CompilationResult
  * @property {Function} startingFunction
- * @property {Jump[]} jumps
  * @property {Object.<string, CompiledProcedure>} procedures
  */
 
@@ -370,15 +354,6 @@ class Compiler {
 
         /** @type {string} */
         this.topBlock = thread.topBlock;
-
-        /** @type {number} */
-        this.labelCount = 0;
-
-        /**
-         * Function jump points.
-         * @type {Jump[]}
-         */
-        this.jumps = [];
 
         /**
          * Compiled procedures.
@@ -474,54 +449,36 @@ class Compiler {
         return source;
     }
 
-    nextLabel() {
-        return this.labelCount++;
-    }
-
-    parseContinuations(script) {
-        const labels = {};
-        let index = 0;
-        let accumulator = 0;
-
-        while (true) {
-            const labelStart = script.indexOf('{{', index);
-            if (labelStart === -1) {
-                break;
-            }
-            const labelEnd = script.indexOf('}}', index);
-            const id = script.substring(labelStart + 2, labelEnd);
-            const length = labelEnd + 2 - labelStart;
-            accumulator += length;
-
-            labels[id] = labelEnd + 2 - accumulator;
-
-            index = labelEnd + 2;
-        }
-
-        const modifiedScript = script.replace(/{{\d+}}/g, '');
-
-        return {
-            labels,
-            script: modifiedScript,
-        };
-    }
-
     compileHat(topBlock) {
-        let script = '';
-        script += '{{' + this.nextLabel() + '}}';
-        script += this.compileStack(topBlock);
-        script += 'end();';
-
-        const parseResult = this.parseContinuations(script);
-        const parsedScript = parseResult.script;
-
-        const startingLabelCount = this.jumps.length;
-        for (const label of Object.keys(parseResult.labels)) {
-          this.jumps[label] = execute.createContinuation(this, parsedScript.slice(parseResult.labels[label]));
+        let script = '(function*(C) {\n';
+        if (this.isWarp) {
+            script += 'thread.warp++;\n';
+        } else {
+            script += 'if (thread.warp) thread.warp++;\n';
         }
+        script += this.compileStack(topBlock);
+        if (this.isWarp) {
+            script += 'thread.warp--;\n';
+        } else {
+            script += 'debugger;\n';
+            script += 'if (thread.warp) thread.warp--; if (thread.warp === 0) yield;\n';
+        }
+        script += '\n});';
+        // script += 'end();';
+
+        // const parseResult = this.parseContinuations(script);
+        // const parsedScript = parseResult.script;
+
+        // const startingLabelCount = this.jumps.length;
+        // for (const label of Object.keys(parseResult.labels)) {
+        //   this.jumps[label] = execute.createContinuation(this, parsedScript.slice(parseResult.labels[label]));
+        // }
+
+        const fn = execute.evalCompiledScript(this, script);
 
         log.info(`[${this.target.getName()}] compiled script`, script);
-        return startingLabelCount;
+
+        return fn;
     }
 
     /**
@@ -568,17 +525,19 @@ class Compiler {
                     }
                 }
 
-                const procedureLabel = this.compileHat(bodyStart);
+                this.isWarp = isWarp;
+
+                const procedureFn = this.compileHat(bodyStart);
+
                 this.procedures[procedureCode] = {
                     warp: isWarp,
-                    label: procedureLabel,
+                    fn: procedureFn,
                 };
             }
         }
 
         return {
-            jumps: this.jumps,
-            startingFunction: this.jumps[startingFunction],
+            startingFunction: startingFunction,
             procedures: this.procedures,
         };
     }

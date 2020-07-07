@@ -5,62 +5,62 @@ const Timer = require('../util/timer');
 // The JSDoc annotations define the function's contract.
 // Most of these functions are only used at runtime by generated scripts. Despite what your editor may say, they are not unused.
 
-/**
- * Immediately jump to a label.
- * @param {number} id The label to jump to.
- */
-const jump = (id) => {
-    immediate = thread.jumps[id];
-};
+// /**
+//  * Immediately jump to a label.
+//  * @param {number} id The label to jump to.
+//  */
+// const jump = (id) => {
+//     immediate = thread.jumps[id];
+// };
 
-/**
- * Jump to a label.
- * If in warp mode, this will be instant (like jump())
- * Otherwise, this jump will occur in the next tick loop.
- * @param {number} id The label to jump to.
- */
-const jumpLazy = (id) => {
-    if (thread.warp) {
-        jump(id);
-    } else {
-        thread.fn = thread.jumps[id];
-    }
-};
+// /**
+//  * Jump to a label.
+//  * If in warp mode, this will be instant (like jump())
+//  * Otherwise, this jump will occur in the next tick loop.
+//  * @param {number} id The label to jump to.
+//  */
+// const jumpLazy = (id) => {
+//     if (thread.warp) {
+//         jump(id);
+//     } else {
+//         thread.fn = thread.jumps[id];
+//     }
+// };
 
-/**
- * Call into a procedure.
- * @param {string} procedureCode The procedure's name
- * @param {*} args The arguments to pass to the procedure.
- * @param {number} resume The label to return to when the procedure completes.
- */
-const call = (procedureCode, args, resume) => {
-    thread.callStack.push(thread.call);
-    thread.call = {
-        args,
-        resume,
-    };
-    // TODO: check recursion
-    const procedure = thread.procedures[procedureCode];
-    if (procedure.warp || thread.warp) {
-        thread.warp++;
-    }
-    jump(procedure.label);
-};
+// /**
+//  * Call into a procedure.
+//  * @param {string} procedureCode The procedure's name
+//  * @param {*} args The arguments to pass to the procedure.
+//  * @param {number} resume The label to return to when the procedure completes.
+//  */
+// const call = (procedureCode, args, resume) => {
+//     thread.callStack.push(thread.call);
+//     thread.call = {
+//         args,
+//         resume,
+//     };
+//     // TODO: check recursion
+//     const procedure = thread.procedures[procedureCode];
+//     if (procedure.warp || thread.warp) {
+//         thread.warp++;
+//     }
+//     jump(procedure.label);
+// };
 
-/**
- * End a script or procedure call.
- */
-const end = () => {
-    if (thread.callStack.length) {
-        jump(thread.call.resume);
-        if (thread.warp) {
-            thread.warp--;
-        }
-        thread.call = thread.callStack.pop();
-    } else {
-        retire();
-    }
-};
+// /**
+//  * End a script or procedure call.
+//  */
+// const end = () => {
+//     if (thread.callStack.length) {
+//         jump(thread.call.resume);
+//         if (thread.warp) {
+//             thread.warp--;
+//         }
+//         thread.call = thread.callStack.pop();
+//     } else {
+//         retire();
+//     }
+// };
 
 /**
  * Start hats by opcode.
@@ -353,11 +353,11 @@ const mod = (n, modulus) => {
     return result;
 };
 
-/**
- * If set, the executor will immediately start executing this function when the current function returns.
- * @type {Function}
- */
-var immediate;
+// /**
+//  * If set, the executor will immediately start executing this function when the current function returns.
+//  * @type {Function}
+//  */
+// var immediate;
 /**
  * The currently running thread.
  * @type {Thread}
@@ -377,13 +377,19 @@ const execute = (_thread) => {
     thread = _thread;
     target = thread.target;
 
-    _thread.fn();
+    _thread.generator.next();
+    
+    // while (_thread.warp) {
+    //     _thread.generator.next();
+    // }
 
-    while (immediate) {
-        var fn = immediate;
-        immediate = null;
-        fn();
-    }
+    // _thread.fn();
+
+    // while (immediate) {
+    //     var fn = immediate;
+    //     immediate = null;
+    //     fn();
+    // }
 };
 
 /**
@@ -404,73 +410,6 @@ const evalCompiledScript = (compiler, _source) => {
     return eval(_source);
 };
 
-const createContinuation = (compiler, source) => {
-    // TODO: optimize, refactor
-    // TODO: support more than just "} else {"
-    // TODO: this is something that definitely deserves unit tests
-    var result = '(function continuation() {\n';
-    var brackets = 0;
-    var delBrackets = 0;
-    var shouldDelete = false;
-    var here = 0;
-    var length = source.length;
-    while (here < length) {
-        var i = source.indexOf('{', here);
-        var j = source.indexOf('}', here);
-        var k = source.indexOf('return;', here);
-        if (k === -1) k = length;
-        if (i === -1 && j === -1) {
-            if (!shouldDelete) {
-                result += source.slice(here, k);
-            }
-            break;
-        }
-        if (i === -1) i = length;
-        if (j === -1) j = length;
-        if (shouldDelete) {
-            if (i < j) {
-                delBrackets++;
-                here = i + 1;
-            } else {
-                delBrackets--;
-                if (!delBrackets) {
-                    shouldDelete = false;
-                }
-                here = j + 1;
-            }
-        } else {
-            if (brackets === 0 && k < i && k < j) {
-                result += source.slice(here, k);
-                break;
-            }
-            if (i < j) {
-                result += source.slice(here, i + 1);
-                brackets++;
-                here = i + 1;
-            } else {
-                result += source.slice(here, j);
-                here = j + 1;
-                if (source.substr(j, 8) === '} else {') {
-                    if (brackets > 0) {
-                        result += '} else {';
-                        here = j + 8;
-                    } else {
-                        shouldDelete = true;
-                        delBrackets = 0;
-                    }
-                } else {
-                    if (brackets > 0) {
-                        result += '}';
-                        brackets--;
-                    }
-                }
-            }
-        }
-    }
-    result += '})';
-    return evalCompiledScript(compiler, result);
-};
-
-execute.createContinuation = createContinuation;
+execute.evalCompiledScript = evalCompiledScript;
 
 module.exports = execute;
