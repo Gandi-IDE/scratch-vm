@@ -282,7 +282,7 @@ const listDelete = (list, idx) => {
  */
 const listContains = (list, item) => {
     // TODO: evaluate whether indexOf is worthwhile here
-    if (list.value.indexOf(item) !== 0) {
+    if (list.value.indexOf(item) !== -1) {
         return true;
     }
     for (let i = 0; i < list.value.length; i++) {
