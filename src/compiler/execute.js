@@ -21,7 +21,7 @@ const endCall = () => {
  * @returns {Array} A list of threads that were started.
  */
 const startHats = (requestedHat, optMatchFields) => {
-    const threads = target.runtime.startHats(requestedHat, optMatchFields, undefined);
+    const threads = thread.target.runtime.startHats(requestedHat, optMatchFields, undefined);
     return threads;
 };
 
@@ -169,7 +169,7 @@ const compare = (v1, v2) => {
  */
 const ioQuery = (device, func, args) => {
     // We will assume that the device always exists.
-    const devObject = target.runtime.ioDevices[device];
+    const devObject = thread.target.runtime.ioDevices[device];
     return devObject[func].apply(devObject, args);
 };
 
@@ -310,11 +310,6 @@ const mod = (n, modulus) => {
  * @type {Thread}
  */
 var thread;
-/**
- * The target of the current thread.
- * @type {Target}
- */
-var target;
 
 /**
  * Step a compiled thread.
@@ -322,7 +317,6 @@ var target;
  */
 const execute = (_thread) => {
     thread = _thread;
-    target = thread.target;
 
     var r = _thread.generator.next();
     if (r.done) {
