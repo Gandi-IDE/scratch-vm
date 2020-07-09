@@ -270,7 +270,7 @@ const listDelete = (list, idx) => {
     if (index === -1) {
         return;
     }
-    list.value.splice(index - 1, 1);
+    list.value.splice(index, 1);
     list._monitorUpToDate = false;
 };
 
