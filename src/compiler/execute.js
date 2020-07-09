@@ -252,7 +252,7 @@ const listInsert = (list, idx, value) => {
     if (index === -1) {
         return;
     }
-    list.value.splice(index - 1, 0, value);
+    list.value.splice(index, 0, value);
     list._monitorUpToDate = false;
 };
 
