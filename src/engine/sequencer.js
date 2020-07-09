@@ -361,6 +361,10 @@ class Sequencer {
         thread.stackFrame = [];
         thread.requestScriptGlowInFrame = false;
         thread.status = Thread.STATUS_DONE;
+        if (thread.isCompiled) {
+            thread.procedures = {};
+            thread.generator = null;
+        }
     }
 }
 
