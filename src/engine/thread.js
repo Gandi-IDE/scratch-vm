@@ -1,4 +1,3 @@
-const Compiler = require('../compiler/compiler');
 const log = require('../util/log');
 
 /**
@@ -426,6 +425,8 @@ class Thread {
      * Attempt to compile this thread.
      */
     tryCompile() {
+        const Compiler = require('../compiler/compiler');
+
         const blocks = this.target.blocks;
         const topBlock = this.topBlock;
 

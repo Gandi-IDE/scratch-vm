@@ -6,7 +6,11 @@ class CompatibilityLayerBlockUtility extends BlockUtility {
     }
 
     startBranch() {
-        throw new Error('startBranch is not supported on this BlockUtility');
+        throw new Error('startBranch is not supported by this BlockUtility');
+    }
+
+    startProcedure() {
+        throw new Error('startProcedure is not supported by this BlockUtility');
     }
 }
 

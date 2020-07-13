@@ -1,5 +1,6 @@
 const Thread = require('../engine/thread');
 const Timer = require('../util/timer');
+const log = require('../util/log');
 
 const CompatibilityLayerBlockUtility = require('./compat-block-utility');
 // single instance used for compatibility layer execution
@@ -31,7 +32,6 @@ const startHats = (requestedHat, optMatchFields) => {
 
 /**
  * Implements "thread waiting", where scripts are halted until all the scripts have finished executing.
- * This is a generator, yield* into it to use it.
  * @param {Array} threads The list of threads.
  */
 const waitThreads = function*(threads) {
@@ -67,16 +67,69 @@ const waitThreads = function*(threads) {
 };
 
 /**
+ * Wait until a Promise resolves or rejects before continuing.
+ * @param {Promise} promise The promise to wait for.
+ * @returns {*} the value that the promise resolves to, otherwise undefined if the promise rejects
+ */
+const waitPromise = function*(promise) {
+    // TODO: there's quite a lot going on in engine/execute.js, we should see how much of that matters to us
+
+    const _thread = thread;
+    let returnValue = undefined;
+
+    promise
+        .then((value) => {
+            returnValue = value;
+            _thread.status = Thread.STATUS_RUNNING;
+        })
+        .catch((error) => {
+            _thread.status = Thread.STATUS_RUNNING;
+            log.warn('Promise rejected in compiled script:', error);
+        });
+
+    // enter STATUS_PROMISE_WAIT and yield, this will stop script execution until the promise handlers reset the thread status
+    thread.status = Thread.STATUS_PROMISE_WAIT;
+    yield;
+
+    return returnValue;
+};
+
+/**
+ * Execute a scratch-vm primitive.
  * @param {*} inputs The inputs to pass to the block.
+ * @param {function} blockFunction The primitive's function.
  * @returns {*} the value returned by the block, if any.
  */
-const executeInCompatibilityLayer = function*(inputs, primMethod, extensionObj) {
-    compatibilityLayerBlockUtility.thread = thread;
-    compatibilityLayerBlockUtility.sequencer = thread.target.runtime.sequencer;
-    var returnValue = primMethod.call(extensionObj, inputs, compatibilityLayerBlockUtility);
-    if (thread.status !== 0) {
-        // thread was yielded, TODO
+const executeInCompatibilityLayer = function*(inputs, blockFunction) {
+    const _thread = thread;
+
+    const executeBlock = () => {
+        compatibilityLayerBlockUtility.thread = _thread;
+        compatibilityLayerBlockUtility.sequencer = thread.target.runtime.sequencer;
+        return blockFunction(inputs, compatibilityLayerBlockUtility);
+    };
+
+    const isPromise = (value) => {
+        // see engine/execute.js
+        return (
+            value !== null &&
+            typeof value === 'object' &&
+            typeof value.then === 'function'
+        );
+    };
+
+    let returnValue = executeBlock();
+
+    if (isPromise(returnValue)) {
+        return yield* waitPromise(returnValue);
     }
+
+    while (_thread.status === Thread.STATUS_YIELD || _thread.status === Thread.STATUS_YIELD_TICK) {
+        yield;
+        _thread.status = Thread.STATUS_RUNNING;
+        returnValue = executeBlock();
+    }
+
     return returnValue;
 };
 

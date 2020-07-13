@@ -51,7 +51,7 @@ const call = /** @param {StatementUtil} util */ (util) => {
                 value = `"${util.safe(defaultValue)}"`;
             }
         }
-        util.write(`"${util.safe(paramNames[i])}": ${value},`);
+        util.write(`"${util.safe(paramNames[i])}":${value},`);
     }
 
     util.writeLn(`});`);

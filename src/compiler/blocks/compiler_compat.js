@@ -1,24 +1,15 @@
 const { BlockUtil, InputUtil, StatementUtil, CompiledInput } = require('../compiler');
 
-/**
- * @typedef {Object} CompatInfo
- * @property {string} extension
- */
+const statements = [
+    'motion_glideto',
+    'sound_play',
+    'sound_playuntildone',
+    'sensing_askandwait',
+];
 
-/**
- * @type {Object.<string, CompatInfo>}
- */
-const statements = {
-    sound_play: {
-        extension: 'scratch3_sound',
-    },
-};
-
-const inputs = {
-    sound_volume: {
-        extension: 'scratch3_sound',
-    },
-};
+const inputs = [
+    'sound_volume',
+];
 
 /**
  * @returns {Object.<string, (util: StatementUtil) => void>}
@@ -26,7 +17,7 @@ const inputs = {
 module.exports.getStatements = () => {
     /** @type {Object.<string, (util: StatementUtil) => void>} */
     const result = {};
-    for (const statement of Object.keys(statements)) {
+    for (const statement of statements) {
         result[statement] = statementCompat;
     }
     return result;
@@ -38,7 +29,7 @@ module.exports.getStatements = () => {
 module.exports.getInputs = () => {
     /** @type {Object.<string, (util: InputUtil) => CompiledInput>} */
     const result = {};
-    for (const input of Object.keys(inputs)) {
+    for (const input of inputs) {
         result[input] = inputCompat;
     }
     return result;
@@ -46,30 +37,27 @@ module.exports.getInputs = () => {
 
 /**
  * @param {BlockUtil} util
- * @param {CompatInfo} data
  */
-const generateCompatCall = (util, data) => {
+const generateCompatCall = (util) => {
     const opcode = util.opcode;
     const inputNames = util.allInputs();
-    const extensionReference = `runtime.ext_${data.extension}`;
 
     let result = 'yield* executeInCompatibilityLayer({';
     for (const inputName of inputNames) {
         const compiledInput = util.input(inputName);
-        result += `"${util.safe(inputName)}": ${compiledInput},`;
+        result += `"${util.safe(inputName)}":${compiledInput},`;
     }
     result += '}, ';
-    result += `${extensionReference}.getPrimitives()["${util.safe(opcode)}"], `; // TODO: statically compile, support extensions, etc.
-    result += `${extensionReference}`;
-    result += `)`; // no semicolon here: that breaks inputs
+    result += `runtime.getOpcodeFunction("${util.safe(opcode)}")`;
+    result += `)`; // no semicolon here: that would break inputs
 
     return result;
 };
 
 const statementCompat = /** @param {StatementUtil} util */ (util) => {
-    util.writeLn(generateCompatCall(util, statements[util.opcode]) + ';');
+    util.writeLn(generateCompatCall(util) + ';');
 };
 
 const inputCompat = /** @param {InputUtil} util */ (util) => {
-    return util.unknown(generateCompatCall(util, inputs[util.opcode]));
+    return util.unknown(generateCompatCall(util));
 };

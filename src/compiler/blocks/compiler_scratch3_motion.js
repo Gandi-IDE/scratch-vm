@@ -27,6 +27,7 @@ module.exports.getInputs = () => {
         motion_direction: getDirection,
         motion_xposition: getX,
         motion_yposition: getY,
+        motion_glideto_menu: glideToMenu,
     };
 };
 
@@ -97,4 +98,8 @@ const setRotationStyle = /** @param {StatementUtil} util */ (util) => {
 
 const getDirection = /** @param {InputUtil} util */ (util) => {
     return util.number('target.direction');
+};
+
+const glideToMenu = /** @param {InputUtil} util */ (util) => {
+    return util.fieldString('TO');
 };
