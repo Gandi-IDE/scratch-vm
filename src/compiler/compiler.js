@@ -14,13 +14,14 @@ const defaultExtensions = [
     require('./blocks/compiler_natives'),
     require('./blocks/compiler_scratch3_motion'),
     require('./blocks/compiler_scratch3_looks'),
-    require('./blocks/compiler_scratch3_sounds'),
+    require('./blocks/compiler_scratch3_sound'),
     require('./blocks/compiler_scratch3_event'),
     require('./blocks/compiler_scratch3_control'),
     require('./blocks/compiler_scratch3_sensing'),
     require('./blocks/compiler_scratch3_operators'),
     require('./blocks/compiler_scratch3_data'),
     require('./blocks/compiler_scratch3_procedures'),
+    require('./blocks/compiler_compat'),
     // TODO: do not load extensions immediately
     require('./extensions/compiler_pen'),
 ];
@@ -99,6 +100,14 @@ class BlockUtil {
     }
 
     /**
+     * The block's opcode.
+     * @type {string}
+     */
+    get opcode() {
+        return this.block.opcode;
+    }
+
+    /**
      * Compile an input of this block.
      * @param {string} name The name of the input. (CONDITION, VALUE, etc.)
      * @returns {CompiledInput}
@@ -116,6 +125,14 @@ class BlockUtil {
      */
     hasInput(name) {
         return this.block.inputs.hasOwnProperty(name) && this.block.inputs[name].block !== null;
+    }
+
+    /**
+     * Get the name of all inputs in this block.
+     * @returns {string[]}
+     */
+    allInputs() {
+        return Object.keys(this.block.inputs);
     }
 
     /**
@@ -148,9 +165,7 @@ class BlockUtil {
             .replace(/'/g, '\\\'')
             .replace(/"/g, '\\"')
             .replace(/\n/g, '\\n')
-            .replace(/\r/g, '\\r')
-            .replace(/\{/g, '\\x7b')
-            .replace(/\}/g, '\\x7d');
+            .replace(/\r/g, '\\r');
     }
 }
 
@@ -201,9 +216,7 @@ class StatementUtil extends BlockUtil {
      * @param {string} threads Threads to wait for, should be a call to startHats()
      */
     waitUntilThreadsComplete(threads) {
-        const v = this.var();
-        this.writeLn(`var ${v} = ${threads};`);
-        this.writeLn(`while (waitThreads(${v})) yield;`);
+        this.writeLn(`yield* waitThreads(${threads});`);
     }
 
     /**

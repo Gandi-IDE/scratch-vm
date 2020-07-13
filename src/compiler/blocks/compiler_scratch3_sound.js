@@ -14,6 +14,10 @@ module.exports.getStatements = () => {
  */
 module.exports.getInputs = () => {
     return {
-
+        sound_sounds_menu: soundsMenu,
     };
+};
+
+const soundsMenu = /** @param {InputUtil} util */ (util) => {
+    return util.fieldString('SOUND_MENU');
 };

@@ -1,6 +1,10 @@
 const Thread = require('../engine/thread');
 const Timer = require('../util/timer');
 
+const CompatibilityLayerBlockUtility = require('./compat-block-utility');
+// single instance used for compatibility layer execution
+const compatibilityLayerBlockUtility = new CompatibilityLayerBlockUtility();
+
 // All the functions defined here will be available to compiled scripts.
 // The JSDoc annotations define the function's contract.
 // Most of these functions are only used at runtime by generated scripts. Despite what your editor may say, they are not unused.
@@ -27,38 +31,53 @@ const startHats = (requestedHat, optMatchFields) => {
 
 /**
  * Implements "thread waiting", where scripts are halted until all the scripts have finished executing.
- * Threads are considered "active" if they are still in the thread list, even if they have STATUS_DONE.
- * The current thread's status may be changed to STATUS_YIELD_TICK if all active threads are waiting.
+ * This is a generator, yield* into it to use it.
  * @param {Array} threads The list of threads.
- * @returns {boolean} true if the script should keep waiting on threads to complete
  */
-const waitThreads = (threads) => {
+const waitThreads = function*(threads) {
     const runtime = thread.target.runtime;
 
-    // determine whether any threads are running
-    var anyRunning = false;
-    for (var i = 0; i < threads.length; i++) {
-        if (runtime.threads.indexOf(threads[i]) !== -1) {
-            anyRunning = true;
-            break;
+    while (true) {
+        // determine whether any threads are running
+        var anyRunning = false;
+        for (var i = 0; i < threads.length; i++) {
+            if (runtime.threads.indexOf(threads[i]) !== -1) {
+                anyRunning = true;
+                break;
+            }
         }
-    }
-    if (!anyRunning) {
-        return false;
-    }
-
-    var allWaiting = true;
-    for (var i = 0; i < threads.length; i++) {
-        if (!runtime.isWaitingThread(threads[i])) {
-            allWaiting = false;
-            break;
+        if (!anyRunning) {
+            // all threads are finished, can resume
+            return;
         }
-    }
-    if (allWaiting) {
-        thread.status = 3; // STATUS_YIELD_TICK
-    }
 
-    return true;
+        var allWaiting = true;
+        for (var i = 0; i < threads.length; i++) {
+            if (!runtime.isWaitingThread(threads[i])) {
+                allWaiting = false;
+                break;
+            }
+        }
+        if (allWaiting) {
+            thread.status = 3; // STATUS_YIELD_TICK
+        }
+
+        yield;
+    }
+};
+
+/**
+ * @param {*} inputs The inputs to pass to the block.
+ * @returns {*} the value returned by the block, if any.
+ */
+const executeInCompatibilityLayer = function*(inputs, primMethod, extensionObj) {
+    compatibilityLayerBlockUtility.thread = thread;
+    compatibilityLayerBlockUtility.sequencer = thread.target.runtime.sequencer;
+    var returnValue = primMethod.call(extensionObj, inputs, compatibilityLayerBlockUtility);
+    if (thread.status !== 0) {
+        // thread was yielded, TODO
+    }
+    return returnValue;
 };
 
 /**
@@ -335,7 +354,12 @@ var targetVariables = target.variables;
 return ${source};
 });`;
 
-    return eval(source);
+    try {
+        return eval(source);
+    } catch (e) {
+        console.error('was unable to compile script', source);
+        throw e;
+    }
 };
 
 execute.createScriptFactory = createScriptFactory;
