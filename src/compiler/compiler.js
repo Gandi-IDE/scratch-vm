@@ -38,12 +38,16 @@ defaultExtensions.forEach((ext) => {
 /**
  * Variable pool used for factory function names.
  */
-const factoryVariablePool = new VariablePool('f');
+const factoryNameVariablePool = new VariablePool('f');
 
 /**
  * Variable pool used for generated script names.
  */
-const generatorVariablePool = new VariablePool('g');
+const generatorNameVariablePool = new VariablePool('g');
+
+/**
+ * @typedef {import('../sprites/rendered-target')} RenderedTarget
+ */
 
 /**
  * @typedef {function} CompiledScript
@@ -56,19 +60,34 @@ const generatorVariablePool = new VariablePool('g');
  */
 
 class ScriptCompiler {
-    constructor(target, topBlock) {
-        this.target = target;
-
-        this.runtime = this.target.runtime;
-
-        this.blocks = this.target.blocks;
-
-        this.isWarp = false;
-
-        this.isProcedure = false;
+    /**
+     * @param {Thread} thread
+     * @param {string} topBlock
+     */
+    constructor(thread, topBlock) {
+        /** @type {RenderedTarget} */
+        this.target = thread.target;
 
         this.topBlock = topBlock;
 
+        this.blocks = thread.blockContainer;
+
+        this.runtime = this.target.runtime;
+
+        /**
+         * Whether this script is explicitly in warp mode.
+         */
+        this.isWarp = false;
+
+        /**
+         * Whether this script is a procedure definition.
+         */
+        this.isProcedure = false;
+
+        /**
+         * Set of the names of procedures that this procedure requires.
+         * @type {Set.<string>}
+         */
         this.requiredProcedures = new Set();
 
         /**
@@ -80,18 +99,15 @@ class ScriptCompiler {
          */
         this.factoryVariables = {};
 
-        this.primaryVariablePool = new VariablePool('a');
-
+        /**
+         * Variable pool used for factory variables.
+         */
         this.factoryVariablePool = new VariablePool('b');
-    }
 
-    /**
-     * Ask the compiler to queue the compilation of a procedure.
-     * This will do nothing if the procedure is already compiled or queued.
-     * @param {string} procedureCode The procedure's code
-     */
-    dependProcedure(procedureCode) {
-        this.requiredProcedures.add(procedureCode);
+        /**
+         * Variable pool used for regular script variables.
+         */
+        this.primaryVariablePool = new VariablePool('a');
     }
 
     /**
@@ -143,53 +159,57 @@ class ScriptCompiler {
         return source;
     }
 
-    compile() {
-        const scriptName = generatorVariablePool.next();
-        const factoryName = factoryVariablePool.next();
-
-        let scriptFunction = '';
-
-        // prepare the script
-        scriptFunction += `function* ${scriptName}(`;
-        // Procedures accept arguments
-        if (this.isProcedure) {
-            scriptFunction += 'C';
-        }
-        scriptFunction += ') {\n';
-
-        // Increase warp level
-        if (this.isWarp) {
-            scriptFunction += 'thread.warp++;\n';
-        } else if (this.isProcedure) {
-            scriptFunction += 'if (thread.warp) thread.warp++;\n';
-        }
-
-        scriptFunction += this.compileStack(this.topBlock);
-
-        if (this.isProcedure) {
-            scriptFunction += 'endCall();\n';
-        } else {
-            scriptFunction += 'retire();\n';
-        }
-
-        scriptFunction += '}';
+    /**
+     * Generate the JS to pass into eval() to create the factory function.
+     * @param {string} stack The generated script from compileStack
+     * @private
+     * @returns {string}
+     */
+    createScriptFactory(stack) {
+        const scriptName = generatorNameVariablePool.next();
+        const factoryName = factoryNameVariablePool.next();
 
         let script = '';
 
-        // prepare the factory
+        // Factory
         script += `(function ${factoryName}(target) { `;
-        script += 'var runtime = target.runtime; ';
-        script += 'var stage = runtime.getTargetForStage();\n';
-
-        // insert factory variables
+        script += 'const runtime = target.runtime; ';
+        script += 'const stage = runtime.getTargetForStage();\n';
         for (const data of Object.keys(this.factoryVariables)) {
             const varName = this.factoryVariables[data];
-            script += `var ${varName} = ${data};\n`;
+            script += `const ${varName} = ${data};\n`;
         }
 
-        // return an instance of the function
-        script += `return ${scriptFunction};\n });`;
+        // Generated script
+        script += `return function* ${scriptName}(`;
+        if (this.isProcedure) {
+            // procedures accept single argument "C"
+            script += 'C';
+        }
+        script += ') {\n';
 
+        if (this.isWarp) {
+            script += 'thread.warp++;\n';
+        } else if (this.isProcedure) {
+            script += 'if (thread.warp) thread.warp++;\n';
+        }
+
+        script += stack;
+
+        if (this.isProcedure) {
+            script += 'endCall();\n';
+        } else {
+            script += 'retire();\n';
+        }
+
+        script += '}; })';
+
+        return script;
+    }
+
+    compile() {
+        const compiledStack = this.compileStack(this.topBlock);
+        const script = this.createScriptFactory(compiledStack);
         const fn = execute.createScriptFactory(script);
         log.info(`[${this.target.getName()}] compiled script`, script);
         return fn;
@@ -214,20 +234,17 @@ class Compiler {
      * @param {Thread} thread
      */
     constructor(thread) {
+        this.thread = thread;
+
         /** @type {RenderedTarget} */
         this.target = thread.target;
-        if (!this.target) {
-            throw new Error('Missing target');
-        }
+        if (!this.target) throw new Error('no target');
 
         /** @type {Runtime} */
         this.runtime = this.target.runtime;
 
         /** @type {Blocks} */
-        this.blocks = this.target.blocks;
-
-        /** @type {string} */
-        this.topBlock = thread.topBlock;
+        this.blocks = this.thread.blockContainer;
 
         /**
          * Compiled procedures.
@@ -255,13 +272,16 @@ class Compiler {
 
     /**
      * Compile a script.
-     * @param {string} topBlock The ID of the top block of the script. This should not be the ID of the hat block.
+     * @param {string} topBlock The ID of the top block of the script. This block must not be a hat.
+     * @param {object} opts
+     * @param {boolean} [opts.isWarp]
+     * @param {boolean} [opts.isProcedure]
      * @returns {CompiledScript}
      */
-    compileScript(topBlock, { isProcedure, isWarp }) {
-        const compiler = new ScriptCompiler(this.target, topBlock);
-        compiler.isWarp = isWarp;
-        compiler.isProcedure = isProcedure;
+    compileScript(topBlock, opts) {
+        const compiler = new ScriptCompiler(this.thread, topBlock);
+        compiler.isWarp = !!opts.isWarp;
+        compiler.isProcedure = !!opts.isProcedure;
         const fn = compiler.compile();
 
         for (const procedureCode of compiler.requiredProcedures) {
@@ -285,27 +305,39 @@ class Compiler {
     }
 
     /**
+     * @param {string} id
+     */
+    getTopBlock(id) {
+        let block = this.blocks.getBlock(id);
+        if (block) return block;
+
+        block = this.runtime.flyoutBlocks.getBlock(id);
+        if (block) return block;
+
+        throw new Error('cannot find top block: ' + id);
+    }
+
+    /**
      * @returns {CompilationResult}
      */
     compile() {
         const target = this.target;
         if (!target) throw new Error('no target');
 
-        const topBlock = this.target.blocks.getBlock(this.topBlock);
-        // TODO: figure out how to run blocks from the flyout, they have their ID set to their opcode
-        if (!topBlock) throw new Error('top block is missing');
+        const topBlock = this.getTopBlock(this.thread.topBlock);
 
-        // Compile the initial script to be started.
-        // We skip hat blocks, as they do not have code that can be run.
+        // If the top block is a hat, advance to its child.
         let startingBlock;
         if (this.runtime.getIsHat(topBlock.opcode)) {
             if (this.runtime.getIsEdgeActivatedHat(topBlock.opcode)) {
+                // Edge-activated hats require special behavior.
                 throw new Error('Not compiling an edge-activated hat');
             }
             startingBlock = topBlock.next;
         } else {
-            startingBlock = this.topBlock;
+            startingBlock = this.thread.topBlock;
         }
+
         const startingFunction = this.compileScript(startingBlock, { isProcedure: false, isWarp: false });
 
         // Compile any required procedures.

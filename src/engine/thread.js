@@ -427,6 +427,7 @@ class Thread {
      * Attempt to compile this thread.
      */
     tryCompile() {
+        // importing Compiler down here avoids circular dependency issues
         const Compiler = require('../compiler/compiler');
 
         this.triedToCompile = true;
