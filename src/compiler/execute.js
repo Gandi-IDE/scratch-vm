@@ -395,9 +395,7 @@ const execute = (_thread) => {
 const createScriptFactory = (_source, compiler) => {
     let source = `(function f(target) {
 var runtime = target.runtime;
-var stage = runtime.getTargetForStage();
-var stageVariables = stage.variables;
-var targetVariables = target.variables;`;
+var stage = runtime.getTargetForStage();\n`;
 
     for (const data of Object.keys(compiler.factoryVariables)) {
         const varName = compiler.factoryVariables[data];
