@@ -125,7 +125,7 @@ const stop = /** @param {StatementUtil} util */ (util) => {
     } else if (STOP_OPTION === 'other scripts in sprite' || STOP_OPTION === 'other scripts in stage') {
         util.writeLn('runtime.stopForTarget(target, thread);');
     } else if (STOP_OPTION === 'this script') {
-        if (util.hints.isProcedure) {
+        if (util.compiler.isProcedure) {
             util.writeLn('endCall(); return;');
         } else {
             util.retire();

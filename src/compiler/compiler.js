@@ -4,7 +4,6 @@ const Runtime = require('../engine/runtime');
 const Blocks = require('../engine/blocks');
 const RenderedTarget = require('../sprites/rendered-target');
 
-const CompilerHints = require('./hints');
 const VariablePool = require('./variable-pool');
 const execute = require('./execute');
 
@@ -69,7 +68,7 @@ const disableToString = (obj) => {
 
 class BlockUtil {
     /**
-     * @param {Compiler} compiler
+     * @param {ScriptCompiler} compiler
      */
     constructor(compiler, block) {
         this.compiler = compiler;
@@ -104,13 +103,6 @@ class BlockUtil {
      */
     get isStage() {
         return !!this.target.isStage;
-    }
-
-    /**
-     * Get the compiler hints.
-     */
-    get hints() {
-        return this.compiler.hints;
     }
 
     /**
@@ -228,7 +220,7 @@ class StatementUtil extends BlockUtil {
      * Does not change thread state.
      */
     yieldNotWarp() {
-        if (!this.hints.isWarp) {
+        if (!this.compiler.isWarp) {
             this.writeLn('if (thread.warp === 0) yield;');
         }
     }
@@ -377,32 +369,21 @@ const generatorVariablePool = new VariablePool('g');
  * @property {Object.<string, CompiledScript>} procedures
  */
 
-class Compiler {
-    /**
-     * @param {Thread} thread
-     */
-    constructor(thread) {
-        /** @type {RenderedTarget} */
-        this.target = thread.target;
-        if (!this.target) {
-            throw new Error('Missing target');
-        }
+class ScriptCompiler {
+    constructor(target, topBlock) {
+        this.target = target;
 
-        /** @type {Runtime} */
         this.runtime = this.target.runtime;
 
-        /** @type {Blocks} */
         this.blocks = this.target.blocks;
 
-        /** @type {string} */
-        this.topBlock = thread.topBlock;
+        this.isWarp = false;
 
-        /**
-         * Compiled procedures.
-         * TODO: don't copy all of the already compiled procedures?
-         * @type {Object.<string, CompiledScript>}
-         */
-        this.procedures = Object.assign({}, this.blocks._cache.compiledProcedures);
+        this.isProcedure = false;
+
+        this.topBlock = topBlock;
+
+        this.requiredProcedures = new Set();
 
         /**
          * Factory variables.
@@ -416,29 +397,6 @@ class Compiler {
         this.primaryVariablePool = new VariablePool('a');
 
         this.factoryVariablePool = new VariablePool('b');
-
-        /**
-         * Compiler optimization/behavior hints.
-         * This is set by compileScript.
-         * @type {CompilerHints}
-         */
-        this.hints = undefined;
-
-        /**
-         * Procedures that are queued to be compiled.
-         * Map of procedure code to the ID of the definition block.
-         * @type {Map.<string, string>}
-         * @private
-         */
-        this.uncompiledProcedures = new Map();
-
-        /**
-         * Procedures that are being compiled.
-         * Same structure as uncompiledProcedures.
-         * @type {Map.<string, string>}
-         * @private
-         */
-        this.compilingProcedures = new Map();
     }
 
     /**
@@ -447,20 +405,7 @@ class Compiler {
      * @param {string} procedureCode The procedure's code
      */
     dependProcedure(procedureCode) {
-        if (this.procedures.hasOwnProperty(procedureCode)) {
-            // already compiled
-            return;
-        }
-        if (this.compilingProcedures.has(procedureCode)) {
-            // being compiled
-            return;
-        }
-        if (this.uncompiledProcedures.has(procedureCode)) {
-            // queued to be compiled
-            return;
-        }
-        const definition = this.target.blocks.getProcedureDefinition(procedureCode);
-        this.uncompiledProcedures.set(procedureCode, definition);
+        this.requiredProcedures.add(procedureCode);
     }
 
     /**
@@ -512,16 +457,7 @@ class Compiler {
         return source;
     }
 
-    /**
-     * Compile a script.
-     * @param {string} topBlock The ID of the top block of the script. This should not be the ID of the hat block.
-     * @param {CompilerHints} hints
-     */
-    compileScript(topBlock, hints) {
-        // reset some data
-        this.hints = hints;
-        this.factoryVariables = {};
-
+    compile() {
         const scriptName = generatorVariablePool.next();
         const factoryName = factoryVariablePool.next();
 
@@ -530,21 +466,21 @@ class Compiler {
         // prepare the script
         scriptFunction += `function* ${scriptName}(`;
         // Procedures accept arguments
-        if (hints.isProcedure) {
+        if (this.isProcedure) {
             scriptFunction += 'C';
         }
         scriptFunction += ') {\n';
 
         // Increase warp level
-        if (hints.isWarp) {
+        if (this.isWarp) {
             scriptFunction += 'thread.warp++;\n';
-        } else if (hints.isProcedure) {
+        } else if (this.isProcedure) {
             scriptFunction += 'if (thread.warp) thread.warp++;\n';
         }
 
-        scriptFunction += this.compileStack(topBlock);
+        scriptFunction += this.compileStack(this.topBlock);
 
-        if (hints.isProcedure) {
+        if (this.isProcedure) {
             scriptFunction += 'endCall();\n';
         } else {
             scriptFunction += 'retire();\n';
@@ -585,6 +521,82 @@ class Compiler {
         this.factoryVariables[value] = variableName;
         return variableName;
     }
+}
+
+class Compiler {
+    /**
+     * @param {Thread} thread
+     */
+    constructor(thread) {
+        /** @type {RenderedTarget} */
+        this.target = thread.target;
+        if (!this.target) {
+            throw new Error('Missing target');
+        }
+
+        /** @type {Runtime} */
+        this.runtime = this.target.runtime;
+
+        /** @type {Blocks} */
+        this.blocks = this.target.blocks;
+
+        /** @type {string} */
+        this.topBlock = thread.topBlock;
+
+        /**
+         * Compiled procedures.
+         * TODO: don't copy all of the already compiled procedures?
+         * @type {Object.<string, CompiledScript>}
+         */
+        this.procedures = Object.assign({}, this.blocks._cache.compiledProcedures);
+
+        /**
+         * Procedures that are queued to be compiled.
+         * Map of procedure code to the ID of the definition block.
+         * @type {Map.<string, string>}
+         * @private
+         */
+        this.uncompiledProcedures = new Map();
+
+        /**
+         * Procedures that are being compiled.
+         * Same structure as uncompiledProcedures.
+         * @type {Map.<string, string>}
+         * @private
+         */
+        this.compilingProcedures = new Map();
+    }
+
+    /**
+     * Compile a script.
+     * @param {string} topBlock The ID of the top block of the script. This should not be the ID of the hat block.
+     * @returns {CompiledScript}
+     */
+    compileScript(topBlock, { isProcedure, isWarp }) {
+        const compiler = new ScriptCompiler(this.target, topBlock);
+        compiler.isWarp = isWarp;
+        compiler.isProcedure = isProcedure;
+        const fn = compiler.compile();
+
+        for (const procedureCode of compiler.requiredProcedures) {
+            if (this.procedures.hasOwnProperty(procedureCode)) {
+                // already compiled
+                continue;
+            }
+            if (this.compilingProcedures.has(procedureCode)) {
+                // being compiled
+                continue;
+            }
+            if (this.uncompiledProcedures.has(procedureCode)) {
+                // queued to be compiled
+                continue;
+            }
+            const definition = this.target.blocks.getProcedureDefinition(procedureCode);
+            this.uncompiledProcedures.set(procedureCode, definition);
+        }
+
+        return fn;
+    }
 
     /**
      * @returns {CompilationResult}
@@ -608,7 +620,7 @@ class Compiler {
         } else {
             startingBlock = this.topBlock;
         }
-        const startingFunction = this.compileScript(startingBlock, new CompilerHints());
+        const startingFunction = this.compileScript(startingBlock, { isProcedure: false, isWarp: false });
 
         // Compile any required procedures.
         // As procedures can depend on other procedures, this process may take several iterations.
@@ -633,11 +645,7 @@ class Compiler {
                     }
                 }
 
-                const hints = new CompilerHints();
-                hints.isProcedure = true;
-                hints.isWarp = isWarp;
-
-                const compiledProcedure = this.compileScript(bodyStart, hints);
+                const compiledProcedure = this.compileScript(bodyStart, { isProcedure: true, isWarp: isWarp, });
                 this.procedures[procedureCode] = compiledProcedure;
             }
         }
