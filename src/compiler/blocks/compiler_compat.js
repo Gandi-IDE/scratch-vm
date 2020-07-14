@@ -74,7 +74,7 @@ const generateCompatCall = (util) => {
     const inputNames = util.allInputs();
     const fieldNames = util.allFields();
 
-    let result = 'yield* executeInCompatibilityLayer({';
+    let result = `/* ${opcode} */ yield* executeInCompatibilityLayer({`;
     for (const inputName of inputNames) {
         const compiledInput = util.input(inputName);
         result += `"${util.safe(inputName)}":${compiledInput},`;
@@ -83,9 +83,7 @@ const generateCompatCall = (util) => {
         const fieldValue = util.fieldValueUnsafe(fieldName);
         result += `"${util.safe(fieldName)}":"${util.safe(fieldValue)}",`;
     }
-    result += '}, ';
-    result += `runtime.getOpcodeFunction("${util.safe(opcode)}")`;
-    result += `)`; // no semicolon here: that would break inputs
+    result += `}, runtime.getOpcodeFunction("${util.safe(opcode)}"))`;
 
     return result;
 };
