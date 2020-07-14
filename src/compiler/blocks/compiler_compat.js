@@ -26,9 +26,6 @@ const statements = [
     'looks_thinkforsecs',
     'sensing_setdragmode',
     'motion_pointtowards',
-    'motion_turnleft',
-    'motion_turnright',
-    'motion_movesteps',
 ];
 
 const inputs = [
