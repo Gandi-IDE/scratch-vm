@@ -5,8 +5,6 @@ const { InputUtil, StatementUtil, CompiledInput } = require('../compiler');
  */
 module.exports.getStatements = () => {
     return {
-        looks_changeeffectby: changeEffect,
-        looks_seteffectto: setEffect,
         looks_hide: hide,
         looks_show: show,
         looks_gotofrontback: goToFrontBack,
@@ -29,26 +27,6 @@ module.exports.getInputs = () => {
         looks_costumenumbername: getCostumeNumberName,
         looks_size: getSize,
     };
-};
-
-const changeEffect = /** @param {StatementUtil} util */ (util) => {
-    const EFFECT = util.fieldValueUnsafe('EFFECT').toLowerCase();
-    const CHANGE = util.input('CHANGE');
-    if (!util.target.effects.hasOwnProperty(EFFECT)) {
-        return;
-    }
-    // TODO: clampEffect
-    util.writeLn(`target.setEffect("${EFFECT}", target.effects["${EFFECT}"] + ${CHANGE.asNumber()});`);
-};
-
-const setEffect = /** @param {StatementUtil} util */ (util) => {
-    const EFFECT = util.fieldValueUnsafe('EFFECT').toLowerCase();
-    const VALUE = util.input('VALUE');
-    if (!util.target.effects.hasOwnProperty(EFFECT)) {
-        return;
-    }
-    // TODO: clampEffect
-    util.writeLn(`target.setEffect("${EFFECT}", ${VALUE.asNumber()});`);
 };
 
 const hide = /** @param {StatementUtil} util */ (util) => {

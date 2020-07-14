@@ -23,6 +23,8 @@ const statements = [
     'looks_say',
     'looks_sayforsecs',
     'looks_think',
+    'looks_changeeffectby',
+    'looks_seteffectto',
     'looks_thinkforsecs',
     'sensing_setdragmode',
     'motion_pointtowards',
