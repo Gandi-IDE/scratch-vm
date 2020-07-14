@@ -9,6 +9,6 @@ module.exports = [
     require('./blocks/compiler_scratch3_operators'),
     require('./blocks/compiler_scratch3_data'),
     require('./blocks/compiler_scratch3_procedures'),
+    require('./blocks/compiler_pen'),
     require('./blocks/compiler_compat'),
-    require('./extensions/compiler_pen'),
 ];

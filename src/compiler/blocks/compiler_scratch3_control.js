@@ -1,4 +1,5 @@
-const { InputUtil, StatementUtil, CompiledInput } = require('../compiler');
+const { BlockUtil, InputUtil, StatementUtil } = require('../compiler-util');
+const CompiledInput = require('../input');
 const scratch3_data = require('./compiler_scratch3_data');
 
 /**

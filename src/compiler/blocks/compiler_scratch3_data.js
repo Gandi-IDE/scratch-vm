@@ -1,4 +1,5 @@
-const { InputUtil, StatementUtil, BlockUtil, CompiledInput } = require('../compiler');
+const { BlockUtil, InputUtil, StatementUtil } = require('../compiler-util');
+const CompiledInput = require('../input');
 
 /**
  * @returns {Object.<string, (util: StatementUtil) => void>}

@@ -1,4 +1,5 @@
-const { InputUtil, StatementUtil, CompiledInput } = require('../compiler');
+const { BlockUtil, InputUtil, StatementUtil } = require('../compiler-util');
+const CompiledInput = require('../input');
 const Cast = require('../../util/cast');
 
 /**
