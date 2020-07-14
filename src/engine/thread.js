@@ -190,6 +190,8 @@ class Thread {
 
         this.justReported = null;
 
+        this.triedToCompile = false;
+
         this.isCompiled = false;
 
         // compiler data
@@ -427,13 +429,14 @@ class Thread {
     tryCompile() {
         const Compiler = require('../compiler/compiler');
 
+        this.triedToCompile = true;
+
         const blocks = this.target.blocks;
         const topBlock = this.topBlock;
 
         const cachedResult = blocks.getCompiledScript(topBlock);
-
         if (cachedResult === null) {
-            // cannot be compiled
+            // null means an error was cached, cannot be compiled
             return;
         }
 

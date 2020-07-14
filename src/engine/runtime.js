@@ -1645,6 +1645,9 @@ class Runtime extends EventEmitter {
         newThread.updateMonitor = thread.updateMonitor;
         newThread.blockContainer = thread.blockContainer;
         newThread.pushStack(thread.topBlock);
+        if (thread.triedToCompile) {
+            newThread.tryCompile();
+        }
         const i = this.threads.indexOf(thread);
         if (i > -1) {
             this.threads[i] = newThread;
