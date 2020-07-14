@@ -104,7 +104,7 @@ const waitPromise = function*(promise) {
 const executeInCompatibilityLayer = function*(inputs, blockFunction) {
     // reset the stackframe
     // we only ever use one stackframe at a time, so this shouldn't cause issues
-    thread.stackFrames[thread.stackFrames.length - 1].reuse();
+    thread.stackFrames[thread.stackFrames.length - 1].reuse(thread.warp > 0);
 
     const executeBlock = () => {
         compatibilityLayerBlockUtility.thread = thread;
