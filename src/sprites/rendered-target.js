@@ -263,7 +263,7 @@ class RenderedTarget extends Target {
      * @param {!number} y New Y coordinate, in Scratch coordinates.
      * @param {?boolean} force Force setting X/Y, in case of dragging
      */
-    setXY (x, y, force) {
+    setXY (x, y, force) { // used by compiler
         if (this.isStage) return;
         if (this.dragging && !force) return;
         const oldX = this.x;
@@ -310,7 +310,7 @@ class RenderedTarget extends Target {
      * Set the direction.
      * @param {!number} direction New direction.
      */
-    setDirection (direction) {
+    setDirection (direction) { // used by compiler
         if (this.isStage) {
             return;
         }
@@ -344,7 +344,7 @@ class RenderedTarget extends Target {
      * Set visibility; i.e., whether it's shown or hidden.
      * @param {!boolean} visible True if should be shown.
      */
-    setVisible (visible) {
+    setVisible (visible) { // used by compiler
         if (this.isStage) {
             return;
         }
@@ -363,7 +363,7 @@ class RenderedTarget extends Target {
      * Set size, as a percentage of the costume size.
      * @param {!number} size Size of rendered target, as % of costume size.
      */
-    setSize (size) {
+    setSize (size) { // used by compiler
         if (this.isStage) {
             return;
         }
@@ -409,7 +409,7 @@ class RenderedTarget extends Target {
     /**
      * Clear all graphic effects on this rendered target.
      */
-    clearEffects () {
+    clearEffects () { // used by compiler
         for (const effectName in this.effects) {
             if (!this.effects.hasOwnProperty(effectName)) continue;
             this.effects[effectName] = 0;
@@ -569,7 +569,7 @@ class RenderedTarget extends Target {
      * Update the rotation style.
      * @param {!string} rotationStyle New rotation style.
      */
-    setRotationStyle (rotationStyle) {
+    setRotationStyle (rotationStyle) { // used by compiler
         if (rotationStyle === RenderedTarget.ROTATION_STYLE_NONE) {
             this.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
         } else if (rotationStyle === RenderedTarget.ROTATION_STYLE_ALL_AROUND) {
@@ -614,7 +614,7 @@ class RenderedTarget extends Target {
      * Get full costume list
      * @return {object[]} list of costumes
      */
-    getCostumes () {
+    getCostumes () { // used by compiler
         return this.sprite.costumes;
     }
 
@@ -740,7 +740,7 @@ class RenderedTarget extends Target {
      * @param {string} requestedObject an id for mouse or edge, or a sprite name.
      * @return {boolean} True if the sprite is touching the object.
      */
-    isTouchingObject (requestedObject) {
+    isTouchingObject (requestedObject) { // used by compiler
         if (requestedObject === '_mouse_') {
             if (!this.runtime.ioDevices.mouse) return false;
             const mouseX = this.runtime.ioDevices.mouse.getClientX();
@@ -809,7 +809,7 @@ class RenderedTarget extends Target {
      * @param {Array.<number>} rgb [r,g,b], values between 0-255.
      * @return {Promise.<boolean>} True iff the rendered target is touching the color.
      */
-    isTouchingColor (rgb) {
+    isTouchingColor (rgb) { // used by compiler
         if (this.renderer) {
             return this.renderer.isTouchingColor(this.drawableID, rgb);
         }
@@ -822,7 +822,7 @@ class RenderedTarget extends Target {
      * @param {object} maskRgb {Array.<number>} [r,g,b], values between 0-255.
      * @return {Promise.<boolean>} True iff the color is touching the color.
      */
-    colorIsTouchingColor (targetRgb, maskRgb) {
+    colorIsTouchingColor (targetRgb, maskRgb) { // used by compiler
         if (this.renderer) {
             return this.renderer.isTouchingColor(
                 this.drawableID,
@@ -843,7 +843,7 @@ class RenderedTarget extends Target {
     /**
      * Move to the front layer.
      */
-    goToFront () { // This should only ever be used for sprites
+    goToFront () { // This should only ever be used for sprites // used by compiler
         if (this.renderer) {
             // Let the renderer re-order the sprite based on its knowledge
             // of what layers are present
@@ -856,7 +856,7 @@ class RenderedTarget extends Target {
     /**
      * Move to the back layer.
      */
-    goToBack () { // This should only ever be used for sprites
+    goToBack () { // This should only ever be used for sprites // used by compiler
         if (this.renderer) {
             // Let the renderer re-order the sprite based on its knowledge
             // of what layers are present
@@ -870,7 +870,7 @@ class RenderedTarget extends Target {
      * Move forward a number of layers.
      * @param {number} nLayers How many layers to go forward.
      */
-    goForwardLayers (nLayers) {
+    goForwardLayers (nLayers) { // used by compiler
         if (this.renderer) {
             this.renderer.setDrawableOrder(this.drawableID, nLayers, StageLayering.SPRITE_LAYER, true);
         }
@@ -882,7 +882,7 @@ class RenderedTarget extends Target {
      * Move backward a number of layers.
      * @param {number} nLayers How many layers to go backward.
      */
-    goBackwardLayers (nLayers) {
+    goBackwardLayers (nLayers) { // used by compiler
         if (this.renderer) {
             this.renderer.setDrawableOrder(this.drawableID, -nLayers, StageLayering.SPRITE_LAYER, true);
         }

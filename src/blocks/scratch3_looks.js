@@ -217,7 +217,7 @@ class Scratch3LooksBlocks {
      * @return {undefined} Early return if text is empty string.
      * @private
      */
-    _renderBubble (target) {
+    _renderBubble (target) { // used by compiler
         if (!this.runtime.renderer) return;
 
         const bubbleState = this._getBubbleState(target);
