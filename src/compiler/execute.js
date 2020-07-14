@@ -270,7 +270,7 @@ var listIndex = (index, length) => {
     if (typeof index !== 'number') {
         if (index === 'last') {
             if (length > 0) {
-                return length;
+                return length - 1;
             }
             return -1;
         } else if (index === 'random' || index === '*') {

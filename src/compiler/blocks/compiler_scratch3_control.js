@@ -1,4 +1,5 @@
 const { InputUtil, StatementUtil, CompiledInput } = require('../compiler');
+const scratch3_data = require('./compiler_scratch3_data');
 
 /**
  * @returns {Object.<string, (util: StatementUtil) => void>}
@@ -16,6 +17,7 @@ module.exports.getStatements = () => {
         control_delete_this_clone: deleteClone,
         control_wait_until: waitUntil,
         control_stop: stop,
+        control_for_each: forEach,
     };
 };
 
@@ -136,4 +138,16 @@ const waitUntil = /** @param {StatementUtil} util */ (util) => {
     util.writeLn(`while (!${CONDITION.asBoolean()}) {`);
     util.yieldNotWarp();
     util.writeLn('}');
+};
+
+const forEach = /** @param {StatementUtil} util */ (util) => {
+    const VARIABLE = scratch3_data.variableReference(util);
+    const VALUE = util.input('VALUE');
+    const SUBSTACK = util.substack('SUBSTACK');
+    const index = util.var();
+    util.writeLn(`var ${index} = 0;`);
+    util.writeLn(`while (${index} < ${VALUE.asNumber()}) { ${index}++; ${VARIABLE}.value = ${index};`);
+    util.write(SUBSTACK);
+    util.yieldNotWarp();
+    util.writeLn(`}`);
 };

@@ -48,11 +48,16 @@ module.exports.getInputs = () => {
 const generateCompatCall = (util) => {
     const opcode = util.opcode;
     const inputNames = util.allInputs();
+    const fieldNames = util.allFields();
 
     let result = 'yield* executeInCompatibilityLayer({';
     for (const inputName of inputNames) {
         const compiledInput = util.input(inputName);
         result += `"${util.safe(inputName)}":${compiledInput},`;
+    }
+    for (const fieldName of fieldNames) {
+        const fieldValue = util.fieldValueUnsafe(fieldName);
+        result += `"${util.safe(fieldName)}":"${util.safe(fieldValue)}",`;
     }
     result += '}, ';
     result += `runtime.getOpcodeFunction("${util.safe(opcode)}")`;

@@ -27,11 +27,12 @@ module.exports.getInputs = () => {
 
 const number = /** @param {InputUtil} util */ (util) => {
     const NUM = util.fieldValueUnsafe('NUM');
-    const number = Number(NUM);
-    if (!Number.isNaN(number)) {
-        return util.number('' + number);
+    const number = +NUM;
+    // if the parsed number's stringified form differs from the input text, or if the number is not actually a number, just treat it like a string.
+    if (number.toString() !== NUM || Number.isNaN(number)) {
+        return util.fieldString('NUM');
     }
-    return util.fieldString('NUM');
+    return util.number('' + number);
 };
 
 const text = /** @param {InputUtil} util */ (util) => {
@@ -43,8 +44,9 @@ const text = /** @param {InputUtil} util */ (util) => {
         //  - do not have the same stringified form as the original text
         //    (this would break "letter 4 of 50.00")
         //  - are used by the name of a costume
-        //    (set costume works different on numbers)
+        //    (as set costume works differently when given numbers instead of strings)
         // are not converted.
+        // TODO: might be causing some issues for stage backdrops
         if (textAsNumber.toString() === TEXT && util.target.getCostumeIndexByName(TEXT) === -1) {
             return util.number(TEXT);
         }

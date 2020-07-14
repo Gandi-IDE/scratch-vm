@@ -45,12 +45,12 @@ const readVariableField = /** @param {BlockUtil} util */ (util) => {
  */
 const findVariable = (util, id, name, type) => {
     const target = util.target;
+    const stage = util.stage;
     // Search for it by ID
     if (target.variables.hasOwnProperty(id)) {
         return `targetVariables["${util.safe(id)}"]`;
     }
     if (target.runtime && !target.isStage) {
-        const stage = target.runtime.getTargetForStage();
         if (stage && stage.variables.hasOwnProperty(id)) {
             return `stageVariables["${util.safe(id)}"]`;
         }
@@ -65,7 +65,6 @@ const findVariable = (util, id, name, type) => {
         }
     }
     if (target.runtime && !target.isStage) {
-        const stage = target.runtime.getTargetForStage();
         if (stage) {
             for (const varId in stage.variables) {
                 if (stage.variables.hasOwnProperty(varId)) {
@@ -97,6 +96,10 @@ const listReference = /** @param {BlockUtil} util */ (util) => {
     util.target.lookupOrCreateList(list.id, list.name);
     return findVariable(util, list.id, list.name, 'list');
 };
+
+// Expose these as helpers for other categories of blocks.
+module.exports.variableReference = variableReference;
+module.exports.listReference = listReference;
 
 const getVariable = /** @param {InputUtil} util */ (util) => {
     const variable = variableReference(util);

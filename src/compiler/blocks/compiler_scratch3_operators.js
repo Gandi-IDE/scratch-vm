@@ -31,6 +31,7 @@ module.exports.getInputs = () => {
         operator_letter_of: letterOf,
         operator_mod: mod,
         operator_length: length,
+        operator_contains: contains,
     };
 };
 
@@ -114,10 +115,9 @@ const mathop = /** @param {InputUtil} util */ (util) => {
         case 'floor': return util.number(`Math.floor(${NUM})`);
         case 'ceiling': return util.number(`Math.ceil(${NUM})`);
         case 'sqrt': return util.number(`Math.sqrt(${NUM})`).setFlag(util.FLAG_NANABLE);
-        // TODO: consider rounding as Scratch 3 does
-        case 'sin': return util.number(`Math.sin((Math.PI * ${NUM}) / 180)`);
-        case 'cos': return util.number(`Math.cos((Math.PI * ${NUM}) / 180)`);
-        case 'tan': return util.noop(); // TODO
+        case 'sin': return util.number(`(Math.round(Math.sin((Math.PI * ${NUM}) / 180) * 1e10) / 1e10)`);
+        case 'cos': return util.number(`(Math.round(Math.cos((Math.PI * ${NUM}) / 180) * 1e10) / 1e10)`);
+        case 'tan': return util.number(`Math.tan(${NUM} * Math.PI / 180)`);
         case 'asin': return util.number(`((Math.asin(${NUM}) * 180) / Math.PI)`);
         case 'acos': return util.number(`((Math.acos(${NUM}) * 180) / Math.PI)`);
         case 'atan': return util.number(`((Math.atan(${NUM}) * 180) / Math.PI)`);
@@ -151,4 +151,10 @@ const mod = /** @param {InputUtil} util */ (util) => {
 const length = /** @param {InputUtil} util */ (util) => {
     const STRING = util.input('STRING');
     return util.number(`${STRING.asString()}.length`);
+};
+
+const contains = /** @param {InputUtil} util */ (util) => {
+    const STRING1 = util.input('STRING1');
+    const STRING2 = util.input('STRING2');
+    return util.boolean(`(${STRING1.asString()}.toLowerCase().indexOf(${STRING2.asString()}.toLowerCase()) !== -1)`)
 };

@@ -85,6 +85,13 @@ class BlockUtil {
     }
 
     /**
+     * The stage of the target's runtime.
+     */
+    get stage() {
+        return this.compiler.runtime.getTargetForStage();
+    }
+
+    /**
      * Whether the target being compiled is a stage.
      * @type {boolean}
      */
@@ -133,6 +140,14 @@ class BlockUtil {
      */
     allInputs() {
         return Object.keys(this.block.inputs);
+    }
+
+    /**
+     * Get the name of all fields in this block.
+     * @returns {string[]}
+     */
+    allFields() {
+        return Object.keys(this.block.fields);
     }
 
     /**
@@ -533,6 +548,9 @@ class Compiler {
         // We skip hat blocks, as they do not have code that can be run.
         let startingBlock;
         if (this.runtime.getIsHat(topBlock.opcode)) {
+            if (this.runtime.getIsEdgeActivatedHat(topBlock.opcode)) {
+                throw new Error('Not compiling an edge-activated hat');
+            }
             startingBlock = topBlock.next;
         } else {
             startingBlock = this.topBlock;
