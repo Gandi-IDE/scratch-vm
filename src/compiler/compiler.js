@@ -5,6 +5,7 @@ const Blocks = require('../engine/blocks');
 const RenderedTarget = require('../sprites/rendered-target');
 
 const CompilerHints = require('./hints');
+const VariablePool = require('./variable-pool');
 const execute = require('./execute');
 
 const statements = {};
@@ -274,7 +275,7 @@ class StatementUtil extends BlockUtil {
      * Get a local variable.
      */
     var() {
-        return this.compiler.nextVariable();
+        return this.compiler.primaryVariablePool.next();
     }
 
     /**
@@ -351,17 +352,28 @@ class CompiledInput {
     }
 }
 
+disableToString(CompiledInput.prototype.toString);
 disableToString(CompiledInput.prototype.asNumber);
 disableToString(CompiledInput.prototype.asString);
 disableToString(CompiledInput.prototype.asBoolean);
 
 /**
- * @typedef {Function} CompiledScript
+ * Variable pool used for factory function names.
+ */
+const factoryVariablePool = new VariablePool('f');
+
+/**
+ * Variable pool used for generated script names.
+ */
+const generatorVariablePool = new VariablePool('g');
+
+/**
+ * @typedef {function} CompiledScript
  */
 
 /**
  * @typedef {Object} CompilationResult
- * @property {Function} startingFunction
+ * @property {CompiledScript} startingFunction
  * @property {Object.<string, CompiledScript>} procedures
  */
 
@@ -396,15 +408,14 @@ class Compiler {
          * Factory variables.
          * These variables will be setup once when the script factory runs.
          * This is a map of Value to variable name.
-         * It may seem backwards but it makes tracking identical values very easy and efficient.
+         * It may seem backwards but it makes tracking identical values very efficient.
          * @type {Object.<string, string>}
          */
         this.factoryVariables = {};
 
-        /**
-         * Number of local variables created.
-         */
-        this.variableCount = 0;
+        this.primaryVariablePool = new VariablePool('a');
+
+        this.factoryVariablePool = new VariablePool('b');
 
         /**
          * Compiler optimization/behavior hints.
@@ -511,43 +522,55 @@ class Compiler {
         this.hints = hints;
         this.factoryVariables = {};
 
-        let script = '';
+        const scriptName = generatorVariablePool.next();
+        const factoryName = factoryVariablePool.next();
 
-        script += 'function* g(';
+        let scriptFunction = '';
+
+        // prepare the script
+        scriptFunction += `function* ${scriptName}(`;
         // Procedures accept arguments
         if (hints.isProcedure) {
-            script += 'C';
+            scriptFunction += 'C';
         }
-        script += ') {\n';
+        scriptFunction += ') {\n';
 
         // Increase warp level
         if (hints.isWarp) {
-            script += 'thread.warp++;\n';
+            scriptFunction += 'thread.warp++;\n';
         } else if (hints.isProcedure) {
-            script += 'if (thread.warp) thread.warp++;\n';
+            scriptFunction += 'if (thread.warp) thread.warp++;\n';
         }
 
-        script += this.compileStack(topBlock);
+        scriptFunction += this.compileStack(topBlock);
 
         if (hints.isProcedure) {
-            script += 'endCall();\n';
+            scriptFunction += 'endCall();\n';
         } else {
-            script += 'retire();\n';
+            scriptFunction += 'retire();\n';
         }
 
-        script += '}';
+        scriptFunction += '}';
 
-        const fn = execute.createScriptFactory(script, this);
+        let script = '';
+
+        // prepare the factory
+        script += `(function ${factoryName}(target) { `;
+        script += 'var runtime = target.runtime; ';
+        script += 'var stage = runtime.getTargetForStage();\n';
+
+        // insert factory variables
+        for (const data of Object.keys(this.factoryVariables)) {
+            const varName = this.factoryVariables[data];
+            script += `var ${varName} = ${data};\n`;
+        }
+
+        // return an instance of the function
+        script += `return ${scriptFunction};\n });`;
+
+        const fn = execute.createScriptFactory(script);
         log.info(`[${this.target.getName()}] compiled script`, script);
         return fn;
-    }
-
-    /**
-     * Get the name of the next local variable.
-     */
-    nextVariable() {
-        this.variableCount++;
-        return 'a' + this.variableCount;
     }
 
     /**
@@ -558,7 +581,7 @@ class Compiler {
         if (this.factoryVariables.hasOwnProperty(value)) {
             return this.factoryVariables[value];
         }
-        const variableName = this.nextVariable();
+        const variableName = this.factoryVariablePool.next();
         this.factoryVariables[value] = variableName;
         return variableName;
     }

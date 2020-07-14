@@ -431,25 +431,8 @@ const execute = (_thread) => {
  * Evaluate a continuation from its source code.
  * Prepares the necessary environment.
  * @param {string} source
- * @param {Compiler} compiler
  */
-const createScriptFactory = (_source, compiler) => {
-    let source = `(function f(target) {
-var runtime = target.runtime;
-var stage = runtime.getTargetForStage();\n`;
-
-    for (const data of Object.keys(compiler.factoryVariables)) {
-        const varName = compiler.factoryVariables[data];
-        source += `var ${varName} = ${data};\n`;
-    }
-
-    source += `return ${_source}; });`;
-
-    // try to get the GC to drop references to these variables, they have no reason to stick around at runtime and can be rather large
-    // TODO: see if this works or is necessary
-    _source = null;
-    compiler = null;
-
+const createScriptFactory = (source) => {
     try {
         return eval(source);
     } catch (e) {
