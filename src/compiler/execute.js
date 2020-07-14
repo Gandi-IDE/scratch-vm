@@ -154,15 +154,6 @@ const toNumber = (value) => {
 };
 
 /**
- * Converts a number to ensure that NaN becomes 0.
- * @param {number} number The value to convert.
- * @returns {number}
- */
-const toNotNaN = (number) => {
-    return number || 0;
-};
-
-/**
  * Scratch cast to boolean.
  * Similar to Cast.toBoolean()
  * @param {*} value The value to cast

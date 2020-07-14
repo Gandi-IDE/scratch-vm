@@ -327,11 +327,11 @@ class CompiledInput {
     asNumber() {
         if (this.type === TYPE_NUMBER) {
             if (this.flags & FLAG_NANABLE) {
-                return 'toNotNaN(' + this.source + ')';
+                return '(' + this.source + ' || 0)';
             }
             return this.source;
         }
-        return 'toNumber(' + this.source + ')';
+        return '(+' + this.source + ' || 0)';
     }
 
     asBoolean() {
@@ -341,7 +341,7 @@ class CompiledInput {
 
     asString() {
         if (this.type === TYPE_STRING) return this.source;
-        return 'toString(' + this.source + ')';
+        return '("" + ' + this.source + ')';
     }
 }
 
