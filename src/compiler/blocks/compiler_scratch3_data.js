@@ -116,7 +116,7 @@ const setVariable = /** @param {StatementUtil} util */ (util) => {
 const changeVariable = /** @param {StatementUtil} util */ (util) => {
     const VALUE = util.input('VALUE');
     const variable = variableReference(util);
-    util.writeLn(`${variable}.value = toNumber(${variable}.value) + ${VALUE.asNumber()};`);
+    util.writeLn(`${variable}.value = (+${variable}.value || 0) + ${VALUE.asNumber()};`);
     // TODO: cloud variables
 };
 
