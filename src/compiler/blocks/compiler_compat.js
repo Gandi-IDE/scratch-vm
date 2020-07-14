@@ -95,5 +95,5 @@ const statementCompat = /** @param {StatementUtil} util */ (util) => {
 };
 
 const inputCompat = /** @param {InputUtil} util */ (util) => {
-    return util.unknown(generateCompatCall(util));
+    return util.unknown('(' + generateCompatCall(util) + ')');
 };

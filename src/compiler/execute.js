@@ -241,7 +241,7 @@ const ioQuery = (device, func, args) => {
 
 /**
  * Create and start a timer.
- * @returns {Timer}
+ * @returns {Timer} A started timer
  */
 const timer = () => {
     const timer = new Timer();
@@ -283,6 +283,7 @@ var listIndex = (index, length) => {
  * Get a value from a list.
  * @param {import('../engine/variable')} list The list
  * @param {*} idx The 1-indexed index in the list.
+ * @returns The list item, otherwise empty string if it does not exist.
  */
 const listGet = (list, idx) => {
     const index = listIndex(idx, list.value.length);
@@ -310,8 +311,8 @@ const listReplace = (list, idx, value) => {
 /**
  * Insert a value in a list.
  * @param {import('../engine/variable')} list The list.
- * @param {any} idx The Scratch index in the list.
- * @param {any} value The value to insert.
+ * @param {*} idx The Scratch index in the list.
+ * @param {*} value The value to insert.
  */
 const listInsert = (list, idx, value) => {
     const index = listIndex(idx, list.value.length + 1);
@@ -325,7 +326,7 @@ const listInsert = (list, idx, value) => {
 /**
  * Delete a value from a list.
  * @param {import('../engine/variable')} list The list.
- * @param {any} idx The Scratch index in the list.
+ * @param {*} idx The Scratch index in the list.
  */
 const listDelete = (list, idx) => {
     if (idx === 'all') {
@@ -343,8 +344,8 @@ const listDelete = (list, idx) => {
 /**
  * Return whether a list contains a value.
  * @param {import('../engine/variable')} list The list.
- * @param {any} item The value to search for.
- * @returns {boolean}
+ * @param {*} item The value to search for.
+ * @returns {boolean} True if the list contains the item
  */
 const listContains = (list, item) => {
     // TODO: evaluate whether indexOf is worthwhile here
@@ -357,6 +358,21 @@ const listContains = (list, item) => {
         }
     }
     return false;
+};
+
+/**
+ * Find the 1-indexed index of an item in a list.
+ * @param {import('../engine/variable')} list The list.
+ * @param {*} item The item to search for
+ * @returns {number} The 1-indexed index of the item in the list, otherwise 0
+ */
+const listIndexOf = (list, item) => {
+    for (var i = 0; i < list.value.length; i++) {
+        if (compare(list.value[i], item) === 0) {
+            return i + 1;
+        }
+    }
+    return 0;
 };
 
 /**

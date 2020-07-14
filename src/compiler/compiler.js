@@ -616,7 +616,12 @@ class Compiler {
 
                 const compiledProcedure = this.compileScript(bodyStart, hints);
                 this.procedures[procedureCode] = compiledProcedure;
-                this.blocks._cache.compiledProcedures[procedureCode] = compiledProcedure;
+            }
+        }
+
+        for (const procedureCode of Object.keys(this.procedures)) {
+            if (!this.blocks._cache.compiledProcedures.hasOwnProperty(procedureCode)) {
+                this.blocks._cache.compiledProcedures[procedureCode] = this.procedures[procedureCode];
             }
         }
 
