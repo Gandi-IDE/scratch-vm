@@ -1,18 +1,30 @@
 const { BlockUtil, InputUtil, StatementUtil, CompiledInput } = require('../compiler');
 
 const statements = [
+    'control_get_counter',
+    'control_incr_counter',
+    'control_clear_counter',
     'motion_glideto',
     'motion_glidesecstoxy',
     'motion_goto',
     'sound_play',
     'sound_playuntildone',
     'sound_stopallsounds',
+    'sound_seteffectto',
+    'sound_changeeffectby',
+    'sound_cleareffects',
     'sound_setvolumeto',
     'sensing_askandwait',
     'sound_seteffectto',
     'sound_changeeffectby',
     'sound_changevolumeby',
     'looks_nextcostume',
+    'looks_nextbackdrop',
+    'looks_say',
+    'looks_sayforsecs',
+    'looks_think',
+    'looks_thinkforsecs',
+    'sensing_setdragmode',
     'motion_pointtowards',
     'motion_turnleft',
     'motion_turnright',
@@ -23,6 +35,14 @@ const inputs = [
     'sound_volume',
     'sensing_of',
     'sensing_distanceto',
+    'sensing_touchingcolor', // TODO: compile
+    'sensing_coloristouchingcolor', // TODO: compile
+    'sensing_current',
+    'sensing_dayssince2000',
+    'sensing_loudness',
+    'sensing_loud',
+    'sensing_answer',
+    'data_listcontents',
 ];
 
 /**
