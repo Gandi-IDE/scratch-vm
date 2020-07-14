@@ -210,7 +210,7 @@ class ScriptCompiler {
     compile() {
         const compiledStack = this.compileStack(this.topBlock);
         const script = this.createScriptFactory(compiledStack);
-        const fn = execute.createScriptFactory(script);
+        const fn = execute.scopedEval(script);
         log.info(`[${this.target.getName()}] compiled script`, script);
         return fn;
     }

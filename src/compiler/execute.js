@@ -428,11 +428,10 @@ const execute = (_thread) => {
 };
 
 /**
- * Evaluate a continuation from its source code.
- * Prepares the necessary environment.
+ * eval() some JS
  * @param {string} source
  */
-const createScriptFactory = (source) => {
+const scopedEval = (source) => {
     try {
         return eval(source);
     } catch (e) {
@@ -441,6 +440,6 @@ const createScriptFactory = (source) => {
     }
 };
 
-execute.createScriptFactory = createScriptFactory;
+execute.scopedEval = scopedEval;
 
 module.exports = execute;
