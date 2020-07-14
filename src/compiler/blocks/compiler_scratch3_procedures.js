@@ -22,10 +22,12 @@ module.exports.getInputs = () => {
 const call = /** @param {StatementUtil} util */ (util) => {
     const procedureCode = util.block.mutation.proccode;
 
-    // debugger block
     if (procedureCode === 'debugger;') {
         util.writeLn('debugger;');
         return;
+    }
+    if (procedureCode === 'nocompile') {
+        throw new Error('Script does not want to be compiled.');
     }
 
     const paramNamesIdsAndDefaults = util.target.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
