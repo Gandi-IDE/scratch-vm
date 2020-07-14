@@ -1,4 +1,5 @@
 const CompiledInput = require('./input');
+const Constants = require('./constants');
 
 class BlockUtil {
     /**
@@ -8,13 +9,6 @@ class BlockUtil {
         this.compiler = compiler;
         this.block = block;
     }
-
-    // Expose some constants that are likely to be of use to blocks.
-    get TYPE_UNKNOWN() { return CompiledInput.TYPE_UNKNOWN; }
-    get TYPE_NUMBER() { return CompiledInput.TYPE_NUMBER; }
-    get TYPE_BOOLEAN() { return CompiledInput.TYPE_BOOLEAN; }
-    get TYPE_STRING() { return CompiledInput.TYPE_STRING; }
-    get FLAG_NANABLE() { return CompiledInput.FLAG_NANABLE; }
 
     /**
      * The target being compiled.
@@ -54,7 +48,7 @@ class BlockUtil {
      */
     input(name) {
         if (!this.hasInput(name)) {
-            return new CompiledInput('""', CompiledInput.TYPE_STRING);
+            return new CompiledInput('""', Constants.TYPE_STRING);
         }
         return this.compiler.compileInput(this.block, name);
     }
@@ -119,27 +113,27 @@ class BlockUtil {
 
 class InputUtil extends BlockUtil {
     unknown(source) {
-        return new CompiledInput(source, CompiledInput.TYPE_UNKNOWN);
+        return new CompiledInput(source, Constants.TYPE_UNKNOWN);
     }
 
     number(source) {
-        return new CompiledInput(source, CompiledInput.TYPE_NUMBER);
+        return new CompiledInput(source, Constants.TYPE_NUMBER);
     }
 
     boolean(source) {
-        return new CompiledInput(source, CompiledInput.TYPE_BOOLEAN);
+        return new CompiledInput(source, Constants.TYPE_BOOLEAN);
     }
 
     string(source) {
-        return new CompiledInput(source, CompiledInput.TYPE_STRING);
+        return new CompiledInput(source, Constants.TYPE_STRING);
     }
 
     fieldString(name) {
-        return new CompiledInput(`"${this.safe(this.fieldValueUnsafe(name))}"`, CompiledInput.TYPE_STRING);
+        return new CompiledInput(`"${this.safe(this.fieldValueUnsafe(name))}"`, Constants.TYPE_STRING);
     }
 
     noop() {
-        return new CompiledInput('/* no-op */ undefined', CompiledInput.TYPE_UNKNOWN);
+        return new CompiledInput('/* no-op */ undefined', Constants.TYPE_UNKNOWN);
     }
 }
 

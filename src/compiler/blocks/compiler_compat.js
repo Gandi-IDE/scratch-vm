@@ -1,5 +1,4 @@
-const { BlockUtil, InputUtil, StatementUtil } = require('../compiler-util');
-const CompiledInput = require('../input');
+const { BlockUtil, InputUtil, StatementUtil, CompiledInput } = require('./block-common');
 
 const statements = [
     'control_get_counter',

@@ -1,3 +1,5 @@
+const Constants = require('./constants');
+
 /**
  * Prevents the use of toString() on an object by throwing an error.
  * Useful to make sure that a method is always called, never accidentally stringified.
@@ -10,13 +12,6 @@ const disableToString = (obj) => {
 };
 
 class CompiledInput {
-    static get TYPE_UNKNOWN() { return 0; }
-    static get TYPE_NUMBER() { return 1; }
-    static get TYPE_BOOLEAN() { return 2; }
-    static get TYPE_STRING() { return 3; }
-
-    static get FLAG_NANABLE() { return 1; }
-
     /**
      * @param {string} source The input's source code.
      * @param {number} type The input's type at runtime.
@@ -54,8 +49,8 @@ class CompiledInput {
     }
 
     asNumber() {
-        if (this.type === CompiledInput.TYPE_NUMBER) {
-            if (this.flags & CompiledInput.FLAG_NANABLE) {
+        if (this.type === Constants.TYPE_NUMBER) {
+            if (this.flags & Constants.FLAG_NANABLE) {
                 return '(' + this.source + ' || 0)';
             }
             return this.source;
@@ -64,12 +59,12 @@ class CompiledInput {
     }
 
     asBoolean() {
-        if (this.type === CompiledInput.TYPE_BOOLEAN) return this.source;
+        if (this.type === Constants.TYPE_BOOLEAN) return this.source;
         return 'toBoolean(' + this.source + ')';
     }
 
     asString() {
-        if (this.type === CompiledInput.TYPE_STRING) return this.source;
+        if (this.type === Constants.TYPE_STRING) return this.source;
         return '("" + ' + this.source + ')';
     }
 }
