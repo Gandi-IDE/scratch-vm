@@ -28,6 +28,8 @@ module.exports.getInputs = () => {
         motion_xposition: getX,
         motion_yposition: getY,
         motion_glideto_menu: glideToMenu,
+        motion_goto_menu: gotoMenu,
+        motion_pointtowards_menu: pointTowardsMenu,
     };
 };
 
@@ -102,4 +104,12 @@ const getDirection = /** @param {InputUtil} util */ (util) => {
 
 const glideToMenu = /** @param {InputUtil} util */ (util) => {
     return util.fieldString('TO');
+};
+
+const gotoMenu = /** @param {InputUtil} util */ (util) => {
+    return util.fieldString('TO');
+};
+
+const pointTowardsMenu = /** @param {InputUtil} util */ (util) => {
+    return util.fieldString('TOWARDS');
 };

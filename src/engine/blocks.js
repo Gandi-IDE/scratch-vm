@@ -88,6 +88,12 @@ class Blocks {
              * @type {object.<string, object>}
              */
             compiledScripts: {},
+            
+            /**
+             * A cache of procedure code opcodes to compiled scripts.
+             * @type {object.<string, object>}
+             */
+            compiledProcedures: {},
         };
 
         /**
@@ -545,6 +551,7 @@ class Blocks {
         this._cache._monitored = null;
         this._cache.scripts = {};
         this._cache.compiledScripts = {};
+        this._cache.compiledProcedures = {};
     }
 
     /**

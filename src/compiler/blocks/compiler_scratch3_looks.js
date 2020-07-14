@@ -13,6 +13,7 @@ module.exports.getStatements = () => {
         looks_gotofrontback: goToFrontBack,
         looks_goforwardbackwardlayers: goForwardBackwardsLayers,
         looks_setsizeto: setSize,
+        looks_changesizeby: changeSize,
         looks_switchcostumeto: switchCostume,
         looks_cleargraphiceffects: clearEffects,
         looks_switchbackdropto: switchBackdrop,
@@ -94,6 +95,11 @@ const goForwardBackwardsLayers = /** @param {StatementUtil} util */ (util) => {
 const setSize = /** @param {StatementUtil} util */ (util) => {
     const SIZE = util.input('SIZE');
     util.writeLn(`target.setSize(${SIZE.asNumber()});`);
+};
+
+const changeSize = /** @param {StatementUtil} util */ (util) => {
+    const CHANGE = util.input('CHANGE');
+    util.writeLn(`target.setSize(target.size + ${CHANGE.asNumber()});`);
 };
 
 const switchCostume = /** @param {StatementUtil} util */ (util) => {

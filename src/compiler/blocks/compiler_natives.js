@@ -26,7 +26,7 @@ module.exports.getInputs = () => {
 };
 
 const number = /** @param {InputUtil} util */ (util) => {
-    const NUM = util.fieldValueUnsafe('NUM');
+    const NUM = util.fieldValueUnsafe('NUM') + '';
     const number = +NUM;
     // if the parsed number's stringified form differs from the input text, or if the number is not actually a number, just treat it like a string.
     if (number.toString() !== NUM || Number.isNaN(number)) {

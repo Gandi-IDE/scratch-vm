@@ -6,8 +6,14 @@ const statements = [
     'motion_goto',
     'sound_play',
     'sound_playuntildone',
+    'sound_stopallsounds',
+    'sound_setvolumeto',
     'sensing_askandwait',
-
+    'sound_seteffectto',
+    'sound_changeeffectby',
+    'sound_changevolumeby',
+    'looks_nextcostume',
+    'motion_pointtowards',
     'motion_turnleft',
     'motion_turnright',
     'motion_movesteps',
@@ -16,6 +22,7 @@ const statements = [
 const inputs = [
     'sound_volume',
     'sensing_of',
+    'sensing_distanceto',
 ];
 
 /**

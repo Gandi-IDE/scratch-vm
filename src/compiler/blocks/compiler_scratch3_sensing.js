@@ -24,6 +24,7 @@ module.exports.getInputs = () => {
         sensing_keyoptions: keyOption,
         sensing_username: getUsername,
         sensing_of_object_menu: ofObjectMenu,
+        sensing_distancetomenu: distanceToMenu,
     };
 };
 
@@ -71,4 +72,8 @@ const getUsername = /** @param {InputUtil} util */ (util) => {
 
 const ofObjectMenu = /** @param {InputUtil} util */ (util) => {
     return util.fieldString('OBJECT');
+};
+
+const distanceToMenu = /** @param {InputUtil} util */ (util) => {
+    return util.fieldString('DISTANCETOMENU');
 };

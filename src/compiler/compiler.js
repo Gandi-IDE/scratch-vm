@@ -381,9 +381,10 @@ class Compiler {
 
         /**
          * Compiled procedures.
+         * TODO: don't copy all of the already compiled procedures?
          * @type {Object.<string, CompiledScript>}
          */
-        this.procedures = {};
+        this.procedures = Object.assign({}, this.blocks._cache.compiledProcedures);
 
         /**
          * Number of local variables created.
@@ -586,6 +587,7 @@ class Compiler {
 
                 const compiledProcedure = this.compileScript(bodyStart, hints);
                 this.procedures[procedureCode] = compiledProcedure;
+                this.blocks._cache.compiledProcedures[procedureCode] = compiledProcedure;
             }
         }
 
