@@ -37,6 +37,9 @@ defaultExtensions.forEach((ext) => {
     const extensionInputs = ext.getInputs();
     for (const op in extensionInputs) {
         if (extensionInputs.hasOwnProperty(op)) {
+            if (inputs.hasOwnProperty(op)) {
+                log.warn(`input opcode ${op} already exists, replacing previous definition.`);
+            }
             inputs[op] = extensionInputs[op];
         }
     }
@@ -44,6 +47,9 @@ defaultExtensions.forEach((ext) => {
     const extensionStatements = ext.getStatements();
     for (const op in extensionStatements) {
         if (extensionStatements.hasOwnProperty(op)) {
+            if (statements.hasOwnProperty(op)) {
+                log.warn(`statement opcode ${op} already exists, replacing previous definition.`);
+            }
             statements[op] = extensionStatements[op];
         }
     }
