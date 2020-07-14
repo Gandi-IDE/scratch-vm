@@ -1,5 +1,6 @@
 const Thread = require('../engine/thread');
 const Timer = require('../util/timer');
+const Cast = require('../util/cast');
 const log = require('../util/log');
 
 const CompatibilityLayerBlockUtility = require('./compat-block-utility');
@@ -72,7 +73,7 @@ const waitThreads = function*(threads) {
  * @returns {*} the value that the promise resolves to, otherwise undefined if the promise rejects
  */
 const waitPromise = function*(promise) {
-    // TODO: there's quite a lot going on in engine/execute.js, we should see how much of that matters to us
+    // TODO: there's quite a lot going on in engine/execute.js's handlePromise, we should see how much of that matters to us
 
     const _thread = thread; // need to store reference to current thread, as promise handlers won't be called from the tick loop
     let returnValue = undefined;
@@ -373,6 +374,30 @@ const listIndexOf = (list, item) => {
         }
     }
     return 0;
+};
+
+/**
+ * Get the stringified form of a list.
+ * @param {import('../engine/variable')} list The list.
+ */
+const listContents = (list) => {
+    for (let i = 0; i < list.value.length; i++) {
+        const listItem = list.value[i];
+        if (!(typeof listItem === 'string' && listItem.length === 1)) {
+            return list.value.join(' ');
+        }
+    }
+    return list.value.join('');
+};
+
+/**
+ * Convert a color to an RGB list
+ * @param {*} color The color value to convert
+ * @return {Array.<number>} [r,g,b], values between 0-255.
+ */
+const colorToList = (color) => {
+    // TODO: remove Cast dependency
+    return Cast.toRgbColorList(color);
 };
 
 /**

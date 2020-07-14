@@ -32,8 +32,6 @@ const inputs = [
     'sound_volume',
     'sensing_of',
     'sensing_distanceto',
-    'sensing_touchingcolor', // TODO: compile
-    'sensing_coloristouchingcolor', // TODO: compile
     'sensing_current',
     'sensing_dayssince2000',
     'sensing_loudness',

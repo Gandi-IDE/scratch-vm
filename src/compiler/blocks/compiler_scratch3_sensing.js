@@ -16,6 +16,8 @@ module.exports.getInputs = () => {
     return {
         sensing_touchingobject: touchingObject,
         sensing_touchingobjectmenu: touchingObjectMenu,
+        sensing_touchingcolor: touchingColor,
+        sensing_coloristouchingcolor: colorIsTouchingColor,
         sensing_timer: getTimer,
         sensing_mousex: getMouseX,
         sensing_mousey: getMouseY,
@@ -35,6 +37,17 @@ const touchingObject = /** @param {InputUtil} util */ (util) => {
 
 const touchingObjectMenu = /** @param {InputUtil} util */ (util) => {
     return util.fieldString('TOUCHINGOBJECTMENU');
+};
+
+const touchingColor = /** @param {InputUtil} util */ (util) => {
+    const COLOR = util.input('COLOR');
+    return util.boolean(`target.isTouchingColor(colorToList(${COLOR}))`);
+};
+
+const colorIsTouchingColor = /** @param {InputUtil} util */ (util) => {
+    const COLOR = util.input('COLOR');
+    const COLOR2 = util.input('COLOR2');
+    return util.boolean(`target.colorIsTouchingColor(colorToList(${COLOR2}), colorToList(${COLOR}))`);
 };
 
 const resetTimer = /** @param {StatementUtil} util */ (util) => {
