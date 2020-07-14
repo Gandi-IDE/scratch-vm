@@ -29,6 +29,7 @@ module.exports.getInputs = () => {
         data_itemoflist: itemOfList,
         data_listcontainsitem: listContainsItem,
         data_itemnumoflist: itemNumOfList,
+        data_listcontents: listContents,
     };
 };
 
@@ -195,4 +196,9 @@ const itemNumOfList = /** @param {InputUtil} util */ (util) => {
     const LIST = listReference(util);
     const ITEM = util.input('ITEM');
     return util.number(`listIndexOf(${LIST}, ${ITEM})`);
+};
+
+const listContents = /** @param {InputUtil} util */ (util) => {
+    const LIST = listReference(util);
+    return util.string(`listContents(${LIST})`);
 };

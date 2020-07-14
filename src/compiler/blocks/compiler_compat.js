@@ -39,7 +39,6 @@ const inputs = [
     'sensing_loudness',
     'sensing_loud',
     'sensing_answer',
-    'data_listcontents',
 ];
 
 /**
