@@ -48,11 +48,11 @@ const findVariable = (util, id, name, type) => {
     const stage = util.stage;
     // Search for it by ID
     if (target.variables.hasOwnProperty(id)) {
-        return `targetVariables["${util.safe(id)}"]`;
+        return util.compiler.getOrCreateFactoryVariable(`targetVariables["${util.safe(id)}"]`);
     }
-    if (target.runtime && !target.isStage) {
+    if (!target.isStage) {
         if (stage && stage.variables.hasOwnProperty(id)) {
-            return `stageVariables["${util.safe(id)}"]`;
+            return util.compiler.getOrCreateFactoryVariable(`stageVariables["${util.safe(id)}"]`);
         }
     }
     // Search for it by name and type
@@ -60,16 +60,17 @@ const findVariable = (util, id, name, type) => {
         if (target.variables.hasOwnProperty(varId)) {
             const currVar = target.variables[varId];
             if (currVar.name === name && currVar.type === type) {
-                return `targetVariables["${util.safe(varId)}"]`;
+                return util.compiler.getOrCreateFactoryVariable(`targetVariables["${util.safe(varId)}"]`);
             }
         }
     }
-    if (target.runtime && !target.isStage) {
+    if (!target.isStage) {
         if (stage) {
             for (const varId in stage.variables) {
                 if (stage.variables.hasOwnProperty(varId)) {
                     const currVar = stage.variables[varId];
                     if (currVar.name === name && currVar.type === type) {
+                        // FIXME: return the JS to evaluate it not the variable itself
                         return currVar;
                     }
                 }

@@ -393,6 +393,15 @@ class Compiler {
         this.procedures = Object.assign({}, this.blocks._cache.compiledProcedures);
 
         /**
+         * Factory variables.
+         * These variables will be setup once when the script factory runs.
+         * This is a map of Value to variable name.
+         * It may seem backwards but it makes tracking identical values very easy and efficient.
+         * @type {Object.<string, string>}
+         */
+        this.factoryVariables = {};
+
+        /**
          * Number of local variables created.
          */
         this.variableCount = 0;
@@ -498,8 +507,9 @@ class Compiler {
      * @param {CompilerHints} hints
      */
     compileScript(topBlock, hints) {
-        // blocks will read hints from here
+        // reset some data
         this.hints = hints;
+        this.factoryVariables = {};
 
         let script = '';
 
@@ -527,7 +537,7 @@ class Compiler {
 
         script += '}';
 
-        const fn = execute.createScriptFactory(script);
+        const fn = execute.createScriptFactory(script, this);
         log.info(`[${this.target.getName()}] compiled script`, script);
         return fn;
     }
@@ -538,6 +548,19 @@ class Compiler {
     nextVariable() {
         this.variableCount++;
         return 'a' + this.variableCount;
+    }
+
+    /**
+     * Create or get a factory variable.
+     * @param {string} value The value of the factory variable.
+     */
+    getOrCreateFactoryVariable(value) {
+        if (this.factoryVariables.hasOwnProperty(value)) {
+            return this.factoryVariables[value];
+        }
+        const variableName = this.nextVariable();
+        this.factoryVariables[value] = variableName;
+        return variableName;
     }
 
     /**
