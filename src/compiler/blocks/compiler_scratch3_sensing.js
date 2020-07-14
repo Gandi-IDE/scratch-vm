@@ -23,6 +23,7 @@ module.exports.getInputs = () => {
         sensing_mousedown: getMouseDown,
         sensing_keyoptions: keyOption,
         sensing_username: getUsername,
+        sensing_of_object_menu: ofObjectMenu,
     };
 };
 
@@ -66,4 +67,8 @@ const keyOption = /** @param {InputUtil} util */ (util) => {
 
 const getUsername = /** @param {InputUtil} util */ (util) => {
     return util.string('ioQuery("userData", "getUsername")');
+};
+
+const ofObjectMenu = /** @param {InputUtil} util */ (util) => {
+    return util.fieldString('OBJECT');
 };

@@ -2,13 +2,20 @@ const { BlockUtil, InputUtil, StatementUtil, CompiledInput } = require('../compi
 
 const statements = [
     'motion_glideto',
+    'motion_glidesecstoxy',
+    'motion_goto',
     'sound_play',
     'sound_playuntildone',
     'sensing_askandwait',
+
+    'motion_turnleft',
+    'motion_turnright',
+    'motion_movesteps',
 ];
 
 const inputs = [
     'sound_volume',
+    'sensing_of',
 ];
 
 /**

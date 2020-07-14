@@ -1,7 +1,10 @@
+scratch-vm with something similar to the phosphorus runtime & compiler hacked into it.
+
 What works
 
- - some scripts can go fast
- - scripts can be cached after being compiled once
+ - actually quite a lot
+ - performance similar to phosphorus (better?) in chrome (much slower in firefox, but that's a firefox bug, still much faster than scratch-vm)
+ - some things like list length restrictions were removed
 
 Non-goals
 
@@ -9,7 +12,6 @@ Non-goals
  - generating human readable code
  - 100% compatibility with every script, block, extension
  - allow modifying compiled scripts while they are running
- - being compatible with js minifiers
 
 <!--
 

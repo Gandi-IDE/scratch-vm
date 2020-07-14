@@ -74,7 +74,7 @@ const waitThreads = function*(threads) {
 const waitPromise = function*(promise) {
     // TODO: there's quite a lot going on in engine/execute.js, we should see how much of that matters to us
 
-    const _thread = thread;
+    const _thread = thread; // need to store reference to current thread, as promise handlers won't be called from the tick loop
     let returnValue = undefined;
 
     promise
@@ -101,10 +101,12 @@ const waitPromise = function*(promise) {
  * @returns {*} the value returned by the block, if any.
  */
 const executeInCompatibilityLayer = function*(inputs, blockFunction) {
-    const _thread = thread;
+    // reset the stackframe
+    // we only ever use one stackframe at a time, so this shouldn't cause issues
+    thread.stackFrames[thread.stackFrames.length - 1].reuse();
 
     const executeBlock = () => {
-        compatibilityLayerBlockUtility.thread = _thread;
+        compatibilityLayerBlockUtility.thread = thread;
         compatibilityLayerBlockUtility.sequencer = thread.target.runtime.sequencer;
         return blockFunction(inputs, compatibilityLayerBlockUtility);
     };
@@ -124,9 +126,10 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction) {
         return yield* waitPromise(returnValue);
     }
 
-    while (_thread.status === Thread.STATUS_YIELD || _thread.status === Thread.STATUS_YIELD_TICK) {
+    while (thread.status === Thread.STATUS_YIELD || thread.status === Thread.STATUS_YIELD_TICK) {
+        // TODO: warp mode
         yield;
-        _thread.status = Thread.STATUS_RUNNING;
+        thread.status = Thread.STATUS_RUNNING;
         returnValue = executeBlock();
     }
 

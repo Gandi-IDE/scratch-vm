@@ -22,13 +22,13 @@ module.exports.getInputs = () => {
 const broadcast = /** @param {StatementUtil} util */ (util) => {
     const BROADCAST_INPUT = util.input('BROADCAST_INPUT');
     // TODO: handle when broadcast doesn't exist
-    util.writeLn(`startHats("event_whenbroadcastreceived", { BROADCAST_OPTION: ${BROADCAST_INPUT} });`);
+    util.writeLn(`startHats("event_whenbroadcastreceived", { BROADCAST_OPTION: ${BROADCAST_INPUT.asString()} });`);
 };
 
 const broadcastAndWait = /** @param {StatementUtil} util */ (util) => {
     const BROADCAST_INPUT = util.input('BROADCAST_INPUT');
     // TODO: handle when broadcast doesn't exist
-    util.waitUntilThreadsComplete(`startHats("event_whenbroadcastreceived", { BROADCAST_OPTION: ${BROADCAST_INPUT} })`);
+    util.waitUntilThreadsComplete(`startHats("event_whenbroadcastreceived", { BROADCAST_OPTION: ${BROADCAST_INPUT.asString()} })`);
 };
 
 const broadcastMenu = /** @param {InputUtil} util */ (util) => {
