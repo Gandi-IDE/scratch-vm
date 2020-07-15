@@ -15,6 +15,7 @@ module.exports.getStatements = () => {
         pen_changePenColorParamBy: changePenColorParamBy,
         pen_setPenColorParamTo: setPenColorParamTo,
         // Legacy blocks
+        pen_setPenHueToNumber: setPenHueToNumber,
         pen_changePenHueBy: changePenHueBy,
         pen_setPenShadeToNumber: setPenShade,
     };
@@ -61,6 +62,11 @@ const setPenSize = /** @param {StatementUtil} util */ (util) => {
 const changePenSize = /** @param {StatementUtil} util */ (util) => {
     const SIZE = util.input('SIZE');
     util.writeLn(`${pen}._changePenSizeBy(${SIZE.asNumber()}, target);`);
+};
+
+const setPenHueToNumber = /** @param {StatementUtil} util */ (util) => {
+    const HUE = util.input('HUE');
+    util.writeLn(`${pen}._setPenHueToNumber(${HUE.asNumber()}, target);`);
 };
 
 const changePenHueBy = /** @param {StatementUtil} util */ (util) => {
