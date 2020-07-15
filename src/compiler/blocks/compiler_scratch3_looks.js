@@ -25,6 +25,7 @@ module.exports.getInputs = () => {
         looks_costume: costumeMenu,
         looks_backdrops: backdropMenu,
         looks_costumenumbername: getCostumeNumberName,
+        looks_backdropnumbername: getBackdropNumberName,
         looks_size: getSize,
     };
 };
@@ -94,6 +95,14 @@ const getCostumeNumberName = /** @param {InputUtil} util */ (util) => {
         return util.number('(target.currentCostume + 1)');
     }
     return util.string('target.getCostumes()[target.currentCostume].name');
+};
+
+const getBackdropNumberName = /** @param {InputUtil} util */ (util) => {
+    const NUMBER_NAME = util.fieldValueUnsafe('NUMBER_NAME');
+    if (NUMBER_NAME === 'number') {
+        return util.number('(stage.currentCostume + 1)');
+    }
+    return util.string('stage.getCostumes()[stage.currentCostume].name');
 };
 
 const clearEffects = /** @param {StatementUtil} util */ (util) => {
