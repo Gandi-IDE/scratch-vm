@@ -30,9 +30,9 @@ const number = /** @param {InputUtil} util */ (util) => {
     const number = +NUM;
     // if the parsed number's stringified form differs from the input text, or if the number is not actually a number, just treat it like a string.
     if (number.toString() !== NUM || Number.isNaN(number)) {
-        return util.fieldString('NUM');
+        return util.fieldString('NUM').setConstantValue(NUM);
     }
-    return util.number('' + number);
+    return util.number('' + number).setConstantValue(number);
 };
 
 const text = /** @param {InputUtil} util */ (util) => {

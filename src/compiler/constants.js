@@ -5,6 +5,7 @@ const CompilerConstants = {
     TYPE_STRING: 3,
 
     FLAG_NANABLE: 1,
+    FLAG_CONSTANT: 2,
 };
 
 module.exports = CompilerConstants;

@@ -67,6 +67,12 @@ class CompiledInput {
         if (this.type === Constants.TYPE_STRING) return this.source;
         return '("" + ' + this.source + ')';
     }
+
+    setConstantValue(v) {
+        this.setFlag(Constants.FLAG_CONSTANT);
+        this.constantValue = v;
+        return this;
+    }
 }
 
 disableToString(CompiledInput.prototype.toString);
