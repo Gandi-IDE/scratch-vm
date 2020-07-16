@@ -1,4 +1,6 @@
 const { BlockUtil, InputUtil, StatementUtil, CompiledInput } = require('./block-common');
+const Constants = require('../constants');
+const Cast = require('../../util/cast');
 
 /**
  * @returns {Object.<string, (util: StatementUtil) => void>}
@@ -104,7 +106,7 @@ const multiply = /** @param {InputUtil} util */ (util) => {
 const divide = /** @param {InputUtil} util */ (util) => {
     const NUM1 = util.input('NUM1');
     const NUM2 = util.input('NUM2');
-    return util.number(`(${NUM1.asNumber()} / ${NUM2.asNumber()})`).setFlag(util.FLAG_NANABLE);
+    return util.number(`(${NUM1.asNumber()} / ${NUM2.asNumber()})`).setFlag(Constants.FLAG_NANABLE);
 };
 
 const mathop = /** @param {InputUtil} util */ (util) => {
@@ -114,7 +116,7 @@ const mathop = /** @param {InputUtil} util */ (util) => {
         case 'abs': return util.number(`Math.abs(${NUM})`);
         case 'floor': return util.number(`Math.floor(${NUM})`);
         case 'ceiling': return util.number(`Math.ceil(${NUM})`);
-        case 'sqrt': return util.number(`Math.sqrt(${NUM})`).setFlag(util.FLAG_NANABLE);
+        case 'sqrt': return util.number(`Math.sqrt(${NUM})`).setFlag(Constants.FLAG_NANABLE);
         case 'sin': return util.number(`(Math.round(Math.sin((Math.PI * ${NUM}) / 180) * 1e10) / 1e10)`);
         case 'cos': return util.number(`(Math.round(Math.cos((Math.PI * ${NUM}) / 180) * 1e10) / 1e10)`);
         case 'tan': return util.number(`Math.tan(${NUM} * Math.PI / 180)`);
@@ -132,6 +134,17 @@ const mathop = /** @param {InputUtil} util */ (util) => {
 const random = /** @param {InputUtil} util */ (util) => {
     const FROM = util.input('FROM');
     const TO = util.input('TO');
+    if (typeof FROM.constantValue !== 'undefined' && typeof TO.constantValue !== 'undefined') {
+        const nFrom = Cast.toNumber(FROM.constantValue);
+        const nTo = Cast.toNumber(TO.constantValue);
+        const low = nFrom <= nTo ? nFrom : nTo;
+        const high = nFrom <= nTo ? nTo : nFrom;
+        if (low === high) return util.number('' + low);
+        if (Cast.isInt(FROM.constantValue) && Cast.isInt(TO.constantValue)) {
+            return util.number(`randomInt(${low}, ${high})`);
+        }
+        return util.number(`randomFloat(${low}, ${high})`);
+    }
     // lack of type casts intentional, as random needs to see whether decimals are necessary
     return util.number(`runtime.ext_scratch3_operators._random(${FROM}, ${TO})`);
 };

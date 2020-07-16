@@ -226,6 +226,26 @@ const compare = (v1, v2) => {
 };
 
 /**
+ * Generate a random integer.
+ * @param {number} low Lower bound
+ * @param {number} high Upper bound
+ * @returns {number}
+ */
+const randomInt = (low, high) => {
+    return low + Math.floor(Math.random() * ((high + 1) - low));
+};
+
+/**
+ * Generate a random float.
+ * @param {number} low Lower bound
+ * @param {number} high Upper bound
+ * @returns {number}
+ */
+const randomFloat = (low, high) => {
+    return (Math.random() * (high - low)) + low;
+};
+
+/**
  * Perform an IO query
  * @param {string} device
  * @param {string} func
