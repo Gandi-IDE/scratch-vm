@@ -3,9 +3,7 @@ const Timer = require('../util/timer');
 const Cast = require('../util/cast');
 const log = require('../util/log');
 
-const CompatibilityLayerBlockUtility = require('./compat-block-utility');
-// single instance used for compatibility layer execution
-const compatibilityLayerBlockUtility = new CompatibilityLayerBlockUtility();
+const compatibilityLayerBlockUtility = require('./compat-block-utility');
 
 // All the functions defined here will be available to compiled scripts.
 // The JSDoc annotations define the function's contract.

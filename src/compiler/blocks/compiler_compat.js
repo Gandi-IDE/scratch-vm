@@ -88,9 +88,9 @@ const generateCompatCall = (util) => {
 };
 
 const statementCompat = /** @param {StatementUtil} util */ (util) => {
-    util.writeLn(generateCompatCall(util) + ';');
+    util.writeLn(`${generateCompatCall(util)};`);
 };
 
 const inputCompat = /** @param {InputUtil} util */ (util) => {
-    return util.unknown('(' + generateCompatCall(util) + ')');
+    return util.unknown(`(${generateCompatCall(util)})`);
 };

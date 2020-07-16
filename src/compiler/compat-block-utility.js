@@ -21,4 +21,5 @@ class CompatibilityLayerBlockUtility extends BlockUtility {
     }
 }
 
-module.exports = CompatibilityLayerBlockUtility;
+// Export a single instance to be reused.
+module.exports = new CompatibilityLayerBlockUtility();
