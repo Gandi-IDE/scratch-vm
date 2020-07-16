@@ -40,19 +40,19 @@ module.exports.getInputs = () => {
 const equals = /** @param {InputUtil} util */ (util) => {
     const OPERAND1 = util.input('OPERAND1');
     const OPERAND2 = util.input('OPERAND2');
-    return util.boolean(`(compare(${OPERAND1}, ${OPERAND2}) === 0)`);
+    return util.boolean(`compareEqual(${OPERAND1}, ${OPERAND2})`);
 };
 
 const greaterThan = /** @param {InputUtil} util */ (util) => {
     const OPERAND1 = util.input('OPERAND1');
     const OPERAND2 = util.input('OPERAND2');
-    return util.boolean(`(compare(${OPERAND1}, ${OPERAND2}) > 0)`);
+    return util.boolean(`compareGreaterThan(${OPERAND1}, ${OPERAND2})`);
 };
 
 const lessThan = /** @param {InputUtil} util */ (util) => {
     const OPERAND1 = util.input('OPERAND1');
     const OPERAND2 = util.input('OPERAND2');
-    return util.boolean(`(compare(${OPERAND1}, ${OPERAND2}) < 0)`);
+    return util.boolean(`compareLessThan(${OPERAND1}, ${OPERAND2})`);
 };
 
 const and = /** @param {InputUtil} util */ (util) => {
@@ -134,6 +134,7 @@ const mathop = /** @param {InputUtil} util */ (util) => {
 const random = /** @param {InputUtil} util */ (util) => {
     const FROM = util.input('FROM');
     const TO = util.input('TO');
+    // If we know the high and low values are compile-time, we can determine whether to return ints or floats at compile time.
     if (typeof FROM.constantValue !== 'undefined' && typeof TO.constantValue !== 'undefined') {
         const nFrom = Cast.toNumber(FROM.constantValue);
         const nTo = Cast.toNumber(TO.constantValue);
