@@ -172,16 +172,6 @@ const toBoolean = (value) => {
 };
 
 /**
- * Scratch cast to string.
- * Similar to Cast.toString()
- * @param {*} value The value to cast
- * @returns {string}
- */
-const toString = (value) => {
-    return '' + value;
-};
-
-/**
  * Check if a value is considered whitespace.
  * Similar to Cast.isWhiteSpace()
  * @param {*} val Value to check
