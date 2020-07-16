@@ -112,22 +112,37 @@ class BlockUtil {
 }
 
 class InputUtil extends BlockUtil {
+    /**
+     * @param {string} source
+     */
     unknown(source) {
         return new CompiledInput(source, Constants.TYPE_UNKNOWN);
     }
 
+    /**
+     * @param {string} source
+     */
     number(source) {
         return new CompiledInput(source, Constants.TYPE_NUMBER);
     }
 
+    /**
+     * @param {string} source
+     */
     boolean(source) {
         return new CompiledInput(source, Constants.TYPE_BOOLEAN);
     }
 
+    /**
+     * @param {string} source
+     */
     string(source) {
         return new CompiledInput(source, Constants.TYPE_STRING);
     }
 
+    /**
+     * @param {string} name
+     */
     fieldString(name) {
         return new CompiledInput(`"${this.safe(this.fieldValueUnsafe(name))}"`, Constants.TYPE_STRING);
     }
