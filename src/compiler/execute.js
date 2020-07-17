@@ -394,7 +394,7 @@ const listContains = (list, item) => {
         return true;
     }
     for (let i = 0; i < list.value.length; i++) {
-        if (compare(list.value[i], item) === 0) {
+        if (compareEqual(list.value[i], item)) {
             return true;
         }
     }
@@ -409,7 +409,7 @@ const listContains = (list, item) => {
  */
 const listIndexOf = (list, item) => {
     for (var i = 0; i < list.value.length; i++) {
-        if (compare(list.value[i], item) === 0) {
+        if (compareEqual(list.value[i], item)) {
             return i + 1;
         }
     }
