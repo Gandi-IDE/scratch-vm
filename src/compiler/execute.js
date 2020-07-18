@@ -10,15 +10,6 @@ const compatibilityLayerBlockUtility = require('./compat-block-utility');
 // Most of these functions are only used at runtime by generated scripts. Despite what your editor may say, they are not unused.
 
 /**
- * End a procedure call.
- */
-const endCall = () => {
-    if (thread.warp) {
-        thread.warp--;
-    }
-};
-
-/**
  * Start hats by opcode.
  * @param {string} requestedHat The opcode of the hat to start.
  * @param {*} optMatchFields Fields to match.

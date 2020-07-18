@@ -126,7 +126,10 @@ const stop = /** @param {StatementUtil} util */ (util) => {
         util.writeLn('runtime.stopForTarget(target, thread);');
     } else if (STOP_OPTION === 'this script') {
         if (util.compiler.isProcedure) {
-            util.writeLn('endCall(); return;');
+            if (util.compiler.isWarp) {
+                util.writeLn('thread.warp--;');
+            }
+            util.writeLn('return;');
         } else {
             util.retire();
         }

@@ -175,9 +175,9 @@ class ScriptCompiler {
         script += `(function ${factoryName}(target) { `;
         script += 'const runtime = target.runtime; ';
         script += 'const stage = runtime.getTargetForStage();\n';
-        for (const data of Object.keys(this.factoryVariables)) {
-            const varName = this.factoryVariables[data];
-            script += `const ${varName} = ${data};\n`;
+        for (const varValue of Object.keys(this.factoryVariables)) {
+            const varName = this.factoryVariables[varValue];
+            script += `const ${varName} = ${varValue};\n`;
         }
 
         // Generated script
@@ -190,16 +190,14 @@ class ScriptCompiler {
 
         if (this.isWarp) {
             script += 'thread.warp++;\n';
-        } else if (this.isProcedure) {
-            script += 'if (thread.warp) thread.warp++;\n';
         }
-
+        
         script += stack;
-
-        if (this.isProcedure) {
-            script += 'endCall();\n';
-        } else {
+        
+        if (!this.isProcedure) {
             script += 'retire();\n';
+        } else if (this.isWarp) {
+            script += 'thread.warp--;\n';
         }
 
         script += '}; })';
