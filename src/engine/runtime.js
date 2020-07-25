@@ -392,6 +392,11 @@ class Runtime extends EventEmitter {
          * @type {function}
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
+
+        /**
+         * Whether the script compiler is enabled.
+         */
+        this.compilerEnabled = true;
     }
 
     /**
@@ -481,6 +486,22 @@ class Runtime extends EventEmitter {
      */
     static get COMPATIBILITY_MODE_OFF () {
         return 'COMPATIBILITY_MODE_OFF';
+    }
+
+    /**
+     * Event name for enabling the compiler.
+     * @const {string}
+     */
+    static get COMPILER_ENABLED () {
+        return 'COMPILER_ENABLED';
+    }
+
+    /**
+     * Event name for disabling the compiler.
+     * @const {string}
+     */
+    static get COMPILER_DISABLED () {
+        return 'COMPILER_DISABLED';
     }
 
     /**
@@ -1614,7 +1635,6 @@ class Runtime extends EventEmitter {
      * @param {?object} opts optional arguments
      * @param {?boolean} opts.stackClick true if the script was activated by clicking on the stack
      * @param {?boolean} opts.updateMonitor true if the script should update a monitor value
-     * @param {?boolean} opts.enableCompiler true if the compiler may be used
      * @return {!Thread} The newly created thread.
      */
     _pushThread (id, target, opts) {
@@ -1629,7 +1649,7 @@ class Runtime extends EventEmitter {
         thread.pushStack(id);
         this.threads.push(thread);
 
-        if (opts && opts.enableCompiler) {
+        if (!(opts && opts.updateMonitor) && this.compilerEnabled) {
             thread.tryCompile();
         }
 
@@ -1661,7 +1681,7 @@ class Runtime extends EventEmitter {
         newThread.updateMonitor = thread.updateMonitor;
         newThread.blockContainer = thread.blockContainer;
         newThread.pushStack(thread.topBlock);
-        if (thread.triedToCompile) {
+        if (thread.triedToCompile && this.compilerEnabled) {
             newThread.tryCompile();
         }
         const i = this.threads.indexOf(thread);
@@ -1710,8 +1730,7 @@ class Runtime extends EventEmitter {
     toggleScript (topBlockId, opts) {
         opts = Object.assign({
             target: this._editingTarget,
-            stackClick: false,
-            enableCompiler: true
+            stackClick: false
         }, opts);
         // Remove any existing thread.
         for (let i = 0; i < this.threads.length; i++) {
@@ -1857,9 +1876,7 @@ class Runtime extends EventEmitter {
                 }
             }
             // Start the thread with this top block.
-            newThreads.push(this._pushThread(topBlockId, target, {
-                enableCompiler: true
-            }));
+            newThreads.push(this._pushThread(topBlockId, target));
         }, optTarget);
         // For compatibility with Scratch 2, edge triggered hats need to be processed before
         // threads are stepped. See ScratchRuntime.as for original implementation
@@ -2176,6 +2193,20 @@ class Runtime extends EventEmitter {
             clearInterval(this._steppingInterval);
             this._steppingInterval = null;
             this.start();
+        }
+    }
+
+    /**
+     * Set whether the compiler is enabled.
+     * This does not affect already running threads.
+     * @param {boolean} compilerEnabled True iff the compiler is to be enabled.
+     */
+    setCompilerEnabled (compilerEnabled) {
+        this.compilerEnabled = compilerEnabled;
+        if (compilerEnabled) {
+            this.emit(Runtime.COMPILER_ENABLED);
+        } else {
+            this.emit(Runtime.COMPILER_DISABLED);
         }
     }
 

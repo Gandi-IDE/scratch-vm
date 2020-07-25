@@ -157,6 +157,12 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.COMPATIBILITY_MODE_ON, () => {
             this.emit(Runtime.COMPATIBILITY_MODE_ON);
         });
+        this.runtime.on(Runtime.COMPILER_ENABLED, () => {
+            this.emit(Runtime.COMPILER_ENABLED);
+        });
+        this.runtime.on(Runtime.COMPILER_DISABLED, () => {
+            this.emit(Runtime.COMPILER_DISABLED);
+        });
 
         this.extensionManager = new ExtensionManager(this.runtime);
 
@@ -206,6 +212,10 @@ class VirtualMachine extends EventEmitter {
      */
     setCompatibilityMode (compatibilityModeOn) {
         this.runtime.setCompatibilityMode(!!compatibilityModeOn);
+    }
+
+    setCompilerEnabled (compilerEnabled) {
+        this.runtime.setCompilerEnabled(compilerEnabled);
     }
 
     /**
