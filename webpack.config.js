@@ -29,13 +29,6 @@ const base = {
             loader: 'file-loader'
         }]
     },
-    optimization: {
-        minimizer: [
-            new UglifyJsPlugin({
-                include: /\.min\.js$/
-            })
-        ]
-    },
     plugins: []
 };
 
