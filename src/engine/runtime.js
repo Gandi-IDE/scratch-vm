@@ -468,6 +468,22 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for turning on compatibility mode.
+     * @const {string}
+     */
+    static get COMPATIBILITY_MODE_ON () {
+        return 'COMPATIBILITY_MODE_ON';
+    }
+
+    /**
+     * Event name for turning off compatibility mode.
+     * @const {string}
+     */
+    static get COMPATIBILITY_MODE_OFF () {
+        return 'COMPATIBILITY_MODE_OFF';
+    }
+
+    /**
      * Event name when the project is started (threads may not necessarily be
      * running).
      * @const {string}
@@ -2151,6 +2167,11 @@ class Runtime extends EventEmitter {
      */
     setCompatibilityMode (compatibilityModeOn) {
         this.compatibilityMode = compatibilityModeOn;
+        if (this.compatibilityMode) {
+            this.emit(Runtime.COMPATIBILITY_MODE_ON);
+        } else {
+            this.emit(Runtime.COMPATIBILITY_MODE_OFF);
+        }
         if (this._steppingInterval) {
             clearInterval(this._steppingInterval);
             this._steppingInterval = null;
