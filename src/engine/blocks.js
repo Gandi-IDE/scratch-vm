@@ -401,6 +401,7 @@ class Blocks {
             this.deleteBlock(e.blockId);
             break;
         case 'var_create':
+            this.resetCache(); // tw: more aggressive cache resetting
             // Check if the variable being created is global or local
             // If local, create a local var on the current editing target, as long
             // as there are no conflicts, and the current target is actually a sprite
@@ -449,6 +450,7 @@ class Blocks {
             this.emitProjectChanged();
             break;
         case 'var_delete': {
+            this.resetCache(); // tw: more aggressive cache resetting
             const target = (editingTarget && editingTarget.variables.hasOwnProperty(e.varId)) ?
                 editingTarget : stage;
             target.deleteVariable(e.varId);
