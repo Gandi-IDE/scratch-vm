@@ -88,6 +88,11 @@ const variableReference = /** @param {BlockUtil} util */ (util) => {
     return findVariable(util, variable.id, variable.name, '');
 };
 
+const lookupOrCreateVariable = /** @param {BlockUtil} util */ (util) => {
+    const variable = readVariableField(util);
+    return util.target.lookupOrCreateVariable(variable.id, variable.name);
+};
+
 const readListField = /** @param {BlockUtil} util */ (util) => {
     const { id, value: name } = util.field('LIST');
     return { id, name };
@@ -112,14 +117,20 @@ const setVariable = /** @param {StatementUtil} util */ (util) => {
     const VALUE = util.input('VALUE');
     const variable = variableReference(util);
     util.writeLn(`${variable}.value = ${VALUE};`);
-    // TODO: cloud variables
+    const varObj = lookupOrCreateVariable(util);
+    if (varObj.isCloud) {
+        util.writeLn(`ioQuery("cloud", "requestUpdateVariable", ["${util.safe(varObj.name)}", ${variable}.value]);`);
+    }
 };
 
 const changeVariable = /** @param {StatementUtil} util */ (util) => {
     const VALUE = util.input('VALUE');
     const variable = variableReference(util);
     util.writeLn(`${variable}.value = (+${variable}.value || 0) + ${VALUE.asNumber()};`);
-    // TODO: cloud variables
+    const varObj = lookupOrCreateVariable(util);
+    if (varObj.isCloud) {
+        util.writeLn(`ioQuery("cloud", "requestUpdateVariable", ["${util.safe(varObj.name)}", ${variable}.value]);`);
+    }
 };
 
 const changeMonitorVisibility = /** @param {StatementUtil} util */ (util, variable, visible) => {
