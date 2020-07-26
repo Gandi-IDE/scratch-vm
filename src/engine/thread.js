@@ -427,14 +427,17 @@ class Thread {
      * Attempt to compile this thread.
      */
     tryCompile() {
-        // importing Compiler down here avoids circular dependency issues
+        const blocks = this.target.blocks;
+        if (!blocks) {
+            return;
+        }
+
+        // importing Compiler here avoids circular dependency issues
         const Compiler = require('../compiler/compiler');
 
         this.triedToCompile = true;
 
-        const blocks = this.target.blocks;
         const topBlock = this.topBlock;
-
         const cachedResult = blocks.getCompiledScript(topBlock);
         if (cachedResult === null) {
             // null means an error was cached, cannot be compiled
