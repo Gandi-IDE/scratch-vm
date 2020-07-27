@@ -61,14 +61,16 @@ const call = /** @param {StatementUtil} util */ (util) => {
 
 const getStringArgument = /** @param {InputUtil} util */ (util) => {
     const VALUE = util.fieldValueUnsafe('VALUE');
+    // TODO: we have to check that this argument exists
     if (!util.compiler.isProcedure) {
-        return util.string('""');
+        return util.number('0');
     }
     return util.unknown(`C["${util.safe(VALUE)}"]`);
 };
 
 const getBooleanArgument = /** @param {InputUtil} util */ (util) => {
     const VALUE = util.fieldValueUnsafe('VALUE');
+    // TODO: we have to check that this argument exists
     if (!util.compiler.isProcedure) {
         return util.boolean('false');
     }
