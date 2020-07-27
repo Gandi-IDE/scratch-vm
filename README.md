@@ -1,15 +1,15 @@
 scratch-vm with something similar to the phosphorus runtime & compiler hacked into it.
 
-What works
+## Setup
 
- - actually quite a lot
- - performance similar to phosphorus (better?) in chrome (much slower in firefox, but that's a firefox bug, still much faster than scratch-vm)
- - some things like list length restrictions were removed
+See https://github.com/TurboWarp/scratch-gui/wiki/Getting-Started to setup the complete TurboWarp environment.
 
-Non-goals
+If you just want to play with the VM then it's the same process as upstream scratch-vm.
+
+## Non-goals
 
  - upstream merging into scratch-vm
- - generating human readable code
+ - generating code to be easily read or modified by humans
  - 100% compatibility with every script, block, extension
  - allow modifying compiled scripts while they are running
 
