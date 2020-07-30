@@ -1,12 +1,33 @@
 const log = require('../util/log');
 
-class ASTGenerator {
+class ScriptTreeGenerator {
     constructor (thread) {
         this.thread = thread;
         this.target = thread.target;
         this.blocks = thread.blockContainer;
         this.runtime = this.target.runtime;
         this.stage = this.runtime.getTargetForStage();
+
+        this.requiredProcedures = new Set();
+        this.isProcedure = false;
+        this.isWarp = false;
+        this.arguments = [];
+    }
+
+    setIsProcedure (procedureCode) {
+        this.isProcedure = true;
+
+        const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
+        if (paramNamesIdsAndDefaults === null) {
+            throw new Error('tree generator cannot find procedure: ' + procedureCode);
+        }
+
+        const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
+        this.arguments = paramNames;
+    }
+
+    setIsWarp () {
+        this.isWarp = true;
     }
 
     descendInput (parentBlock, inputName) {
@@ -21,61 +42,96 @@ class ASTGenerator {
         case 'math_positive_number':
         case 'math_whole_number':
             return {
-                opcode: 'constant',
+                kind: 'constant',
                 value: block.fields.NUM.value
             };
         case 'text':
             return {
-                opcode: 'constant',
+                kind: 'constant',
                 value: block.fields.TEXT.value
             };
 
         case 'operator_gt':
             return {
-                opcode: 'op.greater',
+                kind: 'op.greater',
                 left: this.descendInput(block, 'OPERAND1'),
                 right: this.descendInput(block, 'OPERAND2')
             };
         case 'operator_lt':
             return {
-                opcode: 'op.less',
+                kind: 'op.less',
                 left: this.descendInput(block, 'OPERAND1'),
                 right: this.descendInput(block, 'OPERAND2')
             };
         case 'operator_equals':
             return {
-                opcode: 'op.equals',
+                kind: 'op.equals',
                 left: this.descendInput(block, 'OPERAND1'),
                 right: this.descendInput(block, 'OPERAND2')
             };
         case 'operator_add':
             return {
-                opcode: 'op.add',
+                kind: 'op.add',
                 left: this.descendInput(block, 'NUM1'),
                 right: this.descendInput(block, 'NUM2')
             };
         case 'operator_subtract':
             return {
-                opcode: 'op.subtract',
+                kind: 'op.subtract',
                 left: this.descendInput(block, 'NUM1'),
                 right: this.descendInput(block, 'NUM2')
+            };
+        case 'operator_not':
+            return {
+                kind: 'op.not',
+                operand: this.descendInput(block, 'OPERAND')
             };
 
         case 'data_variable':
             return {
-                opcode: 'var.get',
+                kind: 'var.get',
                 variable: this.descendVariable(block, 'VARIABLE')
             };
         case 'data_itemoflist':
             return {
-                opcode: 'list.get',
+                kind: 'list.get',
+                list: this.descendVariable(block, 'LIST')
+            };
+        case 'data_lengthoflist':
+            return {
+                kind: 'list.length',
                 list: this.descendVariable(block, 'LIST')
             };
 
-        default:
-            log.warn('unknown input: ' + block.opcode, block);
+        case 'motion_xposition':
             return {
-                opcode: 'constant',
+                kind: 'motion.x',
+            };
+        case 'motion_yposition':
+            return {
+                kind: 'motion.y',
+            };
+
+        case 'argument_reporter_string_number': {
+            if (!this.isProcedure) return {
+                kind: 'constant',
+                value: '0'
+            };
+            const value = block.fields.VALUE.value;
+            if (!this.arguments.includes(value)) return {
+                kind: 'constant',
+                value: '0'
+            };
+            return {
+                kind: 'args.stringNumber',
+                name: value
+            };
+        }
+
+        default:
+            log.warn('AST: unknown input: ' + block.opcode, block);
+            return {
+                kind: 'constant',
                 value: '0'
             };
         }
@@ -85,84 +141,141 @@ class ASTGenerator {
         switch (block.opcode) {
         case 'control_if':
             return {
-                opcode: 'control.if',
+                kind: 'control.if',
                 condition: this.descendInput(block, 'CONDITION'),
                 whenTrue: this.descendSubstack(block, 'SUBSTACK'),
                 whenFalse: []
             };
         case 'control_if_else':
             return {
-                opcode: 'control.if',
+                kind: 'control.if',
                 condition: this.descendInput(block, 'CONDITION'),
                 whenTrue: this.descendSubstack(block, 'SUBSTACK'),
                 whenFalse: this.descendSubstack(block, 'SUBSTACK2')
             };
         case 'control_while':
             return {
-                opcode: 'control.while',
+                kind: 'control.while',
                 condition: this.descendInput(block, 'CONDITION'),
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
         case 'control_repeat_until':
             return {
-                opcode: 'control.while',
+                kind: 'control.while',
                 condition: {
-                    opcode: 'op.not',
+                    kind: 'op.not',
                     operand: this.descendInput(block, 'CONDITION')
                 },
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
         case 'control_forever':
             return {
-                opcode: 'control.while',
+                kind: 'control.while',
                 condition: {
-                    opcode: 'constant',
+                    kind: 'constant',
                     value: true
                 },
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
         case 'control_repeat':
             return {
-                opcode: 'control.repeat',
+                kind: 'control.repeat',
                 times: this.descendInput(block, 'TIMES'),
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
         case 'control_stop':
             return {
-                opcode: 'control.stop',
+                kind: 'control.stop',
                 level: block.fields.STOP_OPTION.value
             };
 
         case 'data_setvariableto':
             return {
-                opcode: 'var.set',
+                kind: 'var.set',
                 var: this.descendVariable(block, 'VARIABLE'),
                 value: this.descendInput(block, 'VALUE')
             };
         case 'data_changevariableby':
             return {
-                opcode: 'var.change',
+                kind: 'var.change',
                 var: this.descendVariable(block, 'VARIABLE'),
                 value: this.descendInput(block, 'VALUE')
             };
 
         case 'data_replaceitemoflist':
             return {
-                opcode: 'list.replace',
+                kind: 'list.replace',
                 index: this.descendInput(block, 'INDEX'),
+                item: this.descendInput(block, 'ITEM')
+            };
+        case 'data_deletealloflist':
+            return {
+                kind: 'list.deleteAll',
+                list: this.descendVariable(block, 'LIST')
+            };
+        case 'data_addtolist':
+            return {
+                kind: 'list.add',
+                list: this.descendVariable(block, 'LIST'),
                 item: this.descendInput(block, 'ITEM')
             };
 
         case 'motion_movesteps':
             return {
-                opcode: 'motion.steps',
+                kind: 'motion.step',
                 steps: this.descendInput(block, 'STEPS')
             };
+        case 'motion_gotoxy':
+            return {
+                kind: 'motion.setXY',
+                x: this.descendInput(block, 'X'),
+                y: this.descendInput(block, 'Y')
+            };
+
+        case 'looks_gotofrontback':
+            return {
+                kind: 'looks.goFrontBack',
+                where: block.fields.FRONT_BACK.value === 'front' ? 'front' : 'back'
+            };
+
+        case 'procedures_call': {
+            const procedureCode = block.mutation.proccode;
+            const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
+            if (paramNamesIdsAndDefaults === null) {
+                return {
+                    kind: 'noop'
+                };
+            }
+
+            const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
+            this.requiredProcedures.add(procedureCode);
+
+            const parameters = {};
+            for (let i = 0; i < paramIds.length; i++) {
+                let value;
+                if (block.inputs.hasOwnProperty(paramIds[i])) {
+                    value = this.descendInput(block, paramIds[i]);
+                } else {
+                    value = {
+                        kind: 'constant',
+                        value: paramDefaults[i],
+                    };
+                }
+                // overwriting existing values is intentional
+                parameters[paramNames[i]] = value;
+            }
+
+            return {
+                kind: 'procedures.call',
+                code: procedureCode,
+                parameters
+            };
+        }
 
         default:
-            log.warn('unknown stacked block: ' + block.opcode, block);
+            log.warn('AST: unknown stacked block: ' + block.opcode, block);
             return {
-                opcode: 'noop'
+                kind: 'noop'
             };
         }
     }
@@ -217,49 +330,102 @@ class ASTGenerator {
                 };
             }
         }
-
-        debugger;
-        // // Search for it by name and type
-        // for (const varId in target.variables) {
-        //     if (target.variables.hasOwnProperty(varId)) {
-        //         const currVar = target.variables[varId];
-        //         if (currVar.name === name && currVar.type === type) {
-        //             return util.compiler.getOrCreateFactoryVariable(`target.variables["${util.safe(varId)}"]`);
-        //         }
-        //     }
-        // }
-        // if (!target.isStage) {
-        //     if (stage) {
-        //         for (const varId in stage.variables) {
-        //             if (stage.variables.hasOwnProperty(varId)) {
-        //                 const currVar = stage.variables[varId];
-        //                 if (currVar.name === name && currVar.type === type) {
-        //                     return util.compiler.getOrCreateFactoryVariable(`target.variables["${util.safe(varId)}"]`);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-        // // Should never happen.
-        // throw new Error('cannot find variable: ' + id + ' (' + name + ')');
+        // todo: create if doesn't exist
+        throw new Error('cannot find variable: ' + id + ' (' + variableName + ')');
     }
 
-    generate () {
-        const topBlock = this.blocks.getBlock(this.thread.topBlock);
+    generate (topBlockId) {
+        const topBlock = this.blocks.getBlock(topBlockId);
 
         // If the top block is a hat, advance to its child.
-        let startingBlock;
+        let entryBlock;
         if (this.runtime.getIsHat(topBlock.opcode)) {
             if (this.runtime.getIsEdgeActivatedHat(topBlock.opcode)) {
                 throw new Error('Not compiling an edge-activated hat');
             }
-            startingBlock = topBlock.next;
+            entryBlock = topBlock.next;
         } else {
-            startingBlock = this.thread.topBlock;
+            entryBlock = topBlockId;
+        }
+
+        const stack = this.walkStack(entryBlock);
+
+        return {
+            stack,
+        };
+    }
+}
+
+class ASTGenerator {
+    constructor (thread) {
+        this.thread = thread;
+        this.blocks = thread.blockContainer;
+
+        this.uncompiledProcedures = new Map();
+        this.compilingProcedures = new Map();
+        this.procedures = {};
+    }
+
+    generateScriptTree (generator, topBlockId) {
+        const result = generator.generate(topBlockId);
+
+        for (const procedureCode of generator.requiredProcedures) {
+            if (this.procedures.hasOwnProperty(procedureCode)) {
+                // already compiled
+                continue;
+            }
+            if (this.compilingProcedures.has(procedureCode)) {
+                // being compiled
+                continue;
+            }
+            if (this.uncompiledProcedures.has(procedureCode)) {
+                // queued to be compiled
+                continue;
+            }
+            const definition = this.blocks.getProcedureDefinition(procedureCode);
+            this.uncompiledProcedures.set(procedureCode, definition);
+        }
+
+        return result;
+    }
+
+    generate () {
+        const entry = this.generateScriptTree(new ScriptTreeGenerator(this.thread), this.thread.topBlock);
+
+        // Compile any required procedures.
+        // As procedures can depend on other procedures, this process may take several iterations.
+        while (this.uncompiledProcedures.size > 0) {
+            this.compilingProcedures = this.uncompiledProcedures;
+            this.uncompiledProcedures = new Map();
+
+            for (const [procedureCode, definitionId] of this.compilingProcedures.entries()) {
+                const definitionBlock = this.blocks.getBlock(definitionId);
+                const innerDefinition = this.blocks.getBlock(definitionBlock.inputs.custom_block.block);
+                const bodyStart = definitionBlock.next;
+
+                // Extract the function's warp mode.
+                // See Sequencer.stepToProcedure
+                let isWarp = false;
+                if (innerDefinition && innerDefinition.mutation) {
+                    const warp = innerDefinition.mutation.warp;
+                    if (typeof warp === 'boolean') {
+                        isWarp = warp;
+                    } else if (typeof warp === 'string') {
+                        isWarp = JSON.parse(warp);
+                    }
+                }
+
+                const generator = new ScriptTreeGenerator(this.thread);
+                generator.setIsProcedure(procedureCode, isWarp);
+                if (isWarp) generator.setIsWarp();
+                const compiledProcedure = this.generateScriptTree(generator, bodyStart);
+                this.procedures[procedureCode] = compiledProcedure;
+            }
         }
 
         return {
-            stack: this.walkStack(startingBlock)
+            entry: entry,
+            procedures: this.procedures,
         };
     }
 }
