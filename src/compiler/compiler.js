@@ -319,6 +319,12 @@ class Compiler {
      * @returns {CompilationResult}
      */
     compile() {
+        const ast = new (require('./astgen.js'))(this.thread);
+        const astg = ast.generate();
+        console.log(astg);
+        const sg = new (require('./jsgen.js'))(astg);
+        console.log(sg.compile());
+
         const target = this.target;
         if (!target) throw new Error('no target');
 
