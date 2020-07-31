@@ -1,5 +1,7 @@
-const log = require('../util/log');
 const Cast = require('../util/cast');
+const log = require('../util/log');
+
+const compatBlocks = require('./compat-blocks');
 
 class ScriptTreeGenerator {
     constructor (thread) {
@@ -202,6 +204,16 @@ class ScriptTreeGenerator {
         case 'motion_direction':
             return {
                 kind: 'motion.direction'
+            };
+        case 'motion_glideto_menu':
+            return {
+                kind: 'constant',
+                value: block.fields.TO.value
+            };
+        case 'motion_pointtowards_menu':
+            return {
+                kind: 'constant',
+                value: block.fields.TOWARDS.value
             };
         case 'motion_xposition':
             return {
@@ -442,6 +454,17 @@ class ScriptTreeGenerator {
                 right: this.descendInput(block, 'NUM2')
             };
 
+        case 'sensing_coloristouchingcolor':
+            return {
+                kind: 'sensing.colorTouchingColor',
+                target: this.descendInput(block, 'COLOR2'),
+                mask: this.descendInput(block, 'COLOR')
+            };
+        case 'sensing_distancetomenu':
+            return {
+                kind: 'constant',
+                value: block.fields.DISTANCETOMENU.value
+            };
         case 'sensing_keyoptions':
             return {
                 kind: 'constant',
@@ -464,6 +487,11 @@ class ScriptTreeGenerator {
             return {
                 kind: 'sensing.mouseX'
             };
+        case 'sensing_of_object_menu':
+            return {
+                kind: 'constant',
+                value: block.fields.OBJECT.value
+            };
         case 'sensing_timer':
             return {
                 kind: 'sensing.getTimer'
@@ -473,12 +501,45 @@ class ScriptTreeGenerator {
                 kind: 'sensing.touchingColor',
                 color: this.descendInput(block, 'COLOR')
             };
+        case 'sensing_touchingobject':
+            return {
+                kind: 'sensing.touching',
+                object: this.descendInput(block, 'TOUCHINGOBJECTMENU')
+            };
+        case 'sensing_touchingobjectmenu':
+            return {
+                kind: 'constant',
+                value: block.fields.TOUCHINGOBJECTMENU.value
+            };
         case 'sensing_username':
             return {
                 kind: 'sensing.username'
             };
 
+        case 'sound_sounds_menu':
+            return {
+                kind: 'constant',
+                value: block.fields.SOUND_MENU.value
+            };
+
         default:
+            if (compatBlocks.inputs.includes(block.opcode)) {
+                // todo: don't duplicate this code block twice
+                const inputs = {};
+                const fields = {};
+                for (const name of Object.keys(block.inputs)) {
+                    inputs[name] = this.descendInput(block, name);
+                }
+                for (const name of Object.keys(block.fields)) {
+                    fields[name] = block.fields[name].value;
+                }
+                return {
+                    kind: 'compat',
+                    opcode: block.opcode,
+                    inputs,
+                    fields
+                };
+            }
             log.warn(`AST: Unknown input: ${block.opcode}`, block);
             throw new Error(`AST: Unknown input: ${block.opcode}`);
         }
@@ -502,6 +563,13 @@ class ScriptTreeGenerator {
                     kind: 'constant',
                     value: true
                 },
+                do: this.descendSubstack(block, 'SUBSTACK')
+            };
+        case 'control_for_each':
+            return {
+                kind: 'control.for',
+                variable: this.descendVariable(block, 'VARIABLE'),
+                count: this.descendInput(block, 'VALUE'),
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
         case 'control_if':
@@ -580,15 +648,13 @@ class ScriptTreeGenerator {
             };
         case 'data_hidelist':
             return {
-                kind: 'list.setVisible',
-                list: this.descendVariable(block, 'LIST'),
-                visible: false
+                kind: 'list.hide',
+                list: this.descendVariable(block, 'LIST')
             };
         case 'data_hidevariable':
             return {
-                kind: 'var.setVisible',
-                variable: this.descendVariable(block, 'VARIABLE'),
-                visible: false
+                kind: 'var.hide',
+                variable: this.descendVariable(block, 'VARIABLE')
             };
         case 'data_insertatlist':
             return {
@@ -612,20 +678,23 @@ class ScriptTreeGenerator {
             };
         case 'data_showlist':
             return {
-                kind: 'list.setVisible',
-                list: this.descendVariable(block, 'LIST'),
-                visible: true
+                kind: 'list.show',
+                list: this.descendVariable(block, 'LIST')
             };
         case 'data_showvariable':
             return {
-                kind: 'var.setVisible',
-                variable: this.descendVariable(block, 'VARIABLE'),
-                visible: true
+                kind: 'var.show',
+                variable: this.descendVariable(block, 'VARIABLE')
             };
 
         case 'event_broadcast':
             return {
                 kind: 'event.broadcast',
+                broadcast: this.descendInput(block, 'BROADCAST_INPUT')
+            };
+        case 'event_broadcastandwait':
+            return {
+                kind: 'event.broadcastAndWait',
                 broadcast: this.descendInput(block, 'BROADCAST_INPUT')
             };
 
@@ -657,8 +726,7 @@ class ScriptTreeGenerator {
             };
         case 'looks_hide':
             return {
-                kind: 'looks.setVisible',
-                visible: false
+                kind: 'looks.hide'
             };
         case 'looks_setsizeto':
             return {
@@ -667,8 +735,12 @@ class ScriptTreeGenerator {
             };
         case 'looks_show':
             return {
-                kind: 'looks.setVisible',
-                visible: true
+                kind: 'looks.show'
+            };
+        case 'looks_switchbackdropto':
+            return {
+                kind: 'looks.switchBackdrop',
+                backdrop: this.descendInput(block, 'BACKDROP')
             };
         case 'looks_switchcostumeto':
             return {
@@ -836,6 +908,23 @@ class ScriptTreeGenerator {
             };
 
         default:
+            if (compatBlocks.statements.includes(block.opcode)) {
+                // todo: don't duplicate this code block twice
+                const inputs = {};
+                const fields = {};
+                for (const name of Object.keys(block.inputs)) {
+                    inputs[name] = this.descendInput(block, name);
+                }
+                for (const name of Object.keys(block.fields)) {
+                    fields[name] = block.fields[name].value;
+                }
+                return {
+                    kind: 'compat',
+                    opcode: block.opcode,
+                    inputs,
+                    fields
+                };
+            }
             log.warn(`AST: Unknown stacked block: ${block.opcode}`, block);
             throw new Error(`AST: Unknown stacked block: ${block.opcode}`);
         }
