@@ -148,6 +148,13 @@ class ScriptCompiler {
             return new TypedInput(`compareLessThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
         case 'op.greater':
             return new TypedInput(`compareGreaterThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
+        case 'op.or':
+            return new TypedInput(`(${this.descendInput(node.left).asBoolean()} || ${this.descendInput(node.right).asBoolean()})`, TYPE_BOOLEAN);
+        case 'op.join':
+            return new TypedInput(`(${this.descendInput(node.left).asString()} + ${this.descendInput(node.right).asString()})`, TYPE_STRING);
+
+        case 'timer.get':
+            return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
 
         default:
             // todo: error, not warn
@@ -189,14 +196,14 @@ class ScriptCompiler {
                 this.source += 'runtime.stopForTarget(target, thread);\n';
             } else if (node.level === 'this script') {
                 this.source += 'return;\n';
-                // if (this.isProcedure) {
-                //     if (this.isWarp) {
-                //         util.writeLn('thread.warp--;');
-                //     }
-                //     util.writeLn('return;');
-                // } else {
-                //     util.retire();
-                // }
+                if (this.root.isProcedure) {
+                    if (this.root.isWarp) {
+                        this.source += 'thread.warp--;\n';
+                    }
+                    this.source += 'return;\n';
+                } else {
+                    this.retire();
+                }
             }
             break;
         }
@@ -212,7 +219,7 @@ class ScriptCompiler {
             }
             this.source += `});\n`;
             break;
-        
+
         case 'var.set':
             // todo: cloud
             this.source += `${this.referenceVariable(node.variable)}.value = ${this.descendInput(node.value).asUnknown()};\n`;
@@ -234,6 +241,10 @@ class ScriptCompiler {
             break;
         case 'list.replace':
             this.source += `listReplace(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()}, ${this.descendInput(node.item).asUnknown()});\n`;
+            break;
+
+        case 'timer.reset':
+            this.source += 'ioQuery("clock", "resetProjectTimer");\n';
             break;
 
         default:
@@ -288,23 +299,23 @@ class ScriptCompiler {
 
         // Generated script
         script += `return function* ${scriptName}(`;
-        if (this.isProcedure || true) {
+        if (this.root.isProcedure) {
             // procedures accept single argument "C"
             script += 'C';
         }
         script += ') {\n';
 
-        if (this.isWarp) {
+        if (this.root.isWarp) {
             script += 'thread.warp++;\n';
         }
-        
+
         script += this.source;
 
-        // if (!this.isProcedure) {
-        //     script += 'retire();\n';
-        // } else if (this.isWarp) {
-        //     script += 'thread.warp--;\n';
-        // }
+        if (!this.root.isProcedure) {
+            script += 'retire();\n';
+        } else if (this.root.isWarp) {
+            script += 'thread.warp--;\n';
+        }
 
         script += '}; })';
 

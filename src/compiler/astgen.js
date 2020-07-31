@@ -92,6 +92,24 @@ class ScriptTreeGenerator {
                 kind: 'op.not',
                 operand: this.descendInput(block, 'OPERAND')
             };
+        case 'operator_or':
+            return {
+                kind: 'op.or',
+                left: this.descendInput(block, 'OPERAND1'),
+                right: this.descendInput(block, 'OPERAND2')
+            };
+        case 'operator_and':
+            return {
+                kind: 'op.and',
+                left: this.descendInput(block, 'OPERAND1'),
+                right: this.descendInput(block, 'OPERAND2')
+            };
+        case 'operator_join':
+            return {
+                kind: 'op.join',
+                left: this.descendInput(block, 'STRING1'),
+                right: this.descendInput(block, 'STRING2')
+            };
 
         case 'data_variable':
             return {
@@ -117,6 +135,11 @@ class ScriptTreeGenerator {
         case 'motion_yposition':
             return {
                 kind: 'motion.y',
+            };
+
+        case 'sensing_timer':
+            return {
+                kind: 'timer.get',
             };
 
         case 'argument_reporter_string_number': {
@@ -208,6 +231,16 @@ class ScriptTreeGenerator {
                 variable: this.descendVariable(block, 'VARIABLE'),
                 value: this.descendInput(block, 'VALUE')
             };
+        case 'data_hidevariable':
+            return {
+                kind: 'var.hide',
+                variable: this.descendVariable(block, 'VARIABLE'),
+            };
+        case 'data_showvariable':
+            return {
+                kind: 'var.show',
+                variable: this.descendVariable(block, 'VARIABLE'),
+            };
 
         case 'data_replaceitemoflist':
             return {
@@ -227,6 +260,16 @@ class ScriptTreeGenerator {
                 list: this.descendVariable(block, 'LIST'),
                 item: this.descendInput(block, 'ITEM')
             };
+        case 'data_hidelist':
+            return {
+                kind: 'list.hide',
+                list: this.descendVariable(block, 'LIST'),
+            };
+        case 'data_showlist':
+            return {
+                kind: 'list.show',
+                list: this.descendVariable(block, 'LIST'),
+            };
 
         case 'motion_movesteps':
             return {
@@ -244,6 +287,11 @@ class ScriptTreeGenerator {
             return {
                 kind: 'looks.goFrontBack',
                 where: block.fields.FRONT_BACK.value === 'front' ? 'front' : 'back'
+            };
+
+        case 'sensing_resettimer':
+            return {
+                kind: 'timer.reset'
             };
 
         case 'procedures_call': {
@@ -360,6 +408,8 @@ class ScriptTreeGenerator {
 
         return {
             stack,
+            isProcedure: this.isProcedure,
+            isWarp: this.isWarp,
         };
     }
 }
