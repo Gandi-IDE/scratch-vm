@@ -81,6 +81,12 @@ class ScriptTreeGenerator {
                 left: this.descendInput(block, 'NUM1'),
                 right: this.descendInput(block, 'NUM2')
             };
+        case 'operator_divide':
+            return {
+                kind: 'op.divide',
+                left: this.descendInput(block, 'NUM1'),
+                right: this.descendInput(block, 'NUM2')
+            };
         case 'operator_not':
             return {
                 kind: 'op.not',
@@ -95,7 +101,8 @@ class ScriptTreeGenerator {
         case 'data_itemoflist':
             return {
                 kind: 'list.get',
-                list: this.descendVariable(block, 'LIST')
+                list: this.descendVariable(block, 'LIST'),
+                index: this.descendInput(block, 'INDEX')
             };
         case 'data_lengthoflist':
             return {
@@ -192,19 +199,20 @@ class ScriptTreeGenerator {
         case 'data_setvariableto':
             return {
                 kind: 'var.set',
-                var: this.descendVariable(block, 'VARIABLE'),
+                variable: this.descendVariable(block, 'VARIABLE'),
                 value: this.descendInput(block, 'VALUE')
             };
         case 'data_changevariableby':
             return {
                 kind: 'var.change',
-                var: this.descendVariable(block, 'VARIABLE'),
+                variable: this.descendVariable(block, 'VARIABLE'),
                 value: this.descendInput(block, 'VALUE')
             };
 
         case 'data_replaceitemoflist':
             return {
                 kind: 'list.replace',
+                list: this.descendVariable(block, 'LIST'),
                 index: this.descendInput(block, 'INDEX'),
                 item: this.descendInput(block, 'ITEM')
             };
