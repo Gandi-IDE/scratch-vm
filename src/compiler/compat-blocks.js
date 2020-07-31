@@ -1,4 +1,4 @@
-const statements = [
+const stacked = [
     'control_get_counter',
     'control_incr_counter',
     'control_clear_counter',
@@ -40,6 +40,6 @@ const inputs = [
 ];
 
 module.exports = {
-    statements,
+    stacked,
     inputs
 };

@@ -11,13 +11,13 @@ class ScriptTreeGenerator {
         this.runtime = this.target.runtime;
         this.stage = this.runtime.getTargetForStage();
 
-        this.requiredProcedures = new Set();
+        this.dependedProcedures = [];
         this.isProcedure = false;
         this.isWarp = false;
-        this.arguments = [];
+        this.procedureArguments = [];
     }
 
-    setIsProcedure (procedureCode) {
+    setProcedureCode (procedureCode) {
         this.isProcedure = true;
 
         const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
@@ -26,17 +26,17 @@ class ScriptTreeGenerator {
         }
 
         const [paramNames, _paramIds, _paramDefaults] = paramNamesIdsAndDefaults;
-        this.arguments = paramNames;
+        this.procedureArguments = paramNames;
     }
 
-    setIsWarp () {
+    enableWarp () {
         this.isWarp = true;
     }
 
     descendInput (parentBlock, inputName) {
         const input = parentBlock.inputs[inputName];
         if (!input) {
-            log.warn(`AST: block ${parentBlock.opcode} is missing input ${inputName}`, parentBlock);
+            log.warn(`AST: ${parentBlock.opcode}: missing input ${inputName}`, parentBlock);
             return {
                 kind: 'constant',
                 value: 0
@@ -45,7 +45,7 @@ class ScriptTreeGenerator {
         const inputId = input.block;
         const block = this.blocks.getBlock(inputId);
         if (!block) {
-            log.warn(`AST: could not find input ${inputName}`);
+            log.warn(`AST: ${parentBlock.opcode}: could not find input ${inputName} with ID ${inputId}`);
             return {
                 kind: 'constant',
                 value: 0
@@ -90,7 +90,7 @@ class ScriptTreeGenerator {
                 };
             }
             const name = block.fields.VALUE.value;
-            if (!this.arguments.includes(name)) {
+            if (!this.procedureArguments.includes(name)) {
                 return {
                     kind: 'constant',
                     value: 0
@@ -109,7 +109,7 @@ class ScriptTreeGenerator {
                 };
             }
             const name = block.fields.VALUE.value;
-            if (!this.arguments.includes(name)) {
+            if (!this.procedureArguments.includes(name)) {
                 return {
                     kind: 'constant',
                     value: false
@@ -239,7 +239,6 @@ class ScriptTreeGenerator {
         case 'operator_contains':
             return {
                 kind: 'op.contains',
-                // todo: better names
                 string: this.descendInput(block, 'STRING1'),
                 contains: this.descendInput(block, 'STRING2')
             };
@@ -523,22 +522,9 @@ class ScriptTreeGenerator {
             };
 
         default:
+            // It might be a block that uses the compatibility layer
             if (compatBlocks.inputs.includes(block.opcode)) {
-                // todo: don't duplicate this code block twice
-                const inputs = {};
-                const fields = {};
-                for (const name of Object.keys(block.inputs)) {
-                    inputs[name] = this.descendInput(block, name);
-                }
-                for (const name of Object.keys(block.fields)) {
-                    fields[name] = block.fields[name].value;
-                }
-                return {
-                    kind: 'compat',
-                    opcode: block.opcode,
-                    inputs,
-                    fields
-                };
+                return this.descendCompatLayer(block);
             }
             log.warn(`AST: Unknown input: ${block.opcode}`, block);
             throw new Error(`AST: Unknown input: ${block.opcode}`);
@@ -855,7 +841,10 @@ class ScriptTreeGenerator {
             }
 
             const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
-            this.requiredProcedures.add(procedureCode);
+
+            if (!this.dependedProcedures.includes(procedureCode)) {
+                this.dependedProcedures.push(procedureCode);
+            }
 
             const parameters = {};
             for (let i = 0; i < paramIds.length; i++) {
@@ -908,22 +897,9 @@ class ScriptTreeGenerator {
             };
 
         default:
-            if (compatBlocks.statements.includes(block.opcode)) {
-                // todo: don't duplicate this code block twice
-                const inputs = {};
-                const fields = {};
-                for (const name of Object.keys(block.inputs)) {
-                    inputs[name] = this.descendInput(block, name);
-                }
-                for (const name of Object.keys(block.fields)) {
-                    fields[name] = block.fields[name].value;
-                }
-                return {
-                    kind: 'compat',
-                    opcode: block.opcode,
-                    inputs,
-                    fields
-                };
+            // It might be a block that uses the compatibility layer
+            if (compatBlocks.stacked.includes(block.opcode)) {
+                return this.descendCompatLayer(block);
             }
             log.warn(`AST: Unknown stacked block: ${block.opcode}`, block);
             throw new Error(`AST: Unknown stacked block: ${block.opcode}`);
@@ -984,7 +960,31 @@ class ScriptTreeGenerator {
         throw new Error(`cannot find variable: ${id} (${variableName})`);
     }
 
+    descendCompatLayer (block) {
+        const inputs = {};
+        const fields = {};
+        for (const name of Object.keys(block.inputs)) {
+            inputs[name] = this.descendInput(block, name);
+        }
+        for (const name of Object.keys(block.fields)) {
+            fields[name] = block.fields[name].value;
+        }
+        return {
+            kind: 'compat',
+            opcode: block.opcode,
+            inputs,
+            fields
+        };
+    }
+
     generate (topBlockId) {
+        const result = {
+            stack: null,
+            isProcedure: this.isProcedure,
+            isWarp: this.isWarp,
+            dependedProcedures: this.dependedProcedures
+        };
+
         const topBlock = this.blocks.getBlock(topBlockId);
 
         // If the top block is a hat, advance to its child.
@@ -998,13 +998,15 @@ class ScriptTreeGenerator {
             entryBlock = topBlockId;
         }
 
+        if (!entryBlock) {
+            // This is an empty script.
+            return result;
+        }
+
         const stack = this.walkStack(entryBlock);
 
-        return {
-            stack,
-            isProcedure: this.isProcedure,
-            isWarp: this.isWarp
-        };
+        result.stack = stack;
+        return result;
     }
 }
 
@@ -1021,7 +1023,7 @@ class ASTGenerator {
     generateScriptTree (generator, topBlockId) {
         const result = generator.generate(topBlockId);
 
-        for (const procedureCode of generator.requiredProcedures) {
+        for (const procedureCode of generator.dependedProcedures) {
             if (this.procedures.hasOwnProperty(procedureCode)) {
                 // already compiled
                 continue;
@@ -1068,8 +1070,8 @@ class ASTGenerator {
                 }
 
                 const generator = new ScriptTreeGenerator(this.thread);
-                generator.setIsProcedure(procedureCode, isWarp);
-                if (isWarp) generator.setIsWarp();
+                generator.setProcedureCode(procedureCode);
+                if (isWarp) generator.enableWarp();
                 const compiledProcedure = this.generateScriptTree(generator, bodyStart);
                 this.procedures[procedureCode] = compiledProcedure;
             }
