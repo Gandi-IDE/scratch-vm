@@ -1,4 +1,5 @@
 const log = require('../util/log');
+const Cast = require('../util/cast');
 
 class ScriptTreeGenerator {
     constructor (thread) {
@@ -32,8 +33,22 @@ class ScriptTreeGenerator {
 
     descendInput (parentBlock, inputName) {
         const input = parentBlock.inputs[inputName];
+        if (!input) {
+            log.warn(`AST: block ${parentBlock.opcode} is missing input ${inputName}`, parentBlock);
+            return {
+                kind: 'constant',
+                value: 0
+            };
+        }
         const inputId = input.block;
         const block = this.blocks.getBlock(inputId);
+        if (!block) {
+            log.warn(`AST: could not find input ${inputName}`);
+            return {
+                kind: 'constant',
+                value: 0
+            };
+        }
 
         switch (block.opcode) {
         case 'colour_picker': {
@@ -104,6 +119,12 @@ class ScriptTreeGenerator {
             };
         }
 
+        case 'control_create_clone_of_menu':
+            return {
+                kind: 'constant',
+                value: block.fields.CLONE_OPTION.value
+            };
+
         case 'data_variable':
             return {
                 kind: 'var.get',
@@ -124,13 +145,13 @@ class ScriptTreeGenerator {
             return {
                 kind: 'list.contains',
                 list: this.descendVariable(block, 'LIST'),
-                item: this.descendInput(block, 'INPUT')
+                item: this.descendInput(block, 'ITEM')
             };
         case 'data_itemnumoflist':
             return {
                 kind: 'list.index',
                 list: this.descendVariable(block, 'LIST'),
-                item: this.descendInput(block, 'INPUT')
+                item: this.descendInput(block, 'ITEM')
             };
         case 'data_listcontents':
             return {
@@ -142,9 +163,46 @@ class ScriptTreeGenerator {
         case 'event_broadcast_menu':
             return {
                 kind: 'constant',
-                value: block.fields.BROADCAST_INPUT.value
+                value: block.fields.BROADCAST_OPTION.value
             };
 
+        case 'looks_backdropnumbername':
+            if (block.fields.NUMBER_NAME.value === 'number') {
+                return {
+                    kind: 'looks.backdropNumber'
+                };
+            }
+            return {
+                kind: 'looks.backdropName'
+            };
+        case 'looks_backdrops':
+            return {
+                kind: 'constant',
+                value: block.fields.BACKDROP.value
+            };
+        case 'looks_costume':
+            return {
+                kind: 'constant',
+                value: block.fields.COSTUME.value
+            };
+        case 'looks_costumenumbername':
+            if (block.fields.NUMBER_NAME.value === 'number') {
+                return {
+                    kind: 'looks.costumeNumber'
+                };
+            }
+            return {
+                kind: 'looks.costumeName'
+            };
+        case 'looks_size':
+            return {
+                kind: 'looks.size'
+            };
+
+        case 'motion_direction':
+            return {
+                kind: 'motion.direction'
+            };
         case 'motion_xposition':
             return {
                 kind: 'motion.x'
@@ -303,6 +361,75 @@ class ScriptTreeGenerator {
                 left: this.descendInput(block, 'OPERAND1'),
                 right: this.descendInput(block, 'OPERAND2')
             };
+        case 'operator_random': {
+            const from = this.descendInput(block, 'FROM');
+            const to = this.descendInput(block, 'TO');
+            // If both values are known at compile time, we can do some optimizations.
+            if (from.kind === 'constant' && to.kind === 'constant') {
+                const nFrom = Cast.toNumber(from);
+                const nTo = Cast.toNumber(to);
+                // If both numbers are the same, optimize out the random
+                if (nFrom === nTo) {
+                    return {
+                        type: 'constant',
+                        value: nFrom
+                    };
+                }
+                const low = nFrom <= nTo ? nFrom : nTo;
+                const high = nFrom <= nTo ? nTo : nFrom;
+                // If both are ints, hint this to the compiler
+                if (Cast.isInt(low) && Cast.isInt(high)) {
+                    return {
+                        type: 'op.random',
+                        low: low,
+                        high: high,
+                        checkedOrder: true,
+                        useInts: true,
+                        useFloats: false
+                    };
+                }
+                // Otherwise they're floats
+                return {
+                    type: 'op.random',
+                    low: low,
+                    high: high,
+                    checkedOrder: true,
+                    useInts: false,
+                    useFloats: true
+                };
+            } else if (from.kind === 'constant') {
+                if (!Cast.isInt(Cast.toNumber(from.value))) {
+                    return {
+                        type: 'op.random',
+                        low: from,
+                        high: to,
+                        checkedOrder: false,
+                        useInts: false,
+                        useFloats: true
+                    };
+                }
+            } else if (to.kind === 'constant') {
+                if (!Cast.isInt(Cast.toNumber(to.value))) {
+                    return {
+                        type: 'op.random',
+                        low: from,
+                        high: to,
+                        checkedOrder: false,
+                        useInts: false,
+                        useFloats: true
+                    };
+                }
+            }
+            // No optimizations possible
+            return {
+                type: 'op.random',
+                low: from,
+                high: to,
+                checkedOrder: false,
+                useInts: false,
+                useFloats: false
+            };
+        }
         case 'operator_round':
             return {
                 kind: 'op.round',
@@ -315,13 +442,36 @@ class ScriptTreeGenerator {
                 right: this.descendInput(block, 'NUM2')
             };
 
+        case 'sensing_keyoptions':
+            return {
+                kind: 'constant',
+                value: block.fields.KEY_OPTION.value
+            };
+        case 'sensing_keypressed':
+            return {
+                kind: 'sensing.keydown',
+                key: this.descendInput(block, 'KEY_OPTION')
+            };
         case 'sensing_mousedown':
             return {
                 kind: 'sensing.mousedown'
             };
+        case 'sensing_mousey':
+            return {
+                kind: 'sensing.mouseY'
+            };
+        case 'sensing_mousex':
+            return {
+                kind: 'sensing.mouseX'
+            };
         case 'sensing_timer':
             return {
                 kind: 'sensing.getTimer'
+            };
+        case 'sensing_touchingcolor':
+            return {
+                kind: 'sensing.touchingColor',
+                color: this.descendInput(block, 'COLOR')
             };
         case 'sensing_username':
             return {
@@ -336,6 +486,11 @@ class ScriptTreeGenerator {
 
     descendStackedBlock (block) {
         switch (block.opcode) {
+        case 'control_create_clone_of':
+            return {
+                kind: 'control.createClone',
+                target: this.descendInput(block, 'CLONE_OPTION')
+            };
         case 'control_delete_this_clone':
             return {
                 kind: 'control.deleteClone'
@@ -474,9 +629,26 @@ class ScriptTreeGenerator {
                 broadcast: this.descendInput(block, 'BROADCAST_INPUT')
             };
 
+        case 'looks_changesizeby':
+            return {
+                kind: 'looks.setSize',
+                size: {
+                    kind: 'op.add',
+                    left: {
+                        kind: 'looks.size'
+                    },
+                    right: this.descendInput(block, 'CHANGE')
+                }
+            };
         case 'looks_cleargraphiceffects':
             return {
                 kind: 'looks.clearEffects'
+            };
+        case 'looks_goforwardbackwardlayers':
+            return {
+                kind: 'looks.changeLayers',
+                direction: block.fields.FORWARD_BACKWARD.value,
+                layers: this.descendInput(block, 'NUM')
             };
         case 'looks_gotofrontback':
             return {
@@ -498,17 +670,102 @@ class ScriptTreeGenerator {
                 kind: 'looks.setVisible',
                 visible: true
             };
+        case 'looks_switchcostumeto':
+            return {
+                kind: 'looks.switchCostume',
+                costume: this.descendInput(block, 'COSTUME')
+            };
 
+        case 'motion_changexby':
+            return {
+                kind: 'motion.setXY',
+                x: {
+                    kind: 'op.add',
+                    left: {
+                        kind: 'motion.x'
+                    },
+                    right: this.descendInput(block, 'DX')
+                },
+                y: {
+                    kind: 'motion.y'
+                }
+            };
+        case 'motion_changeyby':
+            return {
+                kind: 'motion.setXY',
+                x: {
+                    kind: 'motion.x'
+                },
+                y: {
+                    kind: 'op.add',
+                    left: {
+                        kind: 'motion.y'
+                    },
+                    right: this.descendInput(block, 'DY')
+                }
+            };
         case 'motion_gotoxy':
             return {
                 kind: 'motion.setXY',
                 x: this.descendInput(block, 'X'),
                 y: this.descendInput(block, 'Y')
             };
+        case 'motion_ifonedgebounce':
+            return {
+                kind: 'motion.ifOnEdgeBounce'
+            };
         case 'motion_movesteps':
             return {
                 kind: 'motion.step',
                 steps: this.descendInput(block, 'STEPS')
+            };
+        case 'motion_pointindirection':
+            return {
+                kind: 'motion.setDirection',
+                direction: this.descendInput(block, 'DIRECTION')
+            };
+        case 'motion_setrotationstyle':
+            return {
+                kind: 'motion.setRotationStyle',
+                style: this.descendInput(block, 'STYLE')
+            };
+        case 'motion_setx':
+            return {
+                kind: 'motion.setXY',
+                x: this.descendInput(block, 'X'),
+                y: {
+                    kind: 'motion.y'
+                }
+            };
+        case 'motion_sety':
+            return {
+                kind: 'motion.setXY',
+                x: {
+                    kind: 'motion.x'
+                },
+                y: this.descendInput(block, 'Y')
+            };
+        case 'motion_turnleft':
+            return {
+                kind: 'motion.setDirection',
+                direction: {
+                    kind: 'op.subtract',
+                    left: {
+                        kind: 'motion.direction'
+                    },
+                    right: this.descendInput(block, 'DEGREES')
+                }
+            };
+        case 'motion_turnright':
+            return {
+                kind: 'motion.setDirection',
+                direction: {
+                    kind: 'op.add',
+                    left: {
+                        kind: 'motion.direction'
+                    },
+                    right: this.descendInput(block, 'DEGREES')
+                }
             };
 
         case 'pen_clear':
@@ -572,7 +829,7 @@ class ScriptTreeGenerator {
             return {
                 kind: 'pen.up'
             };
-                
+
         case 'sensing_resettimer':
             return {
                 kind: 'sensing.resetTimer'

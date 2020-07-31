@@ -3,7 +3,7 @@ const Cast = require('../util/cast');
 const VariablePool = require('./variable-pool');
 const execute = require('./execute');
 
-const sanitize = string => string
+const sanitize = string => string.toString()
     .replace(/\\/g, '\\\\')
     .replace(/'/g, '\\\'')
     .replace(/"/g, '\\"')
