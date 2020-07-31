@@ -1,6 +1,7 @@
 const log = require('../util/log');
 const Cast = require('../util/cast');
 const VariablePool = require('./variable-pool');
+const execute = require('./execute');
 
 const sanitize = (string) => string
     .replace(/\\/g, '\\\\')
@@ -20,6 +21,16 @@ const disableToString = (obj) => {
         throw new Error(`toString unexpectedly called on ${obj.name || 'object'}`);
     };
 };
+
+/**
+ * Variable pool used for factory function names.
+ */
+const factoryNameVariablePool = new VariablePool('f_');
+
+/**
+ * Variable pool used for generated script names.
+ */
+const generatorNameVariablePool = new VariablePool('g_');
 
 /**
  * @typedef Input
@@ -98,6 +109,8 @@ class ScriptCompiler {
         this.root = root;
         this.source = '';
         this.localVariables = new VariablePool('a');
+        this._setupVariablesPool = new VariablePool('b');
+        this._setupVariables = {};
     }
 
     /**
@@ -121,9 +134,9 @@ class ScriptCompiler {
         case 'args.stringNumber':
             return new TypedInput(`C["${sanitize(node.name)}"]`, TYPE_UNKNOWN);
 
-        case 'op.subtract':
-            return new TypedInput(`(${this.descendInput(node.left).asNumber()} + ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
         case 'op.add':
+            return new TypedInput(`(${this.descendInput(node.left).asNumber()} + ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
+        case 'op.subtract':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} - ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
         case 'op.multiply':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} * ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
@@ -207,7 +220,7 @@ class ScriptCompiler {
         case 'var.change': {
             const variable = this.referenceVariable(node.variable);
             // todo: cloud
-            this.source += `${variable}.value = (+${variable} || 0) + ${this.descendInput(node.value).asUnknown()};\n`;
+            this.source += `${variable}.value = (+${variable}.value || 0) + ${this.descendInput(node.value).asUnknown()};\n`;
             break;
         }
 
@@ -239,20 +252,73 @@ class ScriptCompiler {
     referenceVariable (variable) {
         // todo: factoryVariables
         if (variable.scope === 'target') {
-            return `target.variables["${sanitize(variable.id)}"]`;
+            return this.evaluateOnce(`target.variables["${sanitize(variable.id)}"]`);
         } else {
-            return `stage.variables["${sanitize(variable.id)}"]`;
+            return this.evaluateOnce(`stage.variables["${sanitize(variable.id)}"]`);
         }
     }
 
+    evaluateOnce (source) {
+        if (this._setupVariables.hasOwnProperty(source)) {
+            return this._setupVariables[source];
+        }
+        const variable = this._setupVariablesPool.next();
+        this._setupVariables[source] = variable;
+        return variable;
+    }
 
     retire () {
         this.source += 'retire(); yield;';
     }
 
+    createScriptFactory () {
+        const scriptName = generatorNameVariablePool.next();
+        const factoryName = factoryNameVariablePool.next();
+
+        let script = '';
+
+        // Factory
+        script += `(function ${factoryName}(target) { `;
+        script += 'const runtime = target.runtime; ';
+        script += 'const stage = runtime.getTargetForStage();\n';
+        for (const varValue of Object.keys(this._setupVariables)) {
+            const varName = this._setupVariables[varValue];
+            script += `const ${varName} = ${varValue};\n`;
+        }
+
+        // Generated script
+        script += `return function* ${scriptName}(`;
+        if (this.isProcedure || true) {
+            // procedures accept single argument "C"
+            script += 'C';
+        }
+        script += ') {\n';
+
+        if (this.isWarp) {
+            script += 'thread.warp++;\n';
+        }
+        
+        script += this.source;
+
+        // if (!this.isProcedure) {
+        //     script += 'retire();\n';
+        // } else if (this.isWarp) {
+        //     script += 'thread.warp--;\n';
+        // }
+
+        script += '}; })';
+
+        return script;
+    }
+
     compile () {
         this.descendStack(this.root.stack);
-        return this.source;
+
+        const factory = this.createScriptFactory();
+        const fn = execute.scopedEval(factory);
+        log.info(`JS: compiled script`, factory);
+
+        return fn;
     }
 }
 
@@ -274,12 +340,17 @@ class JSCompiler {
 
     compile () {
         const entry = new ScriptCompiler(this.ast.entry).compile();
-        console.log('entry', entry);
 
+        const procedures = {};
         for (const procedureCode of Object.keys(this.ast.procedures)) {
-            const source = new ScriptCompiler(this.ast.procedures[procedureCode]).compile();
-            console.log(procedureCode, source);
+            const compiled = new ScriptCompiler(this.ast.procedures[procedureCode]).compile();
+            procedures[procedureCode] = compiled;
         }
+
+        return {
+            startingFunction: entry,
+            procedures: procedures,
+        };
     }
 }
 

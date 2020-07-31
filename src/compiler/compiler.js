@@ -323,7 +323,11 @@ class Compiler {
         const astg = ast.generate();
         console.log(astg);
         const sg = new (require('./jsgen.js'))(astg);
-        console.log(sg.compile());
+        const sgc = sg.compile();
+        console.log(sgc);
+        if (sgc) {
+            return sgc;
+        }
 
         const target = this.target;
         if (!target) throw new Error('no target');
