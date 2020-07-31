@@ -3,7 +3,7 @@ const Cast = require('../util/cast');
 const VariablePool = require('./variable-pool');
 const execute = require('./execute');
 
-const sanitize = (string) => string
+const sanitize = string => string
     .replace(/\\/g, '\\\\')
     .replace(/'/g, '\\\'')
     .replace(/"/g, '\\"')
@@ -16,7 +16,7 @@ const TYPE_BOOLEAN = 3;
 const TYPE_UNKNOWN = 4;
 const TYPE_NUMBER_NAN = 5;
 
-const disableToString = (obj) => {
+const disableToString = obj => {
     obj.toString = () => {
         throw new Error(`toString unexpectedly called on ${obj.name || 'object'}`);
     };
@@ -44,7 +44,7 @@ const generatorNameVariablePool = new VariablePool('g_');
  * @implements {Input}
  */
 class TypedInput {
-    constructor(source, type) {
+    constructor (source, type) {
         // for debugging
         if (typeof type !== 'number') throw new Error('type is invalid');
         /** @private */
@@ -55,18 +55,18 @@ class TypedInput {
 
     asNumber () {
         if (this.type === TYPE_NUMBER) return this.source;
-        if (this.type === TYPE_NUMBER_NAN) return '(' + this.source + ' || 0)';
-        return '(+' + this.source + ' || 0)';
+        if (this.type === TYPE_NUMBER_NAN) return `(${this.source} || 0)`;
+        return `(+${this.source} || 0)`;
     }
 
     asString () {
         if (this.type === TYPE_STRING) return this.source;
-        return '("" + ' + this.source + ')';
+        return `("" + ${this.source})`;
     }
 
     asBoolean () {
         if (this.type === TYPE_BOOLEAN) return this.source;
-        return 'toBoolean(' + this.source + ')';
+        return `toBoolean(${this.source})`;
     }
 
     asUnknown () {
@@ -78,7 +78,7 @@ class TypedInput {
  * @implements {Input}
  */
 class ConstantInput {
-    constructor(constantValue) {
+    constructor (constantValue) {
         this.constantValue = constantValue;
     }
 
@@ -92,7 +92,7 @@ class ConstantInput {
     }
 
     asString () {
-        return '"' + sanitize(this.constantValue) + '"';
+        return `"${sanitize(this.constantValue)}"`;
     }
 
     asBoolean () {
@@ -120,7 +120,7 @@ class ScriptCompiler {
     }
 
     /**
-     * @param {Object} node Input node to compile.
+     * @param {object} node Input node to compile.
      * @returns {Input}
      */
     descendInput (node) {
@@ -165,8 +165,8 @@ class ScriptCompiler {
             return new TypedInput(`${this.referenceVariable(node.variable)}.value`, TYPE_UNKNOWN);
 
         default:
-            log.warn('JS: Unknown input: ' + node.kind, node);
-            throw new Error('JS: Unknown input: ' + node.kind);
+            log.warn(`JS: Unknown input: ${node.kind}`, node);
+            throw new Error(`JS: Unknown input: ${node.kind}`);
         }
     }
 
@@ -248,15 +248,15 @@ class ScriptCompiler {
             // todo: cloud
             this.source += `${variable}.value = (+${variable}.value || 0) + ${this.descendInput(node.value).asUnknown()};\n`;
             break;
-        }    
+        }
         case 'var.set':
             // todo: cloud
             this.source += `${this.referenceVariable(node.variable)}.value = ${this.descendInput(node.value).asUnknown()};\n`;
             break;
     
         default:
-            log.warn('JS: Unknown stacked block: ' + node.kind, node);
-            throw new Error('JS: Unknown stacked block: ' + node.kind);
+            log.warn(`JS: Unknown stacked block: ${node.kind}`, node);
+            throw new Error(`JS: Unknown stacked block: ${node.kind}`);
         }
     }
 
@@ -270,9 +270,9 @@ class ScriptCompiler {
         // todo: factoryVariables
         if (variable.scope === 'target') {
             return this.evaluateOnce(`target.variables["${sanitize(variable.id)}"]`);
-        } else {
-            return this.evaluateOnce(`stage.variables["${sanitize(variable.id)}"]`);
         }
+        return this.evaluateOnce(`stage.variables["${sanitize(variable.id)}"]`);
+        
     }
 
     evaluateOnce (source) {
@@ -366,7 +366,7 @@ class JSCompiler {
 
         return {
             startingFunction: entry,
-            procedures: procedures,
+            procedures: procedures
         };
     }
 }

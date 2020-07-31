@@ -52,15 +52,19 @@ class ScriptTreeGenerator {
             };
 
         case 'argument_reporter_string_number': {
-            if (!this.isProcedure) return {
-                kind: 'constant',
-                value: '0'
-            };
+            if (!this.isProcedure) {
+                return {
+                    kind: 'constant',
+                    value: '0'
+                };
+            }
             const name = block.fields.VALUE.value;
-            if (!this.arguments.includes(name)) return {
-                kind: 'constant',
-                value: '0'
-            };
+            if (!this.arguments.includes(name)) {
+                return {
+                    kind: 'constant',
+                    value: '0'
+                };
+            }
             return {
                 kind: 'args.stringNumber',
                 name: name
@@ -86,11 +90,11 @@ class ScriptTreeGenerator {
 
         case 'motion_xposition':
             return {
-                kind: 'motion.x',
+                kind: 'motion.x'
             };
         case 'motion_yposition':
             return {
-                kind: 'motion.y',
+                kind: 'motion.y'
             };
 
         case 'operator_add':
@@ -155,12 +159,12 @@ class ScriptTreeGenerator {
 
         case 'sensing_timer':
             return {
-                kind: 'timer.get',
+                kind: 'timer.get'
             };
 
         default:
-            log.warn('AST: Unknown input: ' + block.opcode, block);
-            throw new Error('AST: Unknown input: ' + block.opcode);
+            log.warn(`AST: Unknown input: ${block.opcode}`, block);
+            throw new Error(`AST: Unknown input: ${block.opcode}`);
         }
     }
 
@@ -236,12 +240,12 @@ class ScriptTreeGenerator {
         case 'data_hidelist':
             return {
                 kind: 'list.hide',
-                list: this.descendVariable(block, 'LIST'),
+                list: this.descendVariable(block, 'LIST')
             };
         case 'data_hidevariable':
             return {
                 kind: 'var.hide',
-                variable: this.descendVariable(block, 'VARIABLE'),
+                variable: this.descendVariable(block, 'VARIABLE')
             };
         case 'data_setvariableto':
             return {
@@ -259,12 +263,12 @@ class ScriptTreeGenerator {
         case 'data_showlist':
             return {
                 kind: 'list.show',
-                list: this.descendVariable(block, 'LIST'),
+                list: this.descendVariable(block, 'LIST')
             };
         case 'data_showvariable':
             return {
                 kind: 'var.show',
-                variable: this.descendVariable(block, 'VARIABLE'),
+                variable: this.descendVariable(block, 'VARIABLE')
             };
 
         case 'looks_gotofrontback':
@@ -305,7 +309,7 @@ class ScriptTreeGenerator {
                 } else {
                     value = {
                         kind: 'constant',
-                        value: paramDefaults[i],
+                        value: paramDefaults[i]
                     };
                 }
                 // overwriting existing values is intentional
@@ -325,8 +329,8 @@ class ScriptTreeGenerator {
             };
 
         default:
-            log.warn('AST: Unknown stacked block: ' + block.opcode, block);
-            throw new Error('AST: Unknown stacked block: ' + block.opcode);
+            log.warn(`AST: Unknown stacked block: ${block.opcode}`, block);
+            throw new Error(`AST: Unknown stacked block: ${block.opcode}`);
         }
     }
 
@@ -381,7 +385,7 @@ class ScriptTreeGenerator {
             }
         }
         // todo: create if doesn't exist
-        throw new Error('cannot find variable: ' + id + ' (' + variableName + ')');
+        throw new Error(`cannot find variable: ${id} (${variableName})`);
     }
 
     generate (topBlockId) {
@@ -403,7 +407,7 @@ class ScriptTreeGenerator {
         return {
             stack,
             isProcedure: this.isProcedure,
-            isWarp: this.isWarp,
+            isWarp: this.isWarp
         };
     }
 }
@@ -477,7 +481,7 @@ class ASTGenerator {
 
         return {
             entry: entry,
-            procedures: this.procedures,
+            procedures: this.procedures
         };
     }
 }
