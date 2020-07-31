@@ -158,7 +158,7 @@ class ScriptCompiler {
         case 'op.subtract':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} - ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
     
-        case 'timer.get':
+        case 'sensing.getTimer':
             return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
             
         case 'var.get':
@@ -212,6 +212,7 @@ class ScriptCompiler {
         case 'control.while':
             this.source += `while (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.do);
+            // todo: yield
             this.source += `}\n`;
             break;
 
@@ -239,7 +240,7 @@ class ScriptCompiler {
             this.source += `});\n`;
             break;
 
-        case 'timer.reset':
+        case 'sensing.resetTimer':
             this.source += 'ioQuery("clock", "resetProjectTimer");\n';
             break;
 
