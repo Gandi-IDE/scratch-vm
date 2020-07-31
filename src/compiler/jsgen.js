@@ -83,8 +83,12 @@ class ConstantInput {
     }
 
     asNumber () {
+        // Compute at compilation time
         const numberValue = +this.constantValue;
-        return numberValue.toString();
+        if (numberValue) {
+            return this.constantValue;
+        }
+        return '0';
     }
 
     asString () {
@@ -92,10 +96,12 @@ class ConstantInput {
     }
 
     asBoolean () {
+        // Compute at compilation time
         return Cast.toBoolean(this.constantValue).toString();
     }
 
     asUnknown () {
+        // Attempt to convert strings to numbers, if it is unlikely to break things
         const numberValue = +this.constantValue;
         if (numberValue.toString() === this.constantValue) {
             return this.constantValue;
@@ -123,43 +129,44 @@ class ScriptCompiler {
             // todo: converting to number sometimes break things, need to check for those conditions
             return new ConstantInput(node.value);
 
-        case 'var.get':
-            return new TypedInput(`${this.referenceVariable(node.variable)}.value`, TYPE_UNKNOWN);
+        case 'args.stringNumber':
+            return new TypedInput(`C["${sanitize(node.name)}"]`, TYPE_UNKNOWN);
 
         case 'list.get':
             return new TypedInput(`listGet(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()})`, TYPE_UNKNOWN);
         case 'list.length':
             return new TypedInput(`${this.referenceVariable(node.list)}.value.length`, TYPE_NUMBER);
 
-        case 'args.stringNumber':
-            return new TypedInput(`C["${sanitize(node.name)}"]`, TYPE_UNKNOWN);
-
         case 'op.add':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} + ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
-        case 'op.subtract':
-            return new TypedInput(`(${this.descendInput(node.left).asNumber()} - ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
-        case 'op.multiply':
-            return new TypedInput(`(${this.descendInput(node.left).asNumber()} * ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
+        case 'op.and':
+            return new TypedInput(`(${this.descendInput(node.left).asBoolean()} && ${this.descendInput(node.right).asBoolean()})`, TYPE_BOOLEAN);
         case 'op.divide':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} / ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER_NAN);
         case 'op.equals':
             return new TypedInput(`compareEqual(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
-        case 'op.less':
-            return new TypedInput(`compareLessThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
         case 'op.greater':
             return new TypedInput(`compareGreaterThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
-        case 'op.or':
-            return new TypedInput(`(${this.descendInput(node.left).asBoolean()} || ${this.descendInput(node.right).asBoolean()})`, TYPE_BOOLEAN);
         case 'op.join':
             return new TypedInput(`(${this.descendInput(node.left).asString()} + ${this.descendInput(node.right).asString()})`, TYPE_STRING);
-
+        case 'op.less':
+            return new TypedInput(`compareLessThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
+        case 'op.multiply':
+            return new TypedInput(`(${this.descendInput(node.left).asNumber()} * ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
+        case 'op.or':
+            return new TypedInput(`(${this.descendInput(node.left).asBoolean()} || ${this.descendInput(node.right).asBoolean()})`, TYPE_BOOLEAN);
+        case 'op.subtract':
+            return new TypedInput(`(${this.descendInput(node.left).asNumber()} - ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
+    
         case 'timer.get':
             return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
+            
+        case 'var.get':
+            return new TypedInput(`${this.referenceVariable(node.variable)}.value`, TYPE_UNKNOWN);
 
         default:
-            // todo: error, not warn
-            log.warn('JS: unknown input: ' + node.kind, node);
-            return new ConstantInput('0');
+            log.warn('JS: Unknown input: ' + node.kind, node);
+            throw new Error('JS: Unknown input: ' + node.kind);
         }
     }
 
@@ -168,11 +175,6 @@ class ScriptCompiler {
      */
     descendStackedBlock (node) {
         switch (node.kind) {
-        case 'control.while':
-            this.source += `while (${this.descendInput(node.condition).asBoolean()}) {\n`;
-            this.descendStack(node.do);
-            this.source += `}\n`;
-            break;
         case 'control.if':
             this.source += `if (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.whenTrue);
@@ -207,29 +209,11 @@ class ScriptCompiler {
             }
             break;
         }
-
-        case 'motion.step':
-            this.source += `runtime.ext_scratch3_motion._moveSteps(${this.descendInput(node.steps).asNumber()}, target);\n`;
+        case 'control.while':
+            this.source += `while (${this.descendInput(node.condition).asBoolean()}) {\n`;
+            this.descendStack(node.do);
+            this.source += `}\n`;
             break;
-
-        case 'procedures.call':
-            this.source += `yield* thread.procedures["${sanitize(node.code)}"]({`;
-            for (const name of Object.keys(node.parameters)) {
-                this.source += `"${sanitize(name)}":${this.descendInput(node.parameters[name]).asUnknown()},`;
-            }
-            this.source += `});\n`;
-            break;
-
-        case 'var.set':
-            // todo: cloud
-            this.source += `${this.referenceVariable(node.variable)}.value = ${this.descendInput(node.value).asUnknown()};\n`;
-            break;
-        case 'var.change': {
-            const variable = this.referenceVariable(node.variable);
-            // todo: cloud
-            this.source += `${variable}.value = (+${variable}.value || 0) + ${this.descendInput(node.value).asUnknown()};\n`;
-            break;
-        }
 
         case 'list.add':
             this.source += `${this.referenceVariable(node.list)}.value.push(${this.descendInput(node.item).asUnknown()});\n`;
@@ -242,15 +226,37 @@ class ScriptCompiler {
         case 'list.replace':
             this.source += `listReplace(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()}, ${this.descendInput(node.item).asUnknown()});\n`;
             break;
+    
+        case 'motion.step':
+            this.source += `runtime.ext_scratch3_motion._moveSteps(${this.descendInput(node.steps).asNumber()}, target);\n`;
+            break;
+
+        case 'procedures.call':
+            this.source += `yield* thread.procedures["${sanitize(node.code)}"]({`;
+            for (const name of Object.keys(node.parameters)) {
+                this.source += `"${sanitize(name)}":${this.descendInput(node.parameters[name]).asUnknown()},`;
+            }
+            this.source += `});\n`;
+            break;
 
         case 'timer.reset':
             this.source += 'ioQuery("clock", "resetProjectTimer");\n';
             break;
 
+        case 'var.change': {
+            const variable = this.referenceVariable(node.variable);
+            // todo: cloud
+            this.source += `${variable}.value = (+${variable}.value || 0) + ${this.descendInput(node.value).asUnknown()};\n`;
+            break;
+        }    
+        case 'var.set':
+            // todo: cloud
+            this.source += `${this.referenceVariable(node.variable)}.value = ${this.descendInput(node.value).asUnknown()};\n`;
+            break;
+    
         default:
-            // todo: error, not warn
-            log.warn('JS: unknown stacked block: ' + node.kind, node);
-            this.source += '/* no-op (missing) */\n';
+            log.warn('JS: Unknown stacked block: ' + node.kind, node);
+            throw new Error('JS: Unknown stacked block: ' + node.kind);
         }
     }
 

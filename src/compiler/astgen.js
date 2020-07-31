@@ -19,10 +19,10 @@ class ScriptTreeGenerator {
 
         const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
         if (paramNamesIdsAndDefaults === null) {
-            throw new Error('tree generator cannot find procedure: ' + procedureCode);
+            throw new Error(`AST: cannot find procedure: ${procedureCode}`);
         }
 
-        const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
+        const [paramNames, _paramIds, _paramDefaults] = paramNamesIdsAndDefaults;
         this.arguments = paramNames;
     }
 
@@ -51,65 +51,21 @@ class ScriptTreeGenerator {
                 value: block.fields.TEXT.value
             };
 
-        case 'operator_gt':
-            return {
-                kind: 'op.greater',
-                left: this.descendInput(block, 'OPERAND1'),
-                right: this.descendInput(block, 'OPERAND2')
+        case 'argument_reporter_string_number': {
+            if (!this.isProcedure) return {
+                kind: 'constant',
+                value: '0'
             };
-        case 'operator_lt':
-            return {
-                kind: 'op.less',
-                left: this.descendInput(block, 'OPERAND1'),
-                right: this.descendInput(block, 'OPERAND2')
+            const name = block.fields.VALUE.value;
+            if (!this.arguments.includes(name)) return {
+                kind: 'constant',
+                value: '0'
             };
-        case 'operator_equals':
             return {
-                kind: 'op.equals',
-                left: this.descendInput(block, 'OPERAND1'),
-                right: this.descendInput(block, 'OPERAND2')
+                kind: 'args.stringNumber',
+                name: name
             };
-        case 'operator_add':
-            return {
-                kind: 'op.add',
-                left: this.descendInput(block, 'NUM1'),
-                right: this.descendInput(block, 'NUM2')
-            };
-        case 'operator_subtract':
-            return {
-                kind: 'op.subtract',
-                left: this.descendInput(block, 'NUM1'),
-                right: this.descendInput(block, 'NUM2')
-            };
-        case 'operator_divide':
-            return {
-                kind: 'op.divide',
-                left: this.descendInput(block, 'NUM1'),
-                right: this.descendInput(block, 'NUM2')
-            };
-        case 'operator_not':
-            return {
-                kind: 'op.not',
-                operand: this.descendInput(block, 'OPERAND')
-            };
-        case 'operator_or':
-            return {
-                kind: 'op.or',
-                left: this.descendInput(block, 'OPERAND1'),
-                right: this.descendInput(block, 'OPERAND2')
-            };
-        case 'operator_and':
-            return {
-                kind: 'op.and',
-                left: this.descendInput(block, 'OPERAND1'),
-                right: this.descendInput(block, 'OPERAND2')
-            };
-        case 'operator_join':
-            return {
-                kind: 'op.join',
-                left: this.descendInput(block, 'STRING1'),
-                right: this.descendInput(block, 'STRING2')
-            };
+        }
 
         case 'data_variable':
             return {
@@ -137,38 +93,88 @@ class ScriptTreeGenerator {
                 kind: 'motion.y',
             };
 
+        case 'operator_add':
+            return {
+                kind: 'op.add',
+                left: this.descendInput(block, 'NUM1'),
+                right: this.descendInput(block, 'NUM2')
+            };
+        case 'operator_and':
+            return {
+                kind: 'op.and',
+                left: this.descendInput(block, 'OPERAND1'),
+                right: this.descendInput(block, 'OPERAND2')
+            };
+        case 'operator_divide':
+            return {
+                kind: 'op.divide',
+                left: this.descendInput(block, 'NUM1'),
+                right: this.descendInput(block, 'NUM2')
+            };
+        case 'operator_equals':
+            return {
+                kind: 'op.equals',
+                left: this.descendInput(block, 'OPERAND1'),
+                right: this.descendInput(block, 'OPERAND2')
+            };
+        case 'operator_gt':
+            return {
+                kind: 'op.greater',
+                left: this.descendInput(block, 'OPERAND1'),
+                right: this.descendInput(block, 'OPERAND2')
+            };
+        case 'operator_join':
+            return {
+                kind: 'op.join',
+                left: this.descendInput(block, 'STRING1'),
+                right: this.descendInput(block, 'STRING2')
+            };
+        case 'operator_lt':
+            return {
+                kind: 'op.less',
+                left: this.descendInput(block, 'OPERAND1'),
+                right: this.descendInput(block, 'OPERAND2')
+            };
+        case 'operator_not':
+            return {
+                kind: 'op.not',
+                operand: this.descendInput(block, 'OPERAND')
+            };
+        case 'operator_or':
+            return {
+                kind: 'op.or',
+                left: this.descendInput(block, 'OPERAND1'),
+                right: this.descendInput(block, 'OPERAND2')
+            };
+        case 'operator_subtract':
+            return {
+                kind: 'op.subtract',
+                left: this.descendInput(block, 'NUM1'),
+                right: this.descendInput(block, 'NUM2')
+            };
+
         case 'sensing_timer':
             return {
                 kind: 'timer.get',
             };
 
-        case 'argument_reporter_string_number': {
-            if (!this.isProcedure) return {
-                kind: 'constant',
-                value: '0'
-            };
-            const value = block.fields.VALUE.value;
-            if (!this.arguments.includes(value)) return {
-                kind: 'constant',
-                value: '0'
-            };
-            return {
-                kind: 'args.stringNumber',
-                name: value
-            };
-        }
-
         default:
-            log.warn('AST: unknown input: ' + block.opcode, block);
-            return {
-                kind: 'constant',
-                value: '0'
-            };
+            log.warn('AST: Unknown input: ' + block.opcode, block);
+            throw new Error('AST: Unknown input: ' + block.opcode);
         }
     }
 
     descendStackedBlock (block) {
         switch (block.opcode) {
+        case 'control_forever':
+            return {
+                kind: 'control.while',
+                condition: {
+                    kind: 'constant',
+                    value: true
+                },
+                do: this.descendSubstack(block, 'SUBSTACK')
+            };
         case 'control_if':
             return {
                 kind: 'control.if',
@@ -183,10 +189,10 @@ class ScriptTreeGenerator {
                 whenTrue: this.descendSubstack(block, 'SUBSTACK'),
                 whenFalse: this.descendSubstack(block, 'SUBSTACK2')
             };
-        case 'control_while':
+        case 'control_repeat':
             return {
-                kind: 'control.while',
-                condition: this.descendInput(block, 'CONDITION'),
+                kind: 'control.repeat',
+                times: this.descendInput(block, 'TIMES'),
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
         case 'control_repeat_until':
@@ -198,32 +204,23 @@ class ScriptTreeGenerator {
                 },
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
-        case 'control_forever':
-            return {
-                kind: 'control.while',
-                condition: {
-                    kind: 'constant',
-                    value: true
-                },
-                do: this.descendSubstack(block, 'SUBSTACK')
-            };
-        case 'control_repeat':
-            return {
-                kind: 'control.repeat',
-                times: this.descendInput(block, 'TIMES'),
-                do: this.descendSubstack(block, 'SUBSTACK')
-            };
         case 'control_stop':
             return {
                 kind: 'control.stop',
                 level: block.fields.STOP_OPTION.value
             };
-
-        case 'data_setvariableto':
+        case 'control_while':
             return {
-                kind: 'var.set',
-                variable: this.descendVariable(block, 'VARIABLE'),
-                value: this.descendInput(block, 'VALUE')
+                kind: 'control.while',
+                condition: this.descendInput(block, 'CONDITION'),
+                do: this.descendSubstack(block, 'SUBSTACK')
+            };
+
+        case 'data_addtolist':
+            return {
+                kind: 'list.add',
+                list: this.descendVariable(block, 'LIST'),
+                item: this.descendInput(block, 'ITEM')
             };
         case 'data_changevariableby':
             return {
@@ -231,17 +228,27 @@ class ScriptTreeGenerator {
                 variable: this.descendVariable(block, 'VARIABLE'),
                 value: this.descendInput(block, 'VALUE')
             };
+        case 'data_deletealloflist':
+            return {
+                kind: 'list.deleteAll',
+                list: this.descendVariable(block, 'LIST')
+            };
+        case 'data_hidelist':
+            return {
+                kind: 'list.hide',
+                list: this.descendVariable(block, 'LIST'),
+            };
         case 'data_hidevariable':
             return {
                 kind: 'var.hide',
                 variable: this.descendVariable(block, 'VARIABLE'),
             };
-        case 'data_showvariable':
+        case 'data_setvariableto':
             return {
-                kind: 'var.show',
+                kind: 'var.set',
                 variable: this.descendVariable(block, 'VARIABLE'),
+                value: this.descendInput(block, 'VALUE')
             };
-
         case 'data_replaceitemoflist':
             return {
                 kind: 'list.replace',
@@ -249,38 +256,15 @@ class ScriptTreeGenerator {
                 index: this.descendInput(block, 'INDEX'),
                 item: this.descendInput(block, 'ITEM')
             };
-        case 'data_deletealloflist':
-            return {
-                kind: 'list.deleteAll',
-                list: this.descendVariable(block, 'LIST')
-            };
-        case 'data_addtolist':
-            return {
-                kind: 'list.add',
-                list: this.descendVariable(block, 'LIST'),
-                item: this.descendInput(block, 'ITEM')
-            };
-        case 'data_hidelist':
-            return {
-                kind: 'list.hide',
-                list: this.descendVariable(block, 'LIST'),
-            };
         case 'data_showlist':
             return {
                 kind: 'list.show',
                 list: this.descendVariable(block, 'LIST'),
             };
-
-        case 'motion_movesteps':
+        case 'data_showvariable':
             return {
-                kind: 'motion.step',
-                steps: this.descendInput(block, 'STEPS')
-            };
-        case 'motion_gotoxy':
-            return {
-                kind: 'motion.setXY',
-                x: this.descendInput(block, 'X'),
-                y: this.descendInput(block, 'Y')
+                kind: 'var.show',
+                variable: this.descendVariable(block, 'VARIABLE'),
             };
 
         case 'looks_gotofrontback':
@@ -289,9 +273,16 @@ class ScriptTreeGenerator {
                 where: block.fields.FRONT_BACK.value === 'front' ? 'front' : 'back'
             };
 
-        case 'sensing_resettimer':
+        case 'motion_gotoxy':
             return {
-                kind: 'timer.reset'
+                kind: 'motion.setXY',
+                x: this.descendInput(block, 'X'),
+                y: this.descendInput(block, 'Y')
+            };
+        case 'motion_movesteps':
+            return {
+                kind: 'motion.step',
+                steps: this.descendInput(block, 'STEPS')
             };
 
         case 'procedures_call': {
@@ -328,11 +319,14 @@ class ScriptTreeGenerator {
             };
         }
 
-        default:
-            log.warn('AST: unknown stacked block: ' + block.opcode, block);
+        case 'sensing_resettimer':
             return {
-                kind: 'noop'
+                kind: 'timer.reset'
             };
+
+        default:
+            log.warn('AST: Unknown stacked block: ' + block.opcode, block);
+            throw new Error('AST: Unknown stacked block: ' + block.opcode);
         }
     }
 
