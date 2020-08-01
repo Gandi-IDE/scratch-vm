@@ -5,7 +5,7 @@ const execute = require('./execute');
 
 /* eslint-disable max-len */
 
-const sanitize = string => string.toString()
+const sanitize = string => string
     .replace(/\\/g, '\\\\')
     .replace(/'/g, '\\\'')
     .replace(/"/g, '\\"')
@@ -97,7 +97,7 @@ class ConstantInput {
     }
 
     asString () {
-        return `"${sanitize(this.constantValue)}"`;
+        return `"${sanitize('' + this.constantValue)}"`;
     }
 
     asBoolean () {
@@ -107,6 +107,10 @@ class ConstantInput {
 
     asUnknown () {
         // Attempt to convert strings to numbers, if it is unlikely to break things
+        if (typeof this.constantValue === 'number') {
+            // todo: handle NaN?
+            return this.constantValue;
+        }
         const numberValue = +this.constantValue;
         if (numberValue.toString() === this.constantValue) {
             return this.constantValue;
@@ -245,6 +249,7 @@ class ScriptCompiler {
         case 'sensing.touching':
             return new TypedInput(`target.isTouchingObject(${this.descendInput(node.object).asUnknown()})`, TYPE_BOOLEAN);
         case 'sensing.touchingColor':
+            debugger;
             return new TypedInput(`target.isTouchingColor(colorToList(${this.descendInput(node.color).asUnknown()}))`, TYPE_BOOLEAN);
         case 'sensing.username':
             return new TypedInput('ioQuery("userData", "getUsername")', TYPE_STRING);
@@ -282,9 +287,12 @@ class ScriptCompiler {
         case 'control.if':
             this.source += `if (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.whenTrue);
-            this.source += `} else {\n`;
-            // todo: no else branch if empty?
-            this.descendStack(node.whenFalse);
+            // only add the else branch if it won't be empty
+            // this makes scripts have a bit less useless noise in them
+            if (node.whenFalse.length) {
+                this.source += `} else {\n`;
+                this.descendStack(node.whenFalse);
+            }
             this.source += `}\n`;
             break;
         case 'control.repeat': {
@@ -349,12 +357,18 @@ class ScriptCompiler {
             this.source += `${this.referenceVariable(node.list)}.value.push(${this.descendInput(node.item).asUnknown()});\n`;
             // todo _monitorUpToDate
             break;
+        case 'list.delete':
+            this.source += `listDelete(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()});\n`;
+            break;
         case 'list.deleteAll':
             this.source += `${this.referenceVariable(node.list)}.value = [];\n`;
             // todo _monitorUpToDate
             break;
         case 'list.hide':
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.list.id)}", element: "checkbox", value: false }, runtime);\n`;
+            break;
+        case 'list.insert':
+            this.source += `listInsert(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()}, ${this.descendInput(node.item).asUnknown()});\n`;
             break;
         case 'list.replace':
             this.source += `listReplace(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()}, ${this.descendInput(node.item).asUnknown()});\n`;

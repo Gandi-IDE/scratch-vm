@@ -395,9 +395,12 @@ class ScriptTreeGenerator {
             const to = this.descendInput(block, 'TO');
             // If both values are known at compile time, we can do some optimizations.
             if (from.kind === 'constant' && to.kind === 'constant') {
-                const nFrom = Cast.toNumber(from.value);
-                const nTo = Cast.toNumber(to.value);
-                // If both numbers are the same, optimize out the random
+                const sFrom = from.value;
+                const sTo = to.value;
+                const nFrom = Cast.toNumber(sFrom);
+                const nTo = Cast.toNumber(sTo);
+                // If both numbers are the same, remove the random
+                // todo: this probably never happens so consider removing
                 if (nFrom === nTo) {
                     return {
                         kind: 'constant',
@@ -405,7 +408,7 @@ class ScriptTreeGenerator {
                     };
                 }
                 // If both are ints, hint this to the compiler
-                if (Cast.isInt(nFrom) && Cast.isInt(nTo)) {
+                if (Cast.isInt(sFrom) && Cast.isInt(sTo)) {
                     return {
                         kind: 'op.random',
                         low: nFrom <= nTo ? from : to,
@@ -954,29 +957,6 @@ class ScriptTreeGenerator {
                 parameters
             };
         }
-
-        case 'pen_penDown':
-            return {
-                kind: 'pen.down'
-            };
-        case 'pen_setPenColorToColor':
-            return {
-                kind: 'pen.setColor',
-                color: this.descendInput(block, 'COLOR')
-            };
-        case 'pen_setPenSizeTo':
-            return {
-                kind: 'pen.setSize',
-                size: this.descendInput(block, 'SIZE')
-            };
-        case 'pen_stamp':
-            return {
-                kind: 'pen.stamp'
-            };
-        case 'pen_penUp':
-            return {
-                kind: 'pen.up'
-            };
 
         case 'sensing_resettimer':
             return {
