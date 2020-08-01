@@ -3,6 +3,20 @@ const log = require('../util/log');
 
 const compatBlocks = require('./compat-blocks');
 
+/**
+ * @typedef Tree
+ * @property {null|Array} stack The nodes that comprise this script. `null` is an empty stack.
+ * @property {boolean} isProcedure
+ * @property {boolean} isWarp
+ * @property {Array} dependedProcedures
+ */
+
+/**
+ * @typedef AST
+ * @property {Tree} entry
+ * @property {Object.<String, Tree>} procedures
+ */
+
 class ScriptTreeGenerator {
     constructor (thread) {
         this.thread = thread;
@@ -706,9 +720,13 @@ class ScriptTreeGenerator {
                 layers: this.descendInput(block, 'NUM')
             };
         case 'looks_gotofrontback':
+            if (block.fields.FRONT_BACK.value === 'front') {
+                return {
+                    kind: 'looks.goToFront'
+                };
+            }
             return {
-                kind: 'looks.goFrontBack',
-                where: block.fields.FRONT_BACK.value === 'front' ? 'front' : 'back'
+                kind: 'looks.goToBack'
             };
         case 'looks_hide':
             return {
@@ -977,6 +995,10 @@ class ScriptTreeGenerator {
         };
     }
 
+    /**
+     * @param {string} topBlockId The ID of the top block of the script.
+     * @returns {Tree} A compiled tree.
+     */
     generate (topBlockId) {
         const result = {
             stack: null,
@@ -986,6 +1008,10 @@ class ScriptTreeGenerator {
         };
 
         const topBlock = this.blocks.getBlock(topBlockId);
+        if (!topBlock) {
+            // This is an empty script.
+            return result;
+        }
 
         // If the top block is a hat, advance to its child.
         let entryBlock;
@@ -1025,15 +1051,12 @@ class ASTGenerator {
 
         for (const procedureCode of generator.dependedProcedures) {
             if (this.procedures.hasOwnProperty(procedureCode)) {
-                // already compiled
                 continue;
             }
             if (this.compilingProcedures.has(procedureCode)) {
-                // being compiled
                 continue;
             }
             if (this.uncompiledProcedures.has(procedureCode)) {
-                // queued to be compiled
                 continue;
             }
             const definition = this.blocks.getProcedureDefinition(procedureCode);
@@ -1043,6 +1066,9 @@ class ASTGenerator {
         return result;
     }
 
+    /**
+     * @returns {AST} Syntax tree.
+     */
     generate () {
         const entry = this.generateScriptTree(new ScriptTreeGenerator(this.thread), this.thread.topBlock);
 

@@ -22,6 +22,9 @@ const disableToString = obj => {
     };
 };
 
+const pen = 'runtime.ext_pen';
+const penState = `${pen}._getPenState(target)`;
+
 /**
  * Variable pool used for factory function names.
  */
@@ -125,12 +128,15 @@ class ScriptCompiler {
      */
     descendInput (node) {
         switch (node.kind) {
+        case 'args.stringNumber':
+            return new TypedInput(`C["${sanitize(node.name)}"]`, TYPE_UNKNOWN);
+
+        case 'compat':
+            return new TypedInput(`(${this.generateCompatCall(node)})`, TYPE_UNKNOWN);
+
         case 'constant':
             // todo: converting to number sometimes break things, need to check for those conditions
             return new ConstantInput(node.value);
-
-        case 'args.stringNumber':
-            return new TypedInput(`C["${sanitize(node.name)}"]`, TYPE_UNKNOWN);
 
         case 'list.get':
             return new TypedInput(`listGet(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()})`, TYPE_UNKNOWN);
@@ -151,16 +157,18 @@ class ScriptCompiler {
             return new TypedInput(`(${this.descendInput(node.left).asString()} + ${this.descendInput(node.right).asString()})`, TYPE_STRING);
         case 'op.less':
             return new TypedInput(`compareLessThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
+        case 'op.letterOf':
+            return new TypedInput(`((${this.descendInput(node.string).asString()})[(${this.descendInput(node.letter).asNumber()} | 0) - 1] || "")`, TYPE_STRING);
         case 'op.multiply':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} * ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
         case 'op.or':
             return new TypedInput(`(${this.descendInput(node.left).asBoolean()} || ${this.descendInput(node.right).asBoolean()})`, TYPE_BOOLEAN);
         case 'op.subtract':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} - ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
-    
+
         case 'sensing.getTimer':
             return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
-            
+
         case 'var.get':
             return new TypedInput(`${this.referenceVariable(node.variable)}.value`, TYPE_UNKNOWN);
 
@@ -175,6 +183,11 @@ class ScriptCompiler {
      */
     descendStackedBlock (node) {
         switch (node.kind) {
+        case 'compat':
+            this.source += this.generateCompatCall(node);
+            this.source += ';\n';
+            break;
+
         case 'control.if':
             this.source += `if (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.whenTrue);
@@ -212,7 +225,7 @@ class ScriptCompiler {
         case 'control.while':
             this.source += `while (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.do);
-            // todo: yield
+            this.yieldNotWarp();
             this.source += `}\n`;
             break;
 
@@ -224,12 +237,40 @@ class ScriptCompiler {
             this.source += `${this.referenceVariable(node.list)}.value = [];\n`;
             // todo _monitorUpToDate
             break;
+        case 'list.hide':
+            this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.list.id)}", element: "checkbox", value: false }, runtime);\n`;
+            break;
         case 'list.replace':
             this.source += `listReplace(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()}, ${this.descendInput(node.item).asUnknown()});\n`;
             break;
-    
+        case 'list.show':
+            this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.list.id)}", element: "checkbox", value: true }, runtime);\n`;
+            break;
+
+        case 'looks.goToBack':
+            this.source += 'target.goToBack();\n';
+            break;
+        case 'looks.goToFront':
+            this.source += 'target.goToFront();\n';
+            break;
+        case 'looks.hide':
+            this.source += 'target.setVisible(false);\n';
+            this.source += 'runtime.ext_scratch3_looks._renderBubble(target);\n';
+            break;
+        case 'looks.show':
+            this.source += 'target.setVisible(true);\n';
+            this.source += 'runtime.ext_scratch3_looks._renderBubble(target);\n';
+            break;
+        case 'looks.switchCostume':
+            this.source += `runtime.ext_scratch3_looks._setCostume(target, ${this.descendInput(node.costume).asUnknown()});\n`;
+            break;
+
         case 'motion.step':
             this.source += `runtime.ext_scratch3_motion._moveSteps(${this.descendInput(node.steps).asNumber()}, target);\n`;
+            break;
+
+        case 'pen.clear':
+            this.source += `${pen}.clear();\n`;
             break;
 
         case 'procedures.call':
@@ -250,11 +291,18 @@ class ScriptCompiler {
             this.source += `${variable}.value = (+${variable}.value || 0) + ${this.descendInput(node.value).asUnknown()};\n`;
             break;
         }
+
+        case 'var.hide':
+            this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.variable.id)}", element: "checkbox", value: false }, runtime);\n`;
+            break;
         case 'var.set':
             // todo: cloud
             this.source += `${this.referenceVariable(node.variable)}.value = ${this.descendInput(node.value).asUnknown()};\n`;
             break;
-    
+        case 'var.show':
+            this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.variable.id)}", element: "checkbox", value: true }, runtime);\n`;
+            break;
+
         default:
             log.warn(`JS: Unknown stacked block: ${node.kind}`, node);
             throw new Error(`JS: Unknown stacked block: ${node.kind}`);
@@ -273,7 +321,7 @@ class ScriptCompiler {
             return this.evaluateOnce(`target.variables["${sanitize(variable.id)}"]`);
         }
         return this.evaluateOnce(`stage.variables["${sanitize(variable.id)}"]`);
-        
+
     }
 
     evaluateOnce (source) {
@@ -287,6 +335,31 @@ class ScriptCompiler {
 
     retire () {
         this.source += 'retire(); yield;';
+    }
+
+    yieldNotWarp () {
+        if (!this.root.isWarp) {
+            this.source += 'if (!thread.warp) yield;\n';
+        }
+    }
+
+    generateCompatCall (node) {
+        const opcode = node.opcode;
+
+        let result = `/* ${opcode} */ yield* executeInCompatibilityLayer({`;
+
+        for (const inputName of Object.keys(node.inputs)) {
+            const input = node.inputs[inputName];
+            const compiledInput = this.descendInput(input).asUnknown();
+            result += `"${sanitize(inputName)}":${compiledInput},`;
+        }
+        for (const fieldName of Object.keys(node.fields)) {
+            const field = node.fields[fieldName];
+            result += `"${sanitize(fieldName)}":${sanitize(field.value)},`;
+        }
+        result += `}, runtime.getOpcodeFunction("${sanitize(opcode)}"))`;
+
+        return result;
     }
 
     createScriptFactory () {
@@ -354,20 +427,40 @@ disableToString(TypedInput.prototype.asUnknown);
 class JSCompiler {
     constructor (ast) {
         this.ast = ast;
+        this.compilingProcedures = [];
+        this.compiledProcedures = {};
+    }
+
+    compileTree (root) {
+        for (const procedureCode of root.dependedProcedures) {
+            if (this.compiledProcedures.hasOwnProperty(procedureCode)) {
+                // Already compiled
+                continue;
+            }
+            if (this.compilingProcedures.includes(procedureCode)) {
+                // Being compiled, most likely circular dependencies
+                continue;
+            }
+
+            this.compilingProcedures.push(procedureCode);
+
+            const procedureRoot = this.ast.procedures[procedureCode];
+            const procedureTree = this.compileTree(procedureRoot);
+            this.compiledProcedures[procedureCode] = procedureTree;
+
+            this.compilingProcedures.pop();
+        }
+
+        const compiler = new ScriptCompiler(root);
+        return compiler.compile();
     }
 
     compile () {
-        const entry = new ScriptCompiler(this.ast.entry).compile();
-
-        const procedures = {};
-        for (const procedureCode of Object.keys(this.ast.procedures)) {
-            const compiled = new ScriptCompiler(this.ast.procedures[procedureCode]).compile();
-            procedures[procedureCode] = compiled;
-        }
+        const entry = this.compileTree(this.ast.entry);
 
         return {
             startingFunction: entry,
-            procedures: procedures
+            procedures: this.compiledProcedures
         };
     }
 }
