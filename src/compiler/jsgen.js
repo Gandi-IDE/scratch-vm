@@ -460,7 +460,7 @@ class ScriptCompiler {
         case 'var.change': {
             const variable = this.referenceVariable(node.variable);
             // todo: cloud
-            this.source += `${variable}.value = (+${variable}.value || 0) + ${this.descendInput(node.value).asUnknown()};\n`;
+            this.source += `${variable}.value = (+${variable}.value || 0) + ${this.descendInput(node.value).asNumber()};\n`;
             break;
         }
 

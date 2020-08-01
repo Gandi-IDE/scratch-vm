@@ -1,5 +1,9 @@
 const Cast = require('../util/cast');
+const Variable = require('../engine/variable');
 const log = require('../util/log');
+
+const SCALAR_TYPE = Variable.SCALAR_TYPE;
+const LIST_TYPE = Variable.LIST_TYPE;
 
 const compatBlocks = require('./compat-blocks');
 
@@ -17,6 +21,12 @@ const compatBlocks = require('./compat-blocks');
  * @property {Object.<String, Tree>} procedures
  */
 
+// I would like to make a JSDoc type for "needs to have a string `kind` but can have any other properties" but that doesn't seem to be possible...
+/**
+ * @typedef {Object.<string, *>} Node
+ * @property {string} kind
+ */
+
 class ScriptTreeGenerator {
     constructor (thread) {
         this.thread = thread;
@@ -29,6 +39,7 @@ class ScriptTreeGenerator {
         this.isProcedure = false;
         this.isWarp = false;
         this.procedureArguments = [];
+        this.variableCache = {};
     }
 
     setProcedureCode (procedureCode) {
@@ -47,6 +58,12 @@ class ScriptTreeGenerator {
         this.isWarp = true;
     }
 
+    /**
+     * Descend into an input.
+     * @param {*} parentBlock The parent block of the input.
+     * @param {string} inputName The name of the input to descend into.
+     * @returns {Node} 
+     */
     descendInput (parentBlock, inputName) {
         const input = parentBlock.inputs[inputName];
         if (!input) {
@@ -144,35 +161,35 @@ class ScriptTreeGenerator {
         case 'data_variable':
             return {
                 kind: 'var.get',
-                variable: this.descendVariable(block, 'VARIABLE')
+                variable: this.descendVariable(block, 'VARIABLE', SCALAR_TYPE)
             };
         case 'data_itemoflist':
             return {
                 kind: 'list.get',
-                list: this.descendVariable(block, 'LIST'),
+                list: this.descendVariable(block, 'LIST', LIST_TYPE),
                 index: this.descendInput(block, 'INDEX')
             };
         case 'data_lengthoflist':
             return {
                 kind: 'list.length',
-                list: this.descendVariable(block, 'LIST')
+                list: this.descendVariable(block, 'LIST', LIST_TYPE)
             };
         case 'data_listcontainsitem':
             return {
                 kind: 'list.contains',
-                list: this.descendVariable(block, 'LIST'),
+                list: this.descendVariable(block, 'LIST', LIST_TYPE),
                 item: this.descendInput(block, 'ITEM')
             };
         case 'data_itemnumoflist':
             return {
                 kind: 'list.indexOf',
-                list: this.descendVariable(block, 'LIST'),
+                list: this.descendVariable(block, 'LIST', LIST_TYPE),
                 item: this.descendInput(block, 'ITEM')
             };
         case 'data_listcontents':
             return {
                 kind: 'list.contents',
-                list: this.descendVariable(block, 'LIST')
+                list: this.descendVariable(block, 'LIST', LIST_TYPE)
             };
 
         case 'event_broadcast_menu':
@@ -576,7 +593,7 @@ class ScriptTreeGenerator {
         case 'control_for_each':
             return {
                 kind: 'control.for',
-                variable: this.descendVariable(block, 'VARIABLE'),
+                variable: this.descendVariable(block, 'VARIABLE', SCALAR_TYPE),
                 count: this.descendInput(block, 'VALUE'),
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
@@ -634,54 +651,54 @@ class ScriptTreeGenerator {
         case 'data_addtolist':
             return {
                 kind: 'list.add',
-                list: this.descendVariable(block, 'LIST'),
+                list: this.descendVariable(block, 'LIST', LIST_TYPE),
                 item: this.descendInput(block, 'ITEM')
             };
         case 'data_changevariableby':
             return {
                 kind: 'var.change',
-                variable: this.descendVariable(block, 'VARIABLE'),
+                variable: this.descendVariable(block, 'VARIABLE', SCALAR_TYPE),
                 value: this.descendInput(block, 'VALUE')
             };
         case 'data_deletealloflist':
             return {
                 kind: 'list.deleteAll',
-                list: this.descendVariable(block, 'LIST')
+                list: this.descendVariable(block, 'LIST', LIST_TYPE)
             };
         case 'data_deleteoflist':
             return {
                 kind: 'list.delete',
-                list: this.descendVariable(block, 'LIST'),
+                list: this.descendVariable(block, 'LIST', LIST_TYPE),
                 index: this.descendInput(block, 'INDEX')
             };
         case 'data_hidelist':
             return {
                 kind: 'list.hide',
-                list: this.descendVariable(block, 'LIST')
+                list: this.descendVariable(block, 'LIST', LIST_TYPE)
             };
         case 'data_hidevariable':
             return {
                 kind: 'var.hide',
-                variable: this.descendVariable(block, 'VARIABLE')
+                variable: this.descendVariable(block, 'VARIABLE', SCALAR_TYPE)
             };
         case 'data_insertatlist':
             return {
                 kind: 'list.insert',
-                list: this.descendVariable(block, 'LIST'),
+                list: this.descendVariable(block, 'LIST', LIST_TYPE),
                 index: this.descendInput(block, 'INDEX'),
                 item: this.descendInput(block, 'ITEM')
             };
         case 'data_replaceitemoflist':
             return {
                 kind: 'list.replace',
-                list: this.descendVariable(block, 'LIST'),
+                list: this.descendVariable(block, 'LIST', LIST_TYPE),
                 index: this.descendInput(block, 'INDEX'),
                 item: this.descendInput(block, 'ITEM')
             };
         case 'data_setvariableto':
             return {
                 kind: 'var.set',
-                variable: this.descendVariable(block, 'VARIABLE'),
+                variable: this.descendVariable(block, 'VARIABLE', SCALAR_TYPE),
                 value: this.descendInput(block, 'VALUE')
             };
         case 'data_showlist':
@@ -692,7 +709,7 @@ class ScriptTreeGenerator {
         case 'data_showvariable':
             return {
                 kind: 'var.show',
-                variable: this.descendVariable(block, 'VARIABLE')
+                variable: this.descendVariable(block, 'VARIABLE', SCALAR_TYPE)
             };
 
         case 'event_broadcast':
@@ -1001,13 +1018,15 @@ class ScriptTreeGenerator {
         return result;
     }
 
-    descendVariable (block, variableName) {
-        const variable = block.fields[variableName];
+    descendVariable (block, name, type) {
+        // todo: cache variables by ID
+        const variable = block.fields[name];
         const id = variable.id;
 
         const target = this.target;
         const stage = this.stage;
 
+        // Look for by ID in target...
         if (target.variables.hasOwnProperty(id)) {
             return {
                 scope: 'target',
@@ -1015,6 +1034,7 @@ class ScriptTreeGenerator {
             };
         }
 
+        // Look for by ID in stage...
         if (!target.isStage) {
             if (stage && stage.variables.hasOwnProperty(id)) {
                 return {
@@ -1023,8 +1043,42 @@ class ScriptTreeGenerator {
                 };
             }
         }
-        // todo: create if doesn't exist
-        throw new Error(`cannot find variable: ${id} (${variableName})`);
+
+        // Look for by name and type in target...
+        for (const varId in target.variables) {
+            if (target.variables.hasOwnProperty(varId)) {
+                const currVar = target.variables[varId];
+                if (currVar.name === name && currVar.type === type) {
+                    return {
+                        scope: 'target',
+                        id: varId
+                    };
+                }
+            }
+        }
+
+        // Look for by name and type in stage...
+        if (!target.isStage && stage) {
+            for (const varId in stage.variables) {
+                if (stage.variables.hasOwnProperty(varId)) {
+                    const currVar = stage.variables[varId];
+                    if (currVar.name === name && currVar.type === type) {
+                        return {
+                            sccope: 'stage',
+                            id: varId
+                        };
+                    }
+                }
+            }
+        }
+
+        // Create it locally...
+        const newVariable = new Variable(id, name, type, false);
+        target.variables[id] = newVariable;
+        return {
+            scope: 'target',
+            id: id
+        };
     }
 
     descendCompatLayer (block) {
