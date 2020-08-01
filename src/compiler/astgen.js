@@ -345,7 +345,7 @@ class ScriptTreeGenerator {
                 value
             };
             case 'log': return {
-                kind: 'op.log10',
+                kind: 'op.log',
                 value
             };
             case 'e ^': return {
@@ -396,7 +396,7 @@ class ScriptTreeGenerator {
                 // If both numbers are the same, optimize out the random
                 if (nFrom === nTo) {
                     return {
-                        type: 'constant',
+                        kind: 'constant',
                         value: nFrom
                     };
                 }
@@ -405,7 +405,7 @@ class ScriptTreeGenerator {
                 // If both are ints, hint this to the compiler
                 if (Cast.isInt(low) && Cast.isInt(high)) {
                     return {
-                        type: 'op.random',
+                        kind: 'op.random',
                         low: low,
                         high: high,
                         checkedOrder: true,
@@ -415,7 +415,7 @@ class ScriptTreeGenerator {
                 }
                 // Otherwise they're floats
                 return {
-                    type: 'op.random',
+                    kind: 'op.random',
                     low: low,
                     high: high,
                     checkedOrder: true,
@@ -425,7 +425,7 @@ class ScriptTreeGenerator {
             } else if (from.kind === 'constant') {
                 if (!Cast.isInt(Cast.toNumber(from.value))) {
                     return {
-                        type: 'op.random',
+                        kind: 'op.random',
                         low: from,
                         high: to,
                         checkedOrder: false,
@@ -436,7 +436,7 @@ class ScriptTreeGenerator {
             } else if (to.kind === 'constant') {
                 if (!Cast.isInt(Cast.toNumber(to.value))) {
                     return {
-                        type: 'op.random',
+                        kind: 'op.random',
                         low: from,
                         high: to,
                         checkedOrder: false,
@@ -447,7 +447,7 @@ class ScriptTreeGenerator {
             }
             // No optimizations possible
             return {
-                type: 'op.random',
+                kind: 'op.random',
                 low: from,
                 high: to,
                 checkedOrder: false,
@@ -465,6 +465,12 @@ class ScriptTreeGenerator {
                 kind: 'op.subtract',
                 left: this.descendInput(block, 'NUM1'),
                 right: this.descendInput(block, 'NUM2')
+            };
+
+        case 'pen_menu_colorParam':
+            return {
+                kind: 'constant',
+                value: block.fields.colorParam.value
             };
 
         case 'sensing_coloristouchingcolor':
@@ -714,9 +720,14 @@ class ScriptTreeGenerator {
                 kind: 'looks.clearEffects'
             };
         case 'looks_goforwardbackwardlayers':
+            if (block.fields.FORWARD_BACKWARD.value === 'forward') {
+                return {
+                    kind: 'looks.forwardLayers',
+                    layers: this.descendInput(block, 'NUM')
+                };
+            }
             return {
-                kind: 'looks.changeLayers',
-                direction: block.fields.FORWARD_BACKWARD.value,
+                kind: 'looks.backwardLayers',
                 layers: this.descendInput(block, 'NUM')
             };
         case 'looks_gotofrontback':
@@ -847,6 +858,40 @@ class ScriptTreeGenerator {
         case 'pen_clear':
             return {
                 kind: 'pen.clear'
+            };
+        case 'pen_changePenColorParamBy':
+            return {
+                kind: 'pen.changeParam',
+                param: this.descendInput(block, 'COLOR_PARAM'),
+                value: this.descendInput(block, 'VALUE')
+            };
+        case 'pen_penDown':
+            return {
+                kind: 'pen.down'
+            };
+        case 'pen_penUp':
+            return {
+                kind: 'pen.up'
+            };
+        case 'pen_setPenColorParamTo':
+            return {
+                kind: 'pen.setParam',
+                param: this.descendInput(block, 'COLOR_PARAM'),
+                value: this.descendInput(block, 'VALUE')
+            };
+        case 'pen_setPenSizeTo':
+            return {
+                kind: 'pen.setSize',
+                size: this.descendInput(block, 'SIZE')
+            };
+        case 'pen_changePenSizeBy':
+            return {
+                kind: 'pen.changeSize',
+                size: this.descendInput(block, 'SIZE')
+            };
+        case 'pen_stamp':
+            return {
+                kind: 'pen.stamp'
             };
 
         case 'procedures_call': {
@@ -1001,7 +1046,7 @@ class ScriptTreeGenerator {
      */
     generate (topBlockId) {
         const result = {
-            stack: null,
+            stack: [], // todo: null for empty scripts
             isProcedure: this.isProcedure,
             isWarp: this.isWarp,
             dependedProcedures: this.dependedProcedures

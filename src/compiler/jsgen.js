@@ -3,6 +3,8 @@ const Cast = require('../util/cast');
 const VariablePool = require('./variable-pool');
 const execute = require('./execute');
 
+/* eslint-disable max-len */
+
 const sanitize = string => string.toString()
     .replace(/\\/g, '\\\\')
     .replace(/'/g, '\\\'')
@@ -127,6 +129,7 @@ class ScriptCompiler {
      * @returns {Input}
      */
     descendInput (node) {
+        if(node.kind===undefined)debugger;
         switch (node.kind) {
         case 'args.stringNumber':
             return new TypedInput(`C["${sanitize(node.name)}"]`, TYPE_UNKNOWN);
@@ -143,14 +146,30 @@ class ScriptCompiler {
         case 'list.length':
             return new TypedInput(`${this.referenceVariable(node.list)}.value.length`, TYPE_NUMBER);
 
+        case 'op.abs':
+            return new TypedInput(`Math.abs(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
+        case 'op.acos':
+            return new TypedInput(`((Math.acos(${this.descendInput(node.value).asNumber()}) * 180) / Math.PI)`, TYPE_NUMBER);
         case 'op.add':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} + ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
         case 'op.and':
             return new TypedInput(`(${this.descendInput(node.left).asBoolean()} && ${this.descendInput(node.right).asBoolean()})`, TYPE_BOOLEAN);
+        case 'op.asin':
+            return new TypedInput(`((Math.asin(${this.descendInput(node.value).asNumber()}) * 180) / Math.PI)`, TYPE_NUMBER);
+        case 'op.atan':
+            return new TypedInput(`((Math.atan(${this.descendInput(node.value).asNumber()}) * 180) / Math.PI)`, TYPE_NUMBER);
+        case 'op.ceiling':
+            return new TypedInput(`Math.ceil(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
+        case 'op.cos':
+            return new TypedInput(`(Math.round(Math.cos((Math.PI * ${this.descendInput(node.value).asNumber()}) / 180) * 1e10) / 1e10)`, TYPE_NUMBER);
         case 'op.divide':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} / ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER_NAN);
         case 'op.equals':
             return new TypedInput(`compareEqual(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
+        case 'op.e^':
+            return new TypedInput(`Math.exp(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
+        case 'op.floor':
+            return new TypedInput(`Math.floor(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
         case 'op.greater':
             return new TypedInput(`compareGreaterThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
         case 'op.join':
@@ -159,15 +178,43 @@ class ScriptCompiler {
             return new TypedInput(`compareLessThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
         case 'op.letterOf':
             return new TypedInput(`((${this.descendInput(node.string).asString()})[(${this.descendInput(node.letter).asNumber()} | 0) - 1] || "")`, TYPE_STRING);
+        case 'op.ln':
+            return new TypedInput(`Math.log(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
+        case 'op.log':
+            return new TypedInput(`(Math.log(${this.descendInput(node.value).asNumber()}) / Math.LN10)`, TYPE_NUMBER);
+        case 'op.mod':
+            return new TypedInput(`mod(${this.descendInput(node.left).asNumber()}, ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
         case 'op.multiply':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} * ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
+        case 'op.not':
+            return new TypedInput(`!${this.descendInput(node.operand).asBoolean()}`, TYPE_BOOLEAN);
         case 'op.or':
             return new TypedInput(`(${this.descendInput(node.left).asBoolean()} || ${this.descendInput(node.right).asBoolean()})`, TYPE_BOOLEAN);
+        case 'op.round':
+            return new TypedInput(`Math.round(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
+        case 'op.sin':
+            return new TypedInput(`(Math.round(Math.sin((Math.PI * ${this.descendInput(node.value).asNumber()}) / 180) * 1e10) / 1e10)`, TYPE_NUMBER);
+        case 'op.sqrt':
+            return new TypedInput(`Math.sqrt(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER_NAN);
         case 'op.subtract':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} - ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER);
+        case 'op.tan':
+            return new TypedInput(`Math.tan(${this.descendInput(node.value).asNumber()} * Math.PI / 180)`, TYPE_NUMBER);
+        case 'op.10^':
+            return new TypedInput(`Math.pow(10, ${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
 
         case 'sensing.getTimer':
             return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
+        case 'sensing.keydown':
+            return new TypedInput(`ioQuery("keyboard", "getKeyIsDown", [${this.descendInput(node.key).asUnknown()}])`, TYPE_BOOLEAN);
+        case 'sensing.mousedown':
+            return new TypedInput('ioQuery("mouse", "getIsDown")', TYPE_BOOLEAN);
+        case 'sensing.mouseX':
+            return new TypedInput('ioQuery("mouse", "getScratchX")', TYPE_NUMBER);
+        case 'sensing.mouseY':
+            return new TypedInput('ioQuery("mouse", "getScratchY")', TYPE_NUMBER);
+        case 'sensing.touching':
+            return new TypedInput(`target.isTouchingObject(${this.descendInput(node.object).asUnknown()})`, TYPE_BOOLEAN);
 
         case 'var.get':
             return new TypedInput(`${this.referenceVariable(node.variable)}.value`, TYPE_UNKNOWN);
@@ -222,11 +269,29 @@ class ScriptCompiler {
             }
             break;
         }
+        case 'control.wait': {
+            const timer = this.localVariables.next();
+            const duration = this.localVariables.next();
+            this.source += `var ${timer} = timer();\n`;
+            this.source += `var ${duration} = Math.max(0, 1000 * ${this.descendInput(node.seconds).asNumber()});\n`;
+            this.yieldNotWarp();
+            this.source += `while (${timer}.timeElapsed() < ${duration}) {\n`;
+            this.yieldNotWarp();
+            this.source += '}\n';
+            break;
+        }
         case 'control.while':
             this.source += `while (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.do);
             this.yieldNotWarp();
             this.source += `}\n`;
+            break;
+
+        case 'event.broadcast':
+            this.source += `startHats("event_whenbroadcastreceived", { BROADCAST_OPTION: ${this.descendInput(node.broadcast).asString()} });\n`;
+            break;
+        case 'event.broadcastAndWait':
+            this.source += `yield* waitThreads(startHats("event_whenbroadcastreceived", { BROADCAST_OPTION: ${this.descendInput(node.broadcast).asString()} }));\n`;
             break;
 
         case 'list.add':
@@ -247,6 +312,12 @@ class ScriptCompiler {
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.list.id)}", element: "checkbox", value: true }, runtime);\n`;
             break;
 
+        case 'looks.backwardLayers':
+            this.source += `target.goBackwardLayers(${this.descendInput(node.layers).asNumber()});\n`;
+            break;
+        case 'looks.forwardLayers':
+            this.source += `target.goForwardLayers(${this.descendInput(node.layers).asNumber()});\n`;
+            break;
         case 'looks.goToBack':
             this.source += 'target.goToBack();\n';
             break;
@@ -256,6 +327,9 @@ class ScriptCompiler {
         case 'looks.hide':
             this.source += 'target.setVisible(false);\n';
             this.source += 'runtime.ext_scratch3_looks._renderBubble(target);\n';
+            break;
+        case 'looks.setSize':
+            this.source += `target.setSize(${this.descendInput(node.size).asNumber()});\n`;
             break;
         case 'looks.show':
             this.source += 'target.setVisible(true);\n';
@@ -267,6 +341,9 @@ class ScriptCompiler {
 
         case 'motion.step':
             this.source += `runtime.ext_scratch3_motion._moveSteps(${this.descendInput(node.steps).asNumber()}, target);\n`;
+            break;
+        case 'motion.setXY':
+            this.source += `target.setXY(${this.descendInput(node.x).asNumber()}, ${this.descendInput(node.y).asNumber()});\n`;
             break;
 
         case 'pen.clear':
@@ -321,7 +398,6 @@ class ScriptCompiler {
             return this.evaluateOnce(`target.variables["${sanitize(variable.id)}"]`);
         }
         return this.evaluateOnce(`stage.variables["${sanitize(variable.id)}"]`);
-
     }
 
     evaluateOnce (source) {
