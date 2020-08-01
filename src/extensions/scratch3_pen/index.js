@@ -759,9 +759,12 @@ class Scratch3PenBlocks {
      * @param {object} util - utility object provided by the runtime.
      */
     changePenShadeBy (args, util) {
-        const penState = this._getPenState(util.target);
-        const shadeChange = Cast.toNumber(args.SHADE);
-        this.setPenShadeToNumber({SHADE: penState._shade + shadeChange}, util);
+        this._changePenShadeBy(args.SHADE, util.target);
+    }
+    _changePenShadeBy (shade, target) {
+        const penState = this._getPenState(target);
+        const shadeChange = Cast.toNumber(shade);
+        this._setPenShadeToNumber(penState._shade + shadeChange, target);
     }
 
     /**

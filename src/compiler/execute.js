@@ -462,8 +462,9 @@ const execute = (_thread) => {
  * eval() some JS
  * @param {string} source
  */
-const scopedEval = (source) => {
+const scopedEval = source => {
     try {
+        // eslint-disable-next-line no-eval
         return eval(source);
     } catch (e) {
         console.error('was unable to compile script', source);

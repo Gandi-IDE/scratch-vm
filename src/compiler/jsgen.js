@@ -160,6 +160,14 @@ class ScriptCompiler {
 
         case 'looks.size':
             return new TypedInput('target.size', TYPE_NUMBER);
+        case 'looks.backdropName':
+            return new TypedInput('stage.getCostumes()[stage.currentCostume].name', TYPE_STRING);
+        case 'looks.backdropNumber':
+            return new TypedInput('(stage.currentCostume + 1)', TYPE_NUMBER);
+        case 'looks.costumeName':
+            return new TypedInput('target.getCostumes()[target.currentCostume].name', TYPE_STRING);
+        case 'looks.costumeNumber':
+            return new TypedInput('(target.currentCostume + 1)', TYPE_NUMBER);
     
         case 'motion.direction':
             return new TypedInput('target.direction', TYPE_NUMBER);
@@ -182,6 +190,8 @@ class ScriptCompiler {
             return new TypedInput(`((Math.atan(${this.descendInput(node.value).asNumber()}) * 180) / Math.PI)`, TYPE_NUMBER);
         case 'op.ceiling':
             return new TypedInput(`Math.ceil(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
+        case 'op.contains':
+            return new TypedInput(`(${this.descendInput(node.string).asString()}.toLowerCase().indexOf(${this.descendInput(node.contains).asString()}.toLowerCase()) !== -1)`);
         case 'op.cos':
             return new TypedInput(`(Math.round(Math.cos((Math.PI * ${this.descendInput(node.value).asNumber()}) / 180) * 1e10) / 1e10)`, TYPE_NUMBER);
         case 'op.divide':
@@ -237,7 +247,7 @@ class ScriptCompiler {
 
         case 'sensing.colorTouchingColor':
             return new TypedInput(`target.colorIsTouchingColor(colorToList(${this.descendInput(node.target).asUnknown()}), colorToList(${this.descendInput(node.mask).asUnknown()}))`, TYPE_BOOLEAN);
-        case 'sensing.getTimer':
+        case 'sensing.timer':
             return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
         case 'sensing.keydown':
             return new TypedInput(`ioQuery("keyboard", "getKeyIsDown", [${this.descendInput(node.key).asUnknown()}])`, TYPE_BOOLEAN);
@@ -250,7 +260,6 @@ class ScriptCompiler {
         case 'sensing.touching':
             return new TypedInput(`target.isTouchingObject(${this.descendInput(node.object).asUnknown()})`, TYPE_BOOLEAN);
         case 'sensing.touchingColor':
-            debugger;
             return new TypedInput(`target.isTouchingColor(colorToList(${this.descendInput(node.color).asUnknown()}))`, TYPE_BOOLEAN);
         case 'sensing.username':
             return new TypedInput('ioQuery("userData", "getUsername")', TYPE_STRING);
@@ -285,6 +294,16 @@ class ScriptCompiler {
             this.retire();
             this.source += '}\n';
             break;
+        case 'control.for': {
+            const index = this.localVariables.next();
+            this.source += `var ${index} = 0; `;
+            this.source += `while (${index} < ${this.descendInput(node.count).asNumber()}) { `;
+            this.source += `${index}++; `;
+            this.source += `${this.referenceVariable(node.variable)}.value = ${index};\n`;
+            this.descendStack(node.do);
+            this.source += '}\n';
+            break;
+        }
         case 'control.if':
             this.source += `if (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.whenTrue);
@@ -404,10 +423,16 @@ class ScriptCompiler {
             this.source += 'target.setVisible(true);\n';
             this.source += 'runtime.ext_scratch3_looks._renderBubble(target);\n';
             break;
+        case 'looks.switchBackdrop':
+            this.source += `runtime.ext_scratch3_looks._setBackdrop(stage, ${this.descendInput(node.backdrop)});\n`;
+            break;
         case 'looks.switchCostume':
             this.source += `runtime.ext_scratch3_looks._setCostume(target, ${this.descendInput(node.costume).asUnknown()});\n`;
             break;
 
+        case 'motion.ifOnEdgeBounce':
+            this.source += `runtime.ext_scratch3_motion._ifOnEdgeBounce(target);\n`;
+            break;
         case 'motion.setDirection':
             this.source += `target.setDirection(${this.descendInput(node.direction).asNumber()});\n`;
             break;
@@ -429,6 +454,21 @@ class ScriptCompiler {
             break;
         case 'pen.changeParam':
             this.source += `${pen}._setOrChangeColorParam(${this.descendInput(node.param).asString()}, ${this.descendInput(node.value).asNumber()}, ${penState}, true);\n`;
+            break;
+        case 'pen.changeSize':
+            this.source += `${pen}._changePenSizeBy(${this.descendInput(node.size).asNumber()}, target);\n`;
+            break;
+        case 'pen.legacyChangeHue':
+            this.source += `${pen}._changePenHueBy(${this.descendInput(node.hue).asNumber()}, target);\n`;
+            break;
+        case 'pen.legacyChangeShade':
+            this.source += `${pen}._changePenShadeBy(${this.descendInput(node.shade).asNumber()}, target);\n`;
+            break;
+        case 'pen.legacySetHue':
+            this.source += `${pen}._setPenHueToNumber(${this.descendInput(node.hue).asNumber()}, target);\n`;
+            break;
+        case 'pen.legacySetShade':
+            this.source += `${pen}._setPenShadeToNumber(${this.descendInput(node.shade).asNumber()}, target);\n`;
             break;
         case 'pen.setColor':
             this.source += `${pen}._setPenColorToColor(${this.descendInput(node.color).asUnknown()}, target);\n`;

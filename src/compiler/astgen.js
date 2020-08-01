@@ -59,10 +59,10 @@ class ScriptTreeGenerator {
     }
 
     /**
-     * Descend into an input.
-     * @param {*} parentBlock The parent block of the input.
+     * Descend into an input. (eg. "length of ( )")
+     * @param {*} parentBlock The parent Scratch block that contains the input.
      * @param {string} inputName The name of the input to descend into.
-     * @returns {Node} 
+     * @returns {Node} Compiled input node for this input.
      */
     descendInput (parentBlock, inputName) {
         const input = parentBlock.inputs[inputName];
@@ -532,7 +532,7 @@ class ScriptTreeGenerator {
             };
         case 'sensing_timer':
             return {
-                kind: 'sensing.getTimer'
+                kind: 'sensing.timer'
             };
         case 'sensing_touchingcolor':
             return {
@@ -570,6 +570,11 @@ class ScriptTreeGenerator {
         }
     }
 
+    /**
+     * Descend into a stacked block. (eg. "move ( ) steps")
+     * @param {*} block The Scratch block to parse.
+     * @returns {Node} Compiled node for this block.
+     */
     descendStackedBlock (block) {
         switch (block.opcode) {
         case 'control_create_clone_of':
@@ -990,6 +995,12 @@ class ScriptTreeGenerator {
         }
     }
 
+    /**
+     * Descend into a stack of blocks (eg. the blocks contained within an "if" block)
+     * @param {*} parentBlock The parent Scratch block that contains the stack to parse.
+     * @param {*} substackName The name of the stack to descend into.
+     * @returns {Node[]} List of stacked block nodes.
+     */
     descendSubstack (parentBlock, substackName) {
         const input = parentBlock.inputs[substackName];
         if (!input) {
