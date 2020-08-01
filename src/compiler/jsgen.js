@@ -130,6 +130,8 @@ class ScriptCompiler {
      */
     descendInput (node) {
         switch (node.kind) {
+        case 'args.boolean':
+            return new TypedInput(`toBoolean(C["${sanitize(node.name)}"])`, TYPE_BOOLEAN);
         case 'args.stringNumber':
             return new TypedInput(`C["${sanitize(node.name)}"]`, TYPE_UNKNOWN);
 
@@ -140,11 +142,20 @@ class ScriptCompiler {
             // todo: converting to number sometimes break things, need to check for those conditions
             return new ConstantInput(node.value);
 
+        case 'list.contains':
+            return new TypedInput(`listContains(${this.referenceVariable(node.list)}, ${this.descendInput(node.item).asUnknown()})`, TYPE_BOOLEAN);
+        case 'list.contents':
+            return new TypedInput(`listContents(${this.referenceVariable(node.list)})`, TYPE_STRING);
         case 'list.get':
             return new TypedInput(`listGet(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()})`, TYPE_UNKNOWN);
+        case 'list.indexOf':
+            return new TypedInput(`listIndexOf(${this.referenceVariable(node.list)}, ${this.descendInput(node.item).asUnknown()})`, TYPE_NUMBER);
         case 'list.length':
             return new TypedInput(`${this.referenceVariable(node.list)}.value.length`, TYPE_NUMBER);
 
+        case 'looks.size':
+            return new TypedInput('target.size', TYPE_NUMBER);
+    
         case 'motion.direction':
             return new TypedInput('target.direction', TYPE_NUMBER);
         case 'motion.x':
@@ -180,6 +191,8 @@ class ScriptCompiler {
             return new TypedInput(`compareGreaterThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
         case 'op.join':
             return new TypedInput(`(${this.descendInput(node.left).asString()} + ${this.descendInput(node.right).asString()})`, TYPE_STRING);
+        case 'op.length':
+            return new TypedInput(`${this.descendInput(node.string).asString()}.length`, TYPE_NUMBER);
         case 'op.less':
             return new TypedInput(`compareLessThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
         case 'op.letterOf':
@@ -196,6 +209,14 @@ class ScriptCompiler {
             return new TypedInput(`!${this.descendInput(node.operand).asBoolean()}`, TYPE_BOOLEAN);
         case 'op.or':
             return new TypedInput(`(${this.descendInput(node.left).asBoolean()} || ${this.descendInput(node.right).asBoolean()})`, TYPE_BOOLEAN);
+        case 'op.random':
+            if (node.useInts) {
+                return new TypedInput(`randomInt(${this.descendInput(node.low).asNumber()}, ${this.descendInput(node.high).asNumber()})`, TYPE_NUMBER);
+            }
+            if (node.useFloats) {
+                return new TypedInput(`randomFloat(${this.descendInput(node.low).asNumber()}, ${this.descendInput(node.high).asNumber()})`, TYPE_NUMBER);
+            }
+            return new TypedInput(`runtime.ext_scratch3_operators._random(${this.descendInput(node.low).asUnknown()}, ${this.descendInput(node.high).asUnknown()})`, TYPE_NUMBER);
         case 'op.round':
             return new TypedInput(`Math.round(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
         case 'op.sin':
@@ -209,6 +230,8 @@ class ScriptCompiler {
         case 'op.10^':
             return new TypedInput(`Math.pow(10, ${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
 
+        case 'sensing.colorTouchingColor':
+            return new TypedInput(`target.colorIsTouchingColor(colorToList(${this.descendInput(node.target).asUnknown()}), colorToList(${this.descendInput(node.mask).asUnknown()}))`, TYPE_BOOLEAN);
         case 'sensing.getTimer':
             return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
         case 'sensing.keydown':
@@ -221,6 +244,10 @@ class ScriptCompiler {
             return new TypedInput('ioQuery("mouse", "getScratchY")', TYPE_NUMBER);
         case 'sensing.touching':
             return new TypedInput(`target.isTouchingObject(${this.descendInput(node.object).asUnknown()})`, TYPE_BOOLEAN);
+        case 'sensing.touchingColor':
+            return new TypedInput(`target.isTouchingColor(colorToList(${this.descendInput(node.color).asUnknown()}))`, TYPE_BOOLEAN);
+        case 'sensing.username':
+            return new TypedInput('ioQuery("userData", "getUsername")', TYPE_STRING);
 
         case 'var.get':
             return new TypedInput(`${this.referenceVariable(node.variable)}.value`, TYPE_UNKNOWN);
@@ -244,6 +271,14 @@ class ScriptCompiler {
         case 'control.createClone':
             this.source += `runtime.ext_scratch3_control._createClone(${this.descendInput(node.target).asString()}, target);\n`;
             break;
+        case 'control.deleteClone':
+            // TODO: actually stop thread
+            this.source += 'if (!target.isOriginal) {\n';
+            this.source += '  runtime.disposeTarget(target);\n';
+            this.source += '  runtime.stopForTarget(target);\n';
+            this.retire();
+            this.source += '}\n';
+            break;
         case 'control.if':
             this.source += `if (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.whenTrue);
@@ -256,6 +291,7 @@ class ScriptCompiler {
             const i = this.localVariables.next();
             this.source += `for (var ${i} = ${this.descendInput(node.times).asNumber()}; ${i} >= 0.5; ${i}--) {\n`;
             this.descendStack(node.do);
+            this.yieldNotWarp();
             this.source += `}\n`;
             break;
         }
@@ -266,7 +302,6 @@ class ScriptCompiler {
             } else if (node.level === 'other scripts in sprite' || node.level === 'other scripts in stage') {
                 this.source += 'runtime.stopForTarget(target, thread);\n';
             } else if (node.level === 'this script') {
-                this.source += 'return;\n';
                 if (this.root.isProcedure) {
                     if (this.root.isWarp) {
                         this.source += 'thread.warp--;\n';
@@ -281,9 +316,10 @@ class ScriptCompiler {
         case 'control.wait': {
             const timer = this.localVariables.next();
             const duration = this.localVariables.next();
+            // todo: yield after setting up timer, duration
+            this.yieldNotWarp();
             this.source += `var ${timer} = timer();\n`;
             this.source += `var ${duration} = Math.max(0, 1000 * ${this.descendInput(node.seconds).asNumber()});\n`;
-            this.yieldNotWarp();
             this.source += `while (${timer}.timeElapsed() < ${duration}) {\n`;
             this.yieldNotWarp();
             this.source += '}\n';
@@ -330,6 +366,9 @@ class ScriptCompiler {
         case 'looks.backwardLayers':
             this.source += `target.goBackwardLayers(${this.descendInput(node.layers).asNumber()});\n`;
             break;
+        case 'looks.clearEffects':
+            this.source += 'target.clearEffects();\n';
+            break;
         case 'looks.forwardLayers':
             this.source += `target.goForwardLayers(${this.descendInput(node.layers).asNumber()});\n`;
             break;
@@ -354,11 +393,17 @@ class ScriptCompiler {
             this.source += `runtime.ext_scratch3_looks._setCostume(target, ${this.descendInput(node.costume).asUnknown()});\n`;
             break;
 
-        case 'motion.step':
-            this.source += `runtime.ext_scratch3_motion._moveSteps(${this.descendInput(node.steps).asNumber()}, target);\n`;
+        case 'motion.setDirection':
+            this.source += `target.setDirection(${this.descendInput(node.direction).asNumber()});\n`;
+            break;
+        case 'motion.setRotationStyle':
+            this.source += `target.setRotationStyle("${sanitize(node.style)}");\n`;
             break;
         case 'motion.setXY':
             this.source += `target.setXY(${this.descendInput(node.x).asNumber()}, ${this.descendInput(node.y).asNumber()});\n`;
+            break;
+        case 'motion.step':
+            this.source += `runtime.ext_scratch3_motion._moveSteps(${this.descendInput(node.steps).asNumber()}, target);\n`;
             break;
 
         case 'pen.clear':
@@ -378,6 +423,9 @@ class ScriptCompiler {
             break;
         case 'pen.setSize':
             this.source += `${pen}._setPenSizeTo(${this.descendInput(node.size).asNumber()}, target);\n`;
+            break;
+        case 'pen.stamp':
+            this.source += `${pen}._stamp(target);\n`;
             break;
         case 'pen.up':
             this.source += `${pen}._penUp(target);\n`;
@@ -443,12 +491,12 @@ class ScriptCompiler {
     }
 
     retire () {
-        this.source += 'retire(); yield;';
+        this.source += 'retire(); yield;\n';
     }
 
     yieldNotWarp () {
         if (!this.root.isWarp) {
-            this.source += 'if (!thread.warp) yield;\n';
+            this.source += 'if (thread.warp === 0) yield;\n';
         }
     }
 
@@ -464,7 +512,7 @@ class ScriptCompiler {
         }
         for (const fieldName of Object.keys(node.fields)) {
             const field = node.fields[fieldName];
-            result += `"${sanitize(fieldName)}":${sanitize(field.value)},`;
+            result += `"${sanitize(fieldName)}":"${sanitize(field)}",`;
         }
         result += `}, runtime.getOpcodeFunction("${sanitize(opcode)}"))`;
 

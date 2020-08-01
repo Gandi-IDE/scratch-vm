@@ -165,7 +165,7 @@ class ScriptTreeGenerator {
             };
         case 'data_itemnumoflist':
             return {
-                kind: 'list.index',
+                kind: 'list.indexOf',
                 list: this.descendVariable(block, 'LIST'),
                 item: this.descendInput(block, 'ITEM')
             };
@@ -174,7 +174,6 @@ class ScriptTreeGenerator {
                 kind: 'list.contents',
                 list: this.descendVariable(block, 'LIST')
             };
-
 
         case 'event_broadcast_menu':
             return {
@@ -396,8 +395,8 @@ class ScriptTreeGenerator {
             const to = this.descendInput(block, 'TO');
             // If both values are known at compile time, we can do some optimizations.
             if (from.kind === 'constant' && to.kind === 'constant') {
-                const nFrom = Cast.toNumber(from);
-                const nTo = Cast.toNumber(to);
+                const nFrom = Cast.toNumber(from.value);
+                const nTo = Cast.toNumber(to.value);
                 // If both numbers are the same, optimize out the random
                 if (nFrom === nTo) {
                     return {
@@ -405,25 +404,21 @@ class ScriptTreeGenerator {
                         value: nFrom
                     };
                 }
-                const low = nFrom <= nTo ? nFrom : nTo;
-                const high = nFrom <= nTo ? nTo : nFrom;
                 // If both are ints, hint this to the compiler
-                if (Cast.isInt(low) && Cast.isInt(high)) {
+                if (Cast.isInt(nFrom) && Cast.isInt(nTo)) {
                     return {
                         kind: 'op.random',
-                        low: low,
-                        high: high,
-                        checkedOrder: true,
+                        low: nFrom <= nTo ? from : to,
+                        high: nFrom <= nTo ? to : from,
                         useInts: true,
                         useFloats: false
                     };
                 }
-                // Otherwise they're floats
+                // Otherwise hint that these are floats
                 return {
                     kind: 'op.random',
-                    low: low,
-                    high: high,
-                    checkedOrder: true,
+                    low: nFrom <= nTo ? from : to,
+                    high: nFrom <= nTo ? to : from,
                     useInts: false,
                     useFloats: true
                 };
@@ -433,7 +428,6 @@ class ScriptTreeGenerator {
                         kind: 'op.random',
                         low: from,
                         high: to,
-                        checkedOrder: false,
                         useInts: false,
                         useFloats: true
                     };
@@ -819,7 +813,7 @@ class ScriptTreeGenerator {
         case 'motion_setrotationstyle':
             return {
                 kind: 'motion.setRotationStyle',
-                style: this.descendInput(block, 'STYLE')
+                style: block.fields.STYLE.value
             };
         case 'motion_setx':
             return {
