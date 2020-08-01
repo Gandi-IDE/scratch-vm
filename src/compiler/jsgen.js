@@ -120,8 +120,9 @@ class ConstantInput {
 }
 
 class ScriptCompiler {
-    constructor (root) {
-        this.root = root;
+    constructor (script, ast) {
+        this.script = script;
+        this.ast = ast;
         this.source = '';
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
@@ -310,8 +311,8 @@ class ScriptCompiler {
             } else if (node.level === 'other scripts in sprite' || node.level === 'other scripts in stage') {
                 this.source += 'runtime.stopForTarget(target, thread);\n';
             } else if (node.level === 'this script') {
-                if (this.root.isProcedure) {
-                    if (this.root.isWarp) {
+                if (this.script.isProcedure) {
+                    if (this.script.isWarp) {
                         this.source += 'thread.warp--;\n';
                     }
                     this.source += 'return;\n';
@@ -445,13 +446,25 @@ class ScriptCompiler {
             this.source += `${pen}._penUp(target);\n`;
             break;
 
-        case 'procedures.call':
-            this.source += `yield* thread.procedures["${sanitize(node.code)}"]({`;
-            for (const name of Object.keys(node.parameters)) {
-                this.source += `"${sanitize(name)}":${this.descendInput(node.parameters[name]).asUnknown()},`;
+        case 'procedures.call': {
+            const procedureCode = node.code;
+            // Do not generate any code for empty procedures.
+            const procedureData = this.ast.procedures[procedureCode];
+            if (procedureData.stack === null) {
+                break;
             }
-            this.source += `});\n`;
+            this.source += `yield* thread.procedures["${sanitize(procedureCode)}"](`;
+            // Only include arguments if the procedure accepts any.
+            if (procedureData.hasArguments) {
+                this.source += '{';
+                for (const name of Object.keys(node.parameters)) {
+                    this.source += `"${sanitize(name)}":${this.descendInput(node.parameters[name]).asUnknown()},`;
+                }
+                this.source += '}';
+            }
+            this.source += `);\n`;
             break;
+        }
 
         case 'sensing.resetTimer':
             this.source += 'ioQuery("clock", "resetProjectTimer");\n';
@@ -509,7 +522,7 @@ class ScriptCompiler {
     }
 
     yieldNotWarp () {
-        if (!this.root.isWarp) {
+        if (!this.script.isWarp) {
             this.source += 'if (thread.warp === 0) yield;\n';
         }
     }
@@ -550,21 +563,20 @@ class ScriptCompiler {
 
         // Generated script
         script += `return function* ${scriptName}(`;
-        if (this.root.isProcedure) {
-            // procedures accept single argument "C"
+        if (this.script.hasArguments) {
             script += 'C';
         }
         script += ') {\n';
 
-        if (this.root.isWarp) {
+        if (this.script.isWarp) {
             script += 'thread.warp++;\n';
         }
 
         script += this.source;
 
-        if (!this.root.isProcedure) {
+        if (!this.script.isProcedure) {
             script += 'retire();\n';
-        } else if (this.root.isWarp) {
+        } else if (this.script.isWarp) {
             script += 'thread.warp--;\n';
         }
 
@@ -574,7 +586,9 @@ class ScriptCompiler {
     }
 
     compile () {
-        this.descendStack(this.root.stack);
+        if (this.script.stack) {
+            this.descendStack(this.script.stack);
+        }
 
         const factory = this.createScriptFactory();
         const fn = execute.scopedEval(factory);
@@ -602,8 +616,8 @@ class JSCompiler {
         this.compiledProcedures = {};
     }
 
-    compileTree (root) {
-        for (const procedureCode of root.dependedProcedures) {
+    compileTree (script) {
+        for (const procedureCode of script.dependedProcedures) {
             if (this.compiledProcedures.hasOwnProperty(procedureCode)) {
                 // Already compiled
                 continue;
@@ -622,7 +636,7 @@ class JSCompiler {
             this.compilingProcedures.pop();
         }
 
-        const compiler = new ScriptCompiler(root);
+        const compiler = new ScriptCompiler(script, this.ast);
         return compiler.compile();
     }
 

@@ -1104,8 +1104,9 @@ class ScriptTreeGenerator {
      */
     generate (topBlockId) {
         const result = {
-            stack: [], // todo: null for empty scripts
+            stack: null,
             isProcedure: this.isProcedure,
+            hasArguments: this.procedureArguments.length > 0,
             isWarp: this.isWarp,
             dependedProcedures: this.dependedProcedures
         };
