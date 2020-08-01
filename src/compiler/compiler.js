@@ -322,10 +322,8 @@ class Compiler {
         try{
             const ast = new (require('./astgen.js'))(this.thread);
             const astg = ast.generate();
-            console.log(astg);
             const sg = new (require('./jsgen.js'))(astg);
             const sgc = sg.compile();
-            console.log(sgc);
             if (sgc) {
                 return sgc;
             }

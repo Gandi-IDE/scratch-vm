@@ -224,6 +224,11 @@ class ScriptTreeGenerator {
                 kind: 'constant',
                 value: block.fields.TO.value
             };
+        case 'motion_goto_menu':
+            return {
+                kind: 'constant',
+                value: block.fields.TO.value
+            };
         case 'motion_pointtowards_menu':
             return {
                 kind: 'constant',
@@ -620,7 +625,7 @@ class ScriptTreeGenerator {
         case 'control_wait_until':
             return {
                 kind: 'control.waitUntil',
-                until: this.descendInput(block, 'CONDITION')
+                condition: this.descendInput(block, 'CONDITION')
             };
         case 'control_while':
             return {
@@ -865,6 +870,16 @@ class ScriptTreeGenerator {
                 param: this.descendInput(block, 'COLOR_PARAM'),
                 value: this.descendInput(block, 'VALUE')
             };
+        case 'pen_changePenHueBy':
+            return {
+                kind: 'pen.legacyChangeHue',
+                hue: this.descendInput(block, 'HUE')
+            };
+        case 'pen_changePenShadeBy':
+            return {
+                kind: 'pen.legacyChangeShade',
+                shade: this.descendInput(block, 'SHADE')
+            };
         case 'pen_penDown':
             return {
                 kind: 'pen.down'
@@ -878,6 +893,21 @@ class ScriptTreeGenerator {
                 kind: 'pen.setParam',
                 param: this.descendInput(block, 'COLOR_PARAM'),
                 value: this.descendInput(block, 'VALUE')
+            };
+        case 'pen_setPenColorToColor':
+            return {
+                kind: 'pen.setColor',
+                color: this.descendInput(block, 'COLOR')
+            };
+        case 'pen_setPenHueToNumber':
+            return {
+                kind: 'pen.legacySetHue',
+                hue: this.descendInput(block, 'HUE')
+            };
+        case 'pen_setPenShadeToNumber':
+            return {
+                kind: 'pen.legacySetShade',
+                shade: this.descendInput(block, 'SHADE')
             };
         case 'pen_setPenSizeTo':
             return {

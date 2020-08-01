@@ -30,12 +30,12 @@ const penState = `${pen}._getPenState(target)`;
 /**
  * Variable pool used for factory function names.
  */
-const factoryNameVariablePool = new VariablePool('f_');
+const factoryNameVariablePool = new VariablePool('f');
 
 /**
  * Variable pool used for generated script names.
  */
-const generatorNameVariablePool = new VariablePool('g_');
+const generatorNameVariablePool = new VariablePool('g');
 
 /**
  * @typedef Input
@@ -129,7 +129,6 @@ class ScriptCompiler {
      * @returns {Input}
      */
     descendInput (node) {
-        if(node.kind===undefined)debugger;
         switch (node.kind) {
         case 'args.stringNumber':
             return new TypedInput(`C["${sanitize(node.name)}"]`, TYPE_UNKNOWN);
@@ -145,6 +144,13 @@ class ScriptCompiler {
             return new TypedInput(`listGet(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()})`, TYPE_UNKNOWN);
         case 'list.length':
             return new TypedInput(`${this.referenceVariable(node.list)}.value.length`, TYPE_NUMBER);
+
+        case 'motion.direction':
+            return new TypedInput('target.direction', TYPE_NUMBER);
+        case 'motion.x':
+            return new TypedInput('target.x', TYPE_NUMBER);
+        case 'motion.y':
+            return new TypedInput('target.y', TYPE_NUMBER);
 
         case 'op.abs':
             return new TypedInput(`Math.abs(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
@@ -235,6 +241,9 @@ class ScriptCompiler {
             this.source += ';\n';
             break;
 
+        case 'control.createClone':
+            this.source += `runtime.ext_scratch3_control._createClone(${this.descendInput(node.target).asString()}, target);\n`;
+            break;
         case 'control.if':
             this.source += `if (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.whenTrue);
@@ -278,6 +287,12 @@ class ScriptCompiler {
             this.source += `while (${timer}.timeElapsed() < ${duration}) {\n`;
             this.yieldNotWarp();
             this.source += '}\n';
+            break;
+        }
+        case 'control.waitUntil': {
+            this.source += `while (!${this.descendInput(node.condition).asBoolean()}) {\n`;
+            this.yieldNotWarp();
+            this.source += `}\n`;
             break;
         }
         case 'control.while':
@@ -348,6 +363,24 @@ class ScriptCompiler {
 
         case 'pen.clear':
             this.source += `${pen}.clear();\n`;
+            break;
+        case 'pen.down':
+            this.source += `${pen}._penDown(target);\n`;
+            break;
+        case 'pen.changeParam':
+            this.source += `${pen}._setOrChangeColorParam(${this.descendInput(node.param).asString()}, ${this.descendInput(node.value).asNumber()}, ${penState}, true);\n`;
+            break;
+        case 'pen.setColor':
+            this.source += `${pen}._setPenColorToColor(${this.descendInput(node.color).asUnknown()}, target);\n`;
+            break;
+        case 'pen.setParam':
+            this.source += `${pen}._setOrChangeColorParam(${this.descendInput(node.param).asString()}, ${this.descendInput(node.value).asNumber()}, ${penState}, false);\n`;
+            break;
+        case 'pen.setSize':
+            this.source += `${pen}._setPenSizeTo(${this.descendInput(node.size).asNumber()}, target);\n`;
+            break;
+        case 'pen.up':
+            this.source += `${pen}._penUp(target);\n`;
             break;
 
         case 'procedures.call':
