@@ -133,6 +133,10 @@ class ScriptCompiler {
         this.ast = ast;
         this.target = target;
         this.source = '';
+
+        this.isWarp = script.isWarp;
+        this.isProcedure = script.isProcedure;
+
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
         this._setupVariables = {};
@@ -337,10 +341,7 @@ class ScriptCompiler {
             } else if (node.level === 'other scripts in sprite' || node.level === 'other scripts in stage') {
                 this.source += 'runtime.stopForTarget(target, thread);\n';
             } else if (node.level === 'this script') {
-                if (this.script.isProcedure) {
-                    if (this.script.isWarp) {
-                        this.source += 'thread.warp--;\n';
-                    }
+                if (this.isProcedure) {
                     this.source += 'return;\n';
                 } else {
                     this.retire();
@@ -502,6 +503,10 @@ class ScriptCompiler {
             if (procedureData.stack === null) {
                 break;
             }
+            const callingFromNonWarpToWarp = !this.isWarp && procedureData.isWarp;
+            if (callingFromNonWarpToWarp) {
+                this.source += 'thread.warp++;\n';
+            }
             this.source += `yield* thread.procedures["${sanitize(procedureCode)}"](`;
             // Only include arguments if the procedure accepts any.
             if (procedureData.hasArguments) {
@@ -512,6 +517,9 @@ class ScriptCompiler {
                 this.source += '}';
             }
             this.source += `);\n`;
+            if (callingFromNonWarpToWarp) {
+                this.source += 'thread.warp--;\n';
+            }
             break;
         }
 
@@ -575,7 +583,7 @@ class ScriptCompiler {
     }
 
     yieldNotWarp () {
-        if (!this.script.isWarp) {
+        if (!this.isWarp) {
             this.source += 'if (thread.warp === 0) yield;\n';
         }
     }
@@ -644,16 +652,10 @@ class ScriptCompiler {
         }
         script += ') {\n';
 
-        if (this.script.isWarp) {
-            script += 'thread.warp++;\n';
-        }
-
         script += this.source;
 
-        if (!this.script.isProcedure) {
+        if (!this.isProcedure) {
             script += 'retire();\n';
-        } else if (this.script.isWarp) {
-            script += 'thread.warp--;\n';
         }
 
         script += '}; })';
