@@ -432,8 +432,8 @@ class Thread {
             return;
         }
 
-        // importing Compiler here avoids circular dependency issues
-        const Compiler = require('../compiler/compiler');
+        // importing the compiler here avoids circular dependency issues
+        const compile = require('../compiler/compiler');
 
         this.triedToCompile = true;
 
@@ -449,8 +449,7 @@ class Thread {
             result = cachedResult;
         } else {
             try {
-                const compiler = new Compiler(this);
-                result = compiler.compile();
+                result = compile(this);
                 blocks.setCompiledScript(topBlock, result);
             } catch (e) {
                 log.error('cannot compile script', this.target.getName(), e);
