@@ -990,7 +990,8 @@ class ScriptTreeGenerator {
             const parameters = {};
             for (let i = 0; i < paramIds.length; i++) {
                 let value;
-                if (block.inputs.hasOwnProperty(paramIds[i])) {
+                // todo: move this sort of existance checking somewhere else
+                if (block.inputs[paramIds[i]] && block.inputs[paramIds[i]].block) {
                     value = this.descendInput(block, paramIds[i]);
                 } else {
                     value = {
