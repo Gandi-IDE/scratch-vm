@@ -458,9 +458,11 @@ class Thread {
             }
         }
 
+        this.procedures = {};
         for (const procedureCode of Object.keys(result.procedures)) {
             this.procedures[procedureCode] = result.procedures[procedureCode](this.target);
         }
+
         this.generator = result.startingFunction(this.target)();
         this.isCompiled = true;
     }
