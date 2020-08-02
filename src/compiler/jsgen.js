@@ -374,6 +374,7 @@ class ScriptCompiler {
 
         case 'list.add': {
             const list = this.referenceVariable(node.list);
+            this.source += `${list}.value.push(${this.descendInput(node.item).asUnknown()});\n`;
             this.source += `${list}._monitorUpToDate = false;\n`;
             break;
         }
