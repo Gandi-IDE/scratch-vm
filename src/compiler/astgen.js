@@ -1261,11 +1261,16 @@ class ASTGenerator {
                     }
                 }
 
-                const generator = new ScriptTreeGenerator(this.thread);
-                generator.setProcedureCode(procedureCode);
-                if (isWarp) generator.enableWarp();
-                const compiledProcedure = this.generateScriptTree(generator, bodyStart);
-                this.procedures[procedureCode] = compiledProcedure;
+                if (this.blocks._cache.compiledProcedures[procedureCode]) {
+                    this.procedures[procedureCode] = this.blocks._cache.compiledProcedures[procedureCode];
+                } else {
+                    const generator = new ScriptTreeGenerator(this.thread);
+                    generator.setProcedureCode(procedureCode);
+                    if (isWarp) generator.enableWarp();
+                    const compiledProcedure = this.generateScriptTree(generator, bodyStart);
+                    this.procedures[procedureCode] = compiledProcedure;
+                    this.blocks._cache.compiledProcedures[procedureCode] = compiledProcedure;
+                }
             }
         }
 

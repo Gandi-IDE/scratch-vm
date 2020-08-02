@@ -90,10 +90,10 @@ class Blocks {
             compiledScripts: {},
             
             /**
-             * A cache of procedure code opcodes to compiled scripts.
+             * A cache of procedure code opcodes to a parsed AST
              * @type {object.<string, object>}
              */
-            compiledProcedures: {},
+            compiledProcedures: {}
         };
 
         /**
