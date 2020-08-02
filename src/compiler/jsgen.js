@@ -708,8 +708,14 @@ class JSCompiler {
             this.compilingProcedures.pop();
         }
 
+        if (script.cachedCompileResult) {
+            return script.cachedCompileResult;
+        }
+
         const compiler = new ScriptCompiler(script, this.ast, this.target);
-        return compiler.compile();
+        const result = compiler.compile();
+        script.cachedCompileResult = result;
+        return result;
     }
 
     compile () {

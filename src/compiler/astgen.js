@@ -1166,7 +1166,8 @@ class ScriptTreeGenerator {
             isProcedure: this.isProcedure,
             hasArguments: this.procedureArguments.length > 0,
             isWarp: this.isWarp,
-            dependedProcedures: this.dependedProcedures
+            dependedProcedures: this.dependedProcedures,
+            cachedCompileResult: null
         };
 
         const topBlock = this.blocks.getBlock(topBlockId);
@@ -1264,6 +1265,7 @@ class ASTGenerator {
                 if (this.blocks._cache.compiledProcedures[procedureCode]) {
                     this.procedures[procedureCode] = this.blocks._cache.compiledProcedures[procedureCode];
                 } else {
+                    console.log('parsing AST for', procedureCode);
                     const generator = new ScriptTreeGenerator(this.thread);
                     generator.setProcedureCode(procedureCode);
                     if (isWarp) generator.enableWarp();
