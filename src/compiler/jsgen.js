@@ -672,7 +672,7 @@ class ScriptCompiler {
 
         const factory = this.createScriptFactory();
         const fn = execute.scopedEval(factory);
-        log.info(`JS: compiled script`, factory);
+        log.info(`JS: ${this.target.sprite.name}: compiled script`, factory);
 
         return fn;
     }
