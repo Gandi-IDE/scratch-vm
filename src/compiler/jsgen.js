@@ -456,6 +456,10 @@ class ScriptCompiler {
             this.source += `runtime.ext_scratch3_motion._moveSteps(${this.descendInput(node.steps).asNumber()}, target);\n`;
             break;
 
+        case 'noop':
+            // todo: remove noop entirely
+            break;
+
         case 'pen.clear':
             this.source += `${pen}.clear();\n`;
             break;
