@@ -362,6 +362,7 @@ class ScriptCompiler {
         }
         case 'control.waitUntil': {
             this.source += `while (!${this.descendInput(node.condition).asBoolean()}) {\n`;
+            // todo: see if we should yield, even in warp, because otherwise we get stuck spinning a loop
             this.yieldNotWarp();
             this.source += `}\n`;
             break;

@@ -1132,6 +1132,29 @@ class ScriptTreeGenerator {
         };
     }
 
+    readTopBlockComment (commentId) {
+        const comment = this.target.comments[commentId];
+        if (!comment) {
+            // can't find the comment
+            // this is safe to ignore
+            return;
+        }
+
+        const text = comment.text;
+        if (!/^tw\b/.test(text)) {
+            // not a comment that we care about
+            return;
+        }
+
+        const flags = text.split(' ');
+        for (const flag of flags) {
+            switch (flag) {
+            case 'nocompile':
+                throw new Error('Script explicitly disables compilation');
+            }
+        }
+    }
+
     /**
      * @param {string} topBlockId The ID of the top block of the script.
      * @returns {Tree} A compiled tree.
@@ -1149,6 +1172,10 @@ class ScriptTreeGenerator {
         if (!topBlock) {
             // This is an empty script.
             return result;
+        }
+
+        if (topBlock.comment) {
+            this.readTopBlockComment(topBlock.comment);
         }
 
         // If the top block is a hat, advance to its child.
