@@ -209,7 +209,7 @@ class Thread {
         /**
          * @type {Object.<string, import('../compiler/compiler').CompiledScript>}
          */
-        this.procedures = {};
+        this.procedures = null;
     }
 
     /**

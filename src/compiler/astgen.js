@@ -27,6 +27,14 @@ const compatBlocks = require('./compat-blocks');
  * @property {string} kind
  */
 
+const createVariableData = (scope, varObj) => ({
+    scope,
+    // todo: maybe just return varObj
+    id: varObj.id,
+    name: varObj.name,
+    isCloud: varObj.isCloud
+});
+
 class ScriptTreeGenerator {
     constructor (thread) {
         this.thread = thread;
@@ -1029,29 +1037,32 @@ class ScriptTreeGenerator {
         return result;
     }
 
-    descendVariable (block, name, type) {
-        // todo: cache variables by ID
-        const variable = block.fields[name];
+    descendVariable (block, fieldName, type) {
+        const variable = block.fields[fieldName];
         const id = variable.id;
 
+        if (this.variableCache.hasOwnProperty(id)) {
+            return this.variableCache[id];
+        }
+
+        const data = this.variableCache[id] = this._descendVariable(id, variable.value, type);
+        this.variableCache[id] = data;
+        return data;
+    }
+
+    _descendVariable (id, name, type) {
         const target = this.target;
         const stage = this.stage;
 
         // Look for by ID in target...
         if (target.variables.hasOwnProperty(id)) {
-            return {
-                scope: 'target',
-                id
-            };
+            return createVariableData('target', target.variables[id]);
         }
 
         // Look for by ID in stage...
         if (!target.isStage) {
             if (stage && stage.variables.hasOwnProperty(id)) {
-                return {
-                    scope: 'stage',
-                    id
-                };
+                return createVariableData('stage', stage.variables[id]);
             }
         }
 
@@ -1060,10 +1071,7 @@ class ScriptTreeGenerator {
             if (target.variables.hasOwnProperty(varId)) {
                 const currVar = target.variables[varId];
                 if (currVar.name === name && currVar.type === type) {
-                    return {
-                        scope: 'target',
-                        id: varId
-                    };
+                    return createVariableData('target', currVar);
                 }
             }
         }
@@ -1074,10 +1082,7 @@ class ScriptTreeGenerator {
                 if (stage.variables.hasOwnProperty(varId)) {
                     const currVar = stage.variables[varId];
                     if (currVar.name === name && currVar.type === type) {
-                        return {
-                            sccope: 'stage',
-                            id: varId
-                        };
+                        return createVariableData('stage', currVar);
                     }
                 }
             }
@@ -1086,10 +1091,7 @@ class ScriptTreeGenerator {
         // Create it locally...
         const newVariable = new Variable(id, name, type, false);
         target.variables[id] = newVariable;
-        return {
-            scope: 'target',
-            id: id
-        };
+        return createVariableData('target', newVariable);
     }
 
     descendCompatLayer (block) {

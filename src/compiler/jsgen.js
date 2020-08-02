@@ -120,9 +120,10 @@ class ConstantInput {
 }
 
 class ScriptCompiler {
-    constructor (script, ast) {
+    constructor (script, ast, target) {
         this.script = script;
         this.ast = ast;
+        this.target = target;
         this.source = '';
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
@@ -131,7 +132,7 @@ class ScriptCompiler {
 
     /**
      * @param {object} node Input node to compile.
-     * @returns {Input}
+     * @returns {Input} Compiled input.
      */
     descendInput (node) {
         switch (node.kind) {
@@ -144,8 +145,7 @@ class ScriptCompiler {
             return new TypedInput(`(${this.generateCompatCall(node)})`, TYPE_UNKNOWN);
 
         case 'constant':
-            // todo: converting to number sometimes break things, need to check for those conditions
-            return new ConstantInput(node.value);
+            return this.safeConstantInput(node.value);
 
         case 'list.contains':
             return new TypedInput(`listContains(${this.referenceVariable(node.list)}, ${this.descendInput(node.item).asUnknown()})`, TYPE_BOOLEAN);
@@ -287,7 +287,6 @@ class ScriptCompiler {
             this.source += `runtime.ext_scratch3_control._createClone(${this.descendInput(node.target).asString()}, target);\n`;
             break;
         case 'control.deleteClone':
-            // TODO: actually stop thread
             this.source += 'if (!target.isOriginal) {\n';
             this.source += '  runtime.disposeTarget(target);\n';
             this.source += '  runtime.stopForTarget(target);\n';
@@ -373,16 +372,16 @@ class ScriptCompiler {
             this.source += `yield* waitThreads(startHats("event_whenbroadcastreceived", { BROADCAST_OPTION: ${this.descendInput(node.broadcast).asString()} }));\n`;
             break;
 
-        case 'list.add':
-            this.source += `${this.referenceVariable(node.list)}.value.push(${this.descendInput(node.item).asUnknown()});\n`;
-            // todo _monitorUpToDate
+        case 'list.add': {
+            const list = this.referenceVariable(node.list);
+            this.source += `${list}._monitorUpToDate = false;\n`;
             break;
+        }
         case 'list.delete':
             this.source += `listDelete(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()});\n`;
             break;
         case 'list.deleteAll':
             this.source += `${this.referenceVariable(node.list)}.value = [];\n`;
-            // todo _monitorUpToDate
             break;
         case 'list.hide':
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.list.id)}", element: "checkbox", value: false }, runtime);\n`;
@@ -424,7 +423,7 @@ class ScriptCompiler {
             this.source += 'runtime.ext_scratch3_looks._renderBubble(target);\n';
             break;
         case 'looks.switchBackdrop':
-            this.source += `runtime.ext_scratch3_looks._setBackdrop(stage, ${this.descendInput(node.backdrop)});\n`;
+            this.source += `runtime.ext_scratch3_looks._setBackdrop(stage, ${this.descendInput(node.backdrop).asUnknown()});\n`;
             break;
         case 'looks.switchCostume':
             this.source += `runtime.ext_scratch3_looks._setCostume(target, ${this.descendInput(node.costume).asUnknown()});\n`;
@@ -512,18 +511,23 @@ class ScriptCompiler {
 
         case 'var.change': {
             const variable = this.referenceVariable(node.variable);
-            // todo: cloud
             this.source += `${variable}.value = (+${variable}.value || 0) + ${this.descendInput(node.value).asNumber()};\n`;
+            if (node.variable.isCloud) {
+                this.source += `ioQuery("cloud", "requestUpdateVariable", ["${sanitize(node.variable.name)}", ${variable}.value]);\n`;
+            }
             break;
         }
-
         case 'var.hide':
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.variable.id)}", element: "checkbox", value: false }, runtime);\n`;
             break;
-        case 'var.set':
-            // todo: cloud
-            this.source += `${this.referenceVariable(node.variable)}.value = ${this.descendInput(node.value).asUnknown()};\n`;
+        case 'var.set': {
+            const variable = this.referenceVariable(node.variable);
+            this.source += `${variable}.value = ${this.descendInput(node.value).asUnknown()};\n`;
+            if (node.variable.isCloud) {
+                this.source += `ioQuery("cloud", "requestUpdateVariable", ["${sanitize(node.variable.name)}", ${variable}.value]);\n`;
+            }
             break;
+        }
         case 'var.show':
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.variable.id)}", element: "checkbox", value: true }, runtime);\n`;
             break;
@@ -541,7 +545,6 @@ class ScriptCompiler {
     }
 
     referenceVariable (variable) {
-        // todo: factoryVariables
         if (variable.scope === 'target') {
             return this.evaluateOnce(`target.variables["${sanitize(variable.id)}"]`);
         }
@@ -565,6 +568,20 @@ class ScriptCompiler {
         if (!this.script.isWarp) {
             this.source += 'if (thread.warp === 0) yield;\n';
         }
+    }
+
+    safeConstantInput (value) {
+        if (typeof value === 'string') {
+            if (this.isNameOfCostume(value)) {
+                return new TypedInput(`"${sanitize(value)}"`, TYPE_STRING);
+            }
+        }
+        return new ConstantInput(value);
+    }
+
+    isNameOfCostume (stringValue) {
+        // todo: also check backdrop
+        return this.target.getCostumeIndexByName(stringValue) !== -1;
     }
 
     generateCompatCall (node) {
@@ -650,8 +667,9 @@ disableToString(TypedInput.prototype.asBoolean);
 disableToString(TypedInput.prototype.asUnknown);
 
 class JSCompiler {
-    constructor (ast) {
+    constructor (ast, target) {
         this.ast = ast;
+        this.target = target;
         this.compilingProcedures = [];
         this.compiledProcedures = {};
     }
@@ -676,7 +694,7 @@ class JSCompiler {
             this.compilingProcedures.pop();
         }
 
-        const compiler = new ScriptCompiler(script, this.ast);
+        const compiler = new ScriptCompiler(script, this.ast, this.target);
         return compiler.compile();
     }
 

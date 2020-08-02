@@ -3,7 +3,16 @@ const Timer = require('../util/timer');
 const Cast = require('../util/cast');
 const log = require('../util/log');
 
+/* eslint-disable no-unused-vars */
+
 const compatibilityLayerBlockUtility = require('./compat-block-utility');
+
+
+/**
+ * The currently running thread.
+ * @type {Thread}
+ */
+var thread;
 
 // All the functions defined here will be available to compiled scripts.
 // The JSDoc annotations define the function's contract.
@@ -442,12 +451,6 @@ const mod = (n, modulus) => {
     if (result / modulus < 0) result += modulus;
     return result;
 };
-
-/**
- * The currently running thread.
- * @type {Thread}
- */
-var thread;
 
 /**
  * Step a compiled thread.
