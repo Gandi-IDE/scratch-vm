@@ -2,6 +2,7 @@ const log = require('../util/log');
 const Cast = require('../util/cast');
 const VariablePool = require('./variable-pool');
 const execute = require('./execute');
+const {disableToString} = require('./util');
 
 /* eslint-disable max-len */
 
@@ -18,24 +19,19 @@ const TYPE_BOOLEAN = 3;
 const TYPE_UNKNOWN = 4;
 const TYPE_NUMBER_NAN = 5;
 
-const disableToString = obj => {
-    obj.toString = () => {
-        throw new Error(`toString unexpectedly called on ${obj.name || 'object'}`);
-    };
-};
-
+// Pen-related constants
 const pen = 'runtime.ext_pen';
 const penState = `${pen}._getPenState(target)`;
 
 /**
  * Variable pool used for factory function names.
  */
-const factoryNameVariablePool = new VariablePool('f');
+const factoryNameVariablePool = new VariablePool('factory');
 
 /**
  * Variable pool used for generated script names.
  */
-const generatorNameVariablePool = new VariablePool('g');
+const generatorNameVariablePool = new VariablePool('generator');
 
 /**
  * @typedef Input
@@ -119,6 +115,18 @@ class ConstantInput {
     }
 }
 
+// Running toString() on any of these methods is a mistake.
+disableToString(ConstantInput.prototype);
+disableToString(ConstantInput.prototype.asNumber);
+disableToString(ConstantInput.prototype.asString);
+disableToString(ConstantInput.prototype.asBoolean);
+disableToString(ConstantInput.prototype.asUnknown);
+disableToString(TypedInput.prototype);
+disableToString(TypedInput.prototype.asNumber);
+disableToString(TypedInput.prototype.asString);
+disableToString(TypedInput.prototype.asBoolean);
+disableToString(TypedInput.prototype.asUnknown);
+
 class ScriptCompiler {
     constructor (script, ast, target) {
         this.script = script;
@@ -142,7 +150,7 @@ class ScriptCompiler {
             return new TypedInput(`C["${sanitize(node.name)}"]`, TYPE_UNKNOWN);
 
         case 'compat':
-            return new TypedInput(`(${this.generateCompatCall(node)})`, TYPE_UNKNOWN);
+            return new TypedInput(`(${this.generateCompatibilityLayerCall(node)})`, TYPE_UNKNOWN);
 
         case 'constant':
             return this.safeConstantInput(node.value);
@@ -279,7 +287,7 @@ class ScriptCompiler {
     descendStackedBlock (node) {
         switch (node.kind) {
         case 'compat':
-            this.source += this.generateCompatCall(node);
+            this.source += this.generateCompatibilityLayerCall(node);
             this.source += ';\n';
             break;
 
@@ -585,7 +593,12 @@ class ScriptCompiler {
         return this.target.getCostumeIndexByName(stringValue) !== -1;
     }
 
-    generateCompatCall (node) {
+    /**
+     * Generate a call into the compatibility layer.
+     * @param {*} node The "compat" kind node to generate from.
+     * @returns {string} The JS of the call.
+     */
+    generateCompatibilityLayerCall (node) {
         const opcode = node.opcode;
 
         let result = `/* ${opcode} */ yield* executeInCompatibilityLayer({`;
@@ -604,13 +617,17 @@ class ScriptCompiler {
         return result;
     }
 
+    /**
+     * Generate the JS to pass into eval() based on the current state of the compiler.
+     * @returns {string} JS to pass into eval()
+     */
     createScriptFactory () {
         const scriptName = generatorNameVariablePool.next();
         const factoryName = factoryNameVariablePool.next();
 
         let script = '';
 
-        // Factory
+        // Setup the factory
         script += `(function ${factoryName}(target) { `;
         script += 'const runtime = target.runtime; ';
         script += 'const stage = runtime.getTargetForStage();\n';
@@ -643,6 +660,10 @@ class ScriptCompiler {
         return script;
     }
 
+    /**
+     * Compile this script.
+     * @returns {Function} The factory function for the tree.
+     */
     compile () {
         if (this.script.stack) {
             this.descendStack(this.script.stack);
@@ -655,17 +676,6 @@ class ScriptCompiler {
         return fn;
     }
 }
-
-disableToString(ConstantInput.prototype);
-disableToString(ConstantInput.prototype.asNumber);
-disableToString(ConstantInput.prototype.asString);
-disableToString(ConstantInput.prototype.asBoolean);
-disableToString(ConstantInput.prototype.asUnknown);
-disableToString(TypedInput.prototype);
-disableToString(TypedInput.prototype.asNumber);
-disableToString(TypedInput.prototype.asString);
-disableToString(TypedInput.prototype.asBoolean);
-disableToString(TypedInput.prototype.asUnknown);
 
 class JSCompiler {
     constructor (ast, target) {

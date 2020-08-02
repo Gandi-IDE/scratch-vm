@@ -71,17 +71,17 @@ const waitThreads = function*(threads) {
  * @returns {*} the value that the promise resolves to, otherwise undefined if the promise rejects
  */
 const waitPromise = function*(promise) {
-    // TODO: there's quite a lot going on in engine/execute.js's handlePromise, we should see how much of that matters to us
+    // TODO: there's quite a lot going on in engine/execute.js's handlePromise. We should see how much of that matters to us
 
     const _thread = thread; // need to store reference to current thread, as promise handlers won't be called from the tick loop
     let returnValue = undefined;
 
     promise
-        .then((value) => {
+        .then(value => {
             returnValue = value;
             _thread.status = Thread.STATUS_RUNNING;
         })
-        .catch((error) => {
+        .catch(error => {
             _thread.status = Thread.STATUS_RUNNING;
             log.warn('Promise rejected in compiled script:', error);
         });
@@ -146,19 +146,17 @@ const retire = () => {
  * Scratch cast to number.
  * Similar to Cast.toNumber()
  * @param {*} value The value to cast
- * @returns {number}
+ * @returns {number} The value cast to a number.
  */
-const toNumber = (value) => {
-    return +value || 0;
-};
+const toNumber = value => +value || 0;
 
 /**
  * Scratch cast to boolean.
  * Similar to Cast.toBoolean()
  * @param {*} value The value to cast
- * @returns {boolean}
+ * @returns {boolean} The value cast to a boolean
  */
-const toBoolean = (value) => {
+const toBoolean = value => {
     if (typeof value === 'boolean') {
         return value;
     }
@@ -175,9 +173,11 @@ const toBoolean = (value) => {
  * Check if a value is considered whitespace.
  * Similar to Cast.isWhiteSpace()
  * @param {*} val Value to check
- * @returns {boolean}
+ * @returns {boolean} true if the value is whitespace
  */
-const isWhiteSpace = (val) => {
+const isWhiteSpace = val => {
+    // todo: everywhere this is used we don't care about "is whitespace", but rather "has whitespace"
+    // we might able to optimize for that
     return val === null || (typeof val === 'string' && val.trim().length === 0);
 };
 
@@ -251,7 +251,7 @@ const compareLessThan = (v1, v2) => {
  * Generate a random integer.
  * @param {number} low Lower bound
  * @param {number} high Upper bound
- * @returns {number}
+ * @returns {number} A random integer between low and high, inclusive.
  */
 const randomInt = (low, high) => {
     return low + Math.floor(Math.random() * ((high + 1) - low));
@@ -261,7 +261,7 @@ const randomInt = (low, high) => {
  * Generate a random float.
  * @param {number} low Lower bound
  * @param {number} high Upper bound
- * @returns {number}
+ * @returns {number} A random floating point number between low and high.
  */
 const randomFloat = (low, high) => {
     return (Math.random() * (high - low)) + low;
@@ -269,10 +269,10 @@ const randomFloat = (low, high) => {
 
 /**
  * Perform an IO query
- * @param {string} device
- * @param {string} func
- * @param {*} args
- * @returns {*}
+ * @param {string} device The name of the device to query
+ * @param {string} func The function of the device to query
+ * @param {*} args The arguments to pass to the device
+ * @returns {*} The value returned by the IO device
  */
 const ioQuery = (device, func, args) => {
     // We will assume that the device always exists.
@@ -285,9 +285,9 @@ const ioQuery = (device, func, args) => {
  * @returns {Timer} A started timer
  */
 const timer = () => {
-    const timer = new Timer();
-    timer.start();
-    return timer;
+    const t = new Timer();
+    t.start();
+    return t;
 };
 
 /**
@@ -298,7 +298,7 @@ const timer = () => {
  * @param {number} length Length of the list.
  * @returns {number} 0 based list index, or -1 if invalid.
  */
-var listIndex = (index, length) => {
+const listIndex = (index, length) => {
     if (typeof index !== 'number') {
         if (index === 'last') {
             if (length > 0) {
@@ -420,7 +420,7 @@ const listIndexOf = (list, item) => {
  * Get the stringified form of a list.
  * @param {import('../engine/variable')} list The list.
  */
-const listContents = (list) => {
+const listContents = list => {
     for (let i = 0; i < list.value.length; i++) {
         const listItem = list.value[i];
         if (!(typeof listItem === 'string' && listItem.length === 1)) {
@@ -435,7 +435,7 @@ const listContents = (list) => {
  * @param {*} color The color value to convert
  * @return {Array.<number>} [r,g,b], values between 0-255.
  */
-const colorToList = (color) => {
+const colorToList = color => {
     // TODO: remove Cast dependency
     return Cast.toRgbColorList(color);
 };

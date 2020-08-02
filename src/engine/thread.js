@@ -207,7 +207,7 @@ class Thread {
          */
         this.generator = null;
         /**
-         * @type {Object.<string, import('../compiler/compiler').CompiledScript>}
+         * @type {Object.<string, import('../compiler/compile').CompiledScript>}
          */
         this.procedures = null;
     }
@@ -433,7 +433,7 @@ class Thread {
         }
 
         // importing the compiler here avoids circular dependency issues
-        const compile = require('../compiler/compiler');
+        const compile = require('../compiler/compile');
 
         this.triedToCompile = true;
 

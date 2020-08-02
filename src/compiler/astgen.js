@@ -43,10 +43,31 @@ class ScriptTreeGenerator {
         this.runtime = this.target.runtime;
         this.stage = this.runtime.getTargetForStage();
 
+        /**
+         * List of procedures that this script depends on.
+         */
         this.dependedProcedures = [];
+
+        /**
+         * Whether the current script is a procedure definition.
+         */
         this.isProcedure = false;
+
+        /**
+         * Whether the current script is explicitly in warp mode.
+         */
         this.isWarp = false;
+
+        /**
+         * The names of the arguments accepted by this script, in order.
+         * @type {string[]}
+         */
         this.procedureArguments = [];
+
+        /**
+         * Cache of variable ID to variable data object.
+         * @type {object.<string, object>}
+         */
         this.variableCache = {};
     }
 

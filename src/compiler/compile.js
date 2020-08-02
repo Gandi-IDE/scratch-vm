@@ -6,9 +6,9 @@ const compile = thread => {
     const ast = astGenerator.generate();
 
     const jsGenerator = new JSGenerator(ast, thread.target);
-    const js = jsGenerator.compile();
+    const compilationResult = jsGenerator.compile();
 
-    return js;
+    return compilationResult;
 };
 
 module.exports = compile;
