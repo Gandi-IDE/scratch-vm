@@ -154,15 +154,10 @@ class ScriptCompiler {
      */
     descendInput (node) {
         switch (node.kind) {
-        case 'args.boolean': {
-            // todo: move index stuff to AST
-            const index = this.script.arguments.indexOf(node.name);
-            return new TypedInput(`toBoolean(p${index})`, TYPE_BOOLEAN);
-        }
-        case 'args.stringNumber': {
-            const index = this.script.arguments.indexOf(node.name);
-            return new TypedInput(`p${index}`, TYPE_BOOLEAN);
-        }
+        case 'args.boolean':
+            return new TypedInput(`toBoolean(p${node.index})`, TYPE_BOOLEAN);
+        case 'args.stringNumber':
+            return new TypedInput(`p${node.index}`, TYPE_BOOLEAN);
 
         case 'compat':
             return new TypedInput(`(${this.generateCompatibilityLayerCall(node)})`, TYPE_UNKNOWN);

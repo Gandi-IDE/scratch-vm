@@ -176,6 +176,10 @@ class ScriptTreeGenerator {
                         kind: 'tw.lastKeyPressed'
                     };
                 }
+            }
+            // lastIndexOf because multiple parameters with the same name will use the value of the last definition
+            const index = this.procedureArguments.lastIndexOf(name);
+            if (index === -1) {
                 return {
                     kind: 'constant',
                     value: 0
@@ -183,7 +187,7 @@ class ScriptTreeGenerator {
             }
             return {
                 kind: 'args.stringNumber',
-                name: name
+                index: index
             };
         }
         case 'argument_reporter_boolean': {
@@ -200,9 +204,10 @@ class ScriptTreeGenerator {
                     value: 0
                 };
             }
+            const index = this.procedureArguments.lastIndexOf(name);
             return {
                 kind: 'args.boolean',
-                name: name
+                index: index
             };
         }
 
