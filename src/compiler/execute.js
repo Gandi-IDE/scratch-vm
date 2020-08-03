@@ -410,11 +410,14 @@ const listIndexOf = (list, item) => {
 /**
  * Get the stringified form of a list.
  * @param {import('../engine/variable')} list The list.
+ * @returns {string} Stringified form of the list.
  */
 const listContents = (list) => {
     for (let i = 0; i < list.value.length; i++) {
         const listItem = list.value[i];
-        if (!(typeof listItem === 'string' && listItem.length === 1)) {
+        // this is an intentional break from what scratch 3 does to address our automatic string -> number conversions
+        // it fixes more than it breaks
+        if ((listItem + '').length !== 1) {
             return list.value.join(' ');
         }
     }
