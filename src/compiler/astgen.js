@@ -1213,10 +1213,8 @@ class ASTGenerator {
         this.procedures = {};
     }
 
-    generateScriptTree (generator, topBlockId) {
-        const result = generator.generate(topBlockId);
-
-        for (const procedureCode of generator.dependedProcedures) {
+    addProcedureDependencies (dependencies) {
+        for (const procedureCode of dependencies) {
             if (this.procedures.hasOwnProperty(procedureCode)) {
                 continue;
             }
@@ -1229,7 +1227,11 @@ class ASTGenerator {
             const definition = this.blocks.getProcedureDefinition(procedureCode);
             this.uncompiledProcedures.set(procedureCode, definition);
         }
+    }
 
+    generateScriptTree (generator, topBlockId) {
+        const result = generator.generate(topBlockId);
+        this.addProcedureDependencies(result.dependedProcedures);
         return result;
     }
 
@@ -1263,9 +1265,10 @@ class ASTGenerator {
                 }
 
                 if (this.blocks._cache.compiledProcedures[procedureCode]) {
-                    this.procedures[procedureCode] = this.blocks._cache.compiledProcedures[procedureCode];
+                    const result = this.blocks._cache.compiledProcedures[procedureCode];
+                    this.procedures[procedureCode] = result;
+                    this.addProcedureDependencies(result.dependedProcedures);
                 } else {
-                    console.log('parsing AST for', procedureCode);
                     const generator = new ScriptTreeGenerator(this.thread);
                     generator.setProcedureCode(procedureCode);
                     if (isWarp) generator.enableWarp();
