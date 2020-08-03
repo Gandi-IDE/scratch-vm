@@ -1056,7 +1056,7 @@ class ScriptTreeGenerator {
                 this.dependedProcedures.push(procedureCode);
             }
 
-            const parameters = {};
+            const args = [];
             for (let i = 0; i < paramIds.length; i++) {
                 let value;
                 // todo: move this sort of existance checking somewhere else
@@ -1068,14 +1068,13 @@ class ScriptTreeGenerator {
                         value: paramDefaults[i]
                     };
                 }
-                // overwriting existing values is intentional
-                parameters[paramNames[i]] = value;
+                args.push(value);
             }
 
             return {
                 kind: 'procedures.call',
                 code: procedureCode,
-                parameters
+                arguments: args
             };
         }
 
@@ -1281,7 +1280,7 @@ class ScriptTreeGenerator {
             stack: null,
             procedureCode: this.procedureCode,
             isProcedure: this.isProcedure,
-            hasArguments: this.procedureArguments.length > 0,
+            arguments: this.procedureArguments,
             isWarp: this.isWarp,
             dependedProcedures: this.dependedProcedures,
             yields: this.yields, // will be updated later

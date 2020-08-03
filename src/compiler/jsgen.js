@@ -154,10 +154,15 @@ class ScriptCompiler {
      */
     descendInput (node) {
         switch (node.kind) {
-        case 'args.boolean':
-            return new TypedInput(`toBoolean(C["${sanitize(node.name)}"])`, TYPE_BOOLEAN);
-        case 'args.stringNumber':
-            return new TypedInput(`C["${sanitize(node.name)}"]`, TYPE_UNKNOWN);
+        case 'args.boolean': {
+            // todo: move index stuff to AST
+            const index = this.script.arguments.indexOf(node.name);
+            return new TypedInput(`toBoolean(p${index})`, TYPE_BOOLEAN);
+        }
+        case 'args.stringNumber': {
+            const index = this.script.arguments.indexOf(node.name);
+            return new TypedInput(`p${index}`, TYPE_BOOLEAN);
+        }
 
         case 'compat':
             return new TypedInput(`(${this.generateCompatibilityLayerCall(node)})`, TYPE_UNKNOWN);
@@ -528,12 +533,12 @@ class ScriptCompiler {
             }
             this.source += `thread.procedures["${sanitize(procedureCode)}"](`;
             // Only include arguments if the procedure accepts any.
-            if (procedureData.hasArguments) {
-                this.source += '{';
-                for (const name of Object.keys(node.parameters)) {
-                    this.source += `"${sanitize(name)}":${this.descendInput(node.parameters[name]).asUnknown()},`;
+            if (procedureData.arguments.length) {
+                const args = [];
+                for (const input of node.arguments) {
+                    args.push(this.descendInput(input).asUnknown());
                 }
-                this.source += '}';
+                this.source += args.join(',');
             }
             this.source += `);\n`;
             if (callingFromNonWarpToWarp) {
@@ -712,8 +717,12 @@ class ScriptCompiler {
             script += `function ${functionNameVariablePool.next()} `;
         }
         script += '(';
-        if (this.script.hasArguments) {
-            script += 'C';
+        if (this.script.arguments.length) {
+            const args = [];
+            for (let i = 0; i < this.script.arguments.length; i++) {
+                args.push(`p${i}`);
+            }
+            script += args.join(',');
         }
         script += ') {\n';
 
