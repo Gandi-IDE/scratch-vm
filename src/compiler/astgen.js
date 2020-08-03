@@ -170,6 +170,12 @@ class ScriptTreeGenerator {
             }
             const name = block.fields.VALUE.value;
             if (!this.procedureArguments.includes(name)) {
+                if (name === 'is compiled?') {
+                    return {
+                        kind: 'constant',
+                        value: true
+                    };
+                }
                 return {
                     kind: 'constant',
                     value: false
