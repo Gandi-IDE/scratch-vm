@@ -294,6 +294,23 @@ class ScriptTreeGenerator {
                 kind: 'motion.y'
             };
 
+        case 'music_menu_DRUM':
+            return {
+                kind: 'constant',
+                value: block.fields.DRUM.value
+            };
+        case 'music_menu_INSTRUMENT':
+            return {
+                kind: 'constant',
+                value: block.fields.INSTRUMENT.value
+            };
+
+        case 'note':
+            return {
+                kind: 'constant',
+                value: block.fields.NOTE.value
+            };
+
         case 'operator_add':
             return {
                 kind: 'op.add',

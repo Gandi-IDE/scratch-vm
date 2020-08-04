@@ -1,3 +1,9 @@
+/**
+ * @fileoverview List of blocks to be supported in the compiler compatibility layer.
+ */
+
+// Please keep these lists alphabetical.
+
 const stacked = [
     'control_clear_counter',
     'control_get_counter',
@@ -14,6 +20,12 @@ const stacked = [
     'motion_glideto',
     'motion_goto',
     'motion_pointtowards',
+    'music_changeTempo',
+    'music_playDrumForBeats',
+    'music_playNoteForBeats',
+    'music_restForBeats',
+    'music_setInstrument',
+    'music_setTempo',
     'sensing_askandwait',
     'sensing_setdragmode',
     'sound_changeeffectby',
@@ -29,6 +41,7 @@ const stacked = [
 ];
 
 const inputs = [
+    'music_getTempo',
     'sensing_answer',
     'sensing_current',
     'sensing_dayssince2000',
