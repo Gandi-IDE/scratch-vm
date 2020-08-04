@@ -207,9 +207,9 @@ class Thread {
          */
         this.generator = null;
         /**
-         * @type {Object.<string, import('../compiler/compiler').CompiledScript>}
+         * @type {Object.<string, import('../compiler/compile').CompiledScript>}
          */
-        this.procedures = {};
+        this.procedures = null;
     }
 
     /**
@@ -432,8 +432,8 @@ class Thread {
             return;
         }
 
-        // importing Compiler here avoids circular dependency issues
-        const Compiler = require('../compiler/compiler');
+        // importing the compiler here avoids circular dependency issues
+        const compile = require('../compiler/compile');
 
         this.triedToCompile = true;
 
@@ -449,8 +449,7 @@ class Thread {
             result = cachedResult;
         } else {
             try {
-                const compiler = new Compiler(this);
-                result = compiler.compile();
+                result = compile(this);
                 blocks.setCompiledScript(topBlock, result);
             } catch (e) {
                 log.error('cannot compile script', this.target.getName(), e);
@@ -459,9 +458,11 @@ class Thread {
             }
         }
 
+        this.procedures = {};
         for (const procedureCode of Object.keys(result.procedures)) {
             this.procedures[procedureCode] = result.procedures[procedureCode](this.target);
         }
+
         this.generator = result.startingFunction(this.target)();
         this.isCompiled = true;
     }
