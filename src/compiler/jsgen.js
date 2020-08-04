@@ -352,10 +352,10 @@ class ScriptCompiler {
         case 'control.wait': {
             const timer = this.localVariables.next();
             const duration = this.localVariables.next();
-            // todo: yield after setting up timer, duration
-            this.yieldNotWarp();
             this.source += `var ${timer} = timer();\n`;
             this.source += `var ${duration} = Math.max(0, 1000 * ${this.descendInput(node.seconds).asNumber()});\n`;
+            // always yield at least once, even on 0 second durations
+            this.yieldNotWarp();
             this.source += `while (${timer}.timeElapsed() < ${duration}) {\n`;
             this.yieldNotWarp();
             this.source += '}\n';
