@@ -27,13 +27,24 @@ const compatBlocks = require('./compat-blocks');
  * @property {string} kind
  */
 
+/**
+ * Create a variable codegen object.
+ * @param {'target'|'stage'} scope The scope of this variable -- which object owns it.
+ * @param {import('../engine/variable.js')} varObj The Scratch Variable
+ * @returns {*} A variable codegen object.
+ */
 const createVariableData = (scope, varObj) => ({
     scope,
-    // todo: maybe just return varObj
     id: varObj.id,
     name: varObj.name,
     isCloud: varObj.isCloud
 });
+
+/**
+ * Determine whether an input is used as a compiler detector.
+ * @param {string} name The name of the argument.
+ */
+const isCompilerDetectorArgument = name => name === 'is compiled?';
 
 class ScriptTreeGenerator {
     constructor (thread) {
@@ -162,15 +173,21 @@ class ScriptTreeGenerator {
             };
         }
         case 'argument_reporter_boolean': {
+            const name = block.fields.VALUE.value;
             if (!this.isProcedure) {
+                if (isCompilerDetectorArgument(name)) {
+                    return {
+                        kind: 'constant',
+                        value: true
+                    };
+                }
                 return {
                     kind: 'constant',
                     value: false
                 };
             }
-            const name = block.fields.VALUE.value;
             if (!this.procedureArguments.includes(name)) {
-                if (name === 'is compiled?') {
+                if (isCompilerDetectorArgument(name)) {
                     return {
                         kind: 'constant',
                         value: true
