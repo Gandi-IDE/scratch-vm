@@ -132,6 +132,8 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction) {
         returnValue = executeBlock();
     }
 
+    // todo: do we have to do anything extra if status is STATUS_DONE?
+
     return returnValue;
 };
 

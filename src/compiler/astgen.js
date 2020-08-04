@@ -435,7 +435,6 @@ class ScriptTreeGenerator {
             };
             }
         }
-
         case 'operator_mod':
             return {
                 kind: 'op.mod',
