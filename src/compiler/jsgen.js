@@ -363,8 +363,7 @@ class ScriptCompiler {
         }
         case 'control.waitUntil': {
             this.source += `while (!${this.descendInput(node.condition).asBoolean()}) {\n`;
-            // todo: see if we should yield, even in warp, because otherwise we get stuck spinning a loop
-            this.yieldNotWarp();
+            this.yieldNotWarpOrStuck();
             this.source += `}\n`;
             break;
         }
@@ -586,10 +585,20 @@ class ScriptCompiler {
         this.source += 'retire(); yield;\n';
     }
 
+    /**
+     * Write JS to yield the current thread if warp mode is disabled.
+     */
     yieldNotWarp () {
         if (!this.isWarp) {
             this.source += 'if (thread.warp === 0) yield;\n';
         }
+    }
+
+    /**
+     * Write JS to yield the current thread if warp mode is disabled or if the script seems to be stuck.
+     */
+    yieldNotWarpOrStuck () {
+        this.source += 'if (thread.warp === 0 || runtime.sequencer.timer.timeElapsed() > 1000) yield;\n';
     }
 
     safeConstantInput (value) {
