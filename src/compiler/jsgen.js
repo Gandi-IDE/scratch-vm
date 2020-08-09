@@ -623,7 +623,7 @@ class ScriptCompiler {
     generateCompatibilityLayerCall (node) {
         const opcode = node.opcode;
 
-        let result = `/* ${opcode} */ yield* executeInCompatibilityLayer({`;
+        let result = 'yield* executeInCompatibilityLayer({';
 
         for (const inputName of Object.keys(node.inputs)) {
             const input = node.inputs[inputName];
