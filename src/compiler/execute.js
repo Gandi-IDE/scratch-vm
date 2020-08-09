@@ -294,12 +294,17 @@ const ioQuery = (device, func, args) => {
     return devObject[func].apply(devObject, args);
 };
 
+// nowObj used for timers.
+const timerNowObj = {
+    now: () => thread.target.runtime.currentMSecs
+};
+
 /**
  * Create and start a timer.
  * @returns {Timer} A started timer
  */
 const timer = () => {
-    const t = new Timer();
+    const t = new Timer(timerNowObj);
     t.start();
     return t;
 };
