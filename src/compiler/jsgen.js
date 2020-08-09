@@ -358,7 +358,7 @@ class ScriptCompiler {
             // always yield at least once, even on 0 second durations
             this.yieldNotWarp();
             this.source += `while (${timer}.timeElapsed() < ${duration}) {\n`;
-            this.yieldNotWarp();
+            this.yieldNotWarpOrStuck();
             this.source += '}\n';
             break;
         }
