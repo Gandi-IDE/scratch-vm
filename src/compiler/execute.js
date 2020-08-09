@@ -19,6 +19,12 @@ var thread;
 // Most of these functions are only used at runtime by generated scripts. Despite what your editor may say, they are not unused.
 
 /**
+ * Determine whether the current tick is likely stuck.
+ * @returns {boolean} true if the current tick is likely stuck.
+ */
+const isStuck = () => thread.target.runtime.sequencer.timer.timeElapsed() > 250;
+
+/**
  * Start hats by opcode.
  * @param {string} requestedHat The opcode of the hat to start.
  * @param {*} optMatchFields Fields to match.

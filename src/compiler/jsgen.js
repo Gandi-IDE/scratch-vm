@@ -599,7 +599,7 @@ class ScriptCompiler {
      * Write JS to yield the current thread if warp mode is disabled or if the script seems to be stuck.
      */
     yieldNotWarpOrStuck () {
-        this.source += 'if (thread.warp === 0 || runtime.sequencer.timer.timeElapsed() > 1000) yield;\n';
+        this.source += 'if (thread.warp === 0 || (thread.warp && isStuck())) yield;\n';
     }
 
     /**
