@@ -126,9 +126,15 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction) {
     }
 
     while (thread.status === Thread.STATUS_YIELD || thread.status === Thread.STATUS_YIELD_TICK) {
-        // TODO: warp mode
+        // todo: handle warp mode
+
+        if (thread.status === Thread.STATUS_YIELD) {
+            thread.status = Thread.STATUS_RUNNING;
+        }
+
         yield;
-        thread.status = Thread.STATUS_RUNNING;
+
+        // todo: do we have to check if returnValue is a promise at this point?
         returnValue = executeBlock();
     }
 
