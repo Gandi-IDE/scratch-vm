@@ -354,6 +354,7 @@ class ScriptCompiler {
             const duration = this.localVariables.next();
             this.source += `var ${timer} = timer();\n`;
             this.source += `var ${duration} = Math.max(0, 1000 * ${this.descendInput(node.seconds).asNumber()});\n`;
+            this.requestRedraw();
             // always yield at least once, even on 0 second durations
             this.yieldNotWarp();
             this.source += `while (${timer}.timeElapsed() < ${duration}) {\n`;
@@ -599,6 +600,13 @@ class ScriptCompiler {
      */
     yieldNotWarpOrStuck () {
         this.source += 'if (thread.warp === 0 || runtime.sequencer.timer.timeElapsed() > 1000) yield;\n';
+    }
+
+    /**
+     * Write JS to request a redraw.
+     */
+    requestRedraw () {
+        this.source += 'runtime.requestRedraw();\n';
     }
 
     safeConstantInput (value) {
