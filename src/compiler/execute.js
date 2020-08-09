@@ -132,16 +132,23 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction) {
     }
 
     while (thread.status === Thread.STATUS_YIELD || thread.status === Thread.STATUS_YIELD_TICK) {
-        // todo: handle warp mode
-
+        // Yielded threads will run next iteration.
         if (thread.status === Thread.STATUS_YIELD) {
             thread.status = Thread.STATUS_RUNNING;
+            // Yield back to the event loop when stuck or not in warp mode.
+            if (thread.warp === 0 || isStuck()) {
+                yield;
+            }
+        } else {
+            // status is STATUS_YIELD_TICK, always yield to the event loop
+            yield;
         }
 
-        yield;
-
-        // todo: do we have to check if returnValue is a promise at this point?
         returnValue = executeBlock();
+
+        if (isPromise(returnValue)) {
+            return yield* waitPromise(returnValue);
+        }
     }
 
     // todo: do we have to do anything extra if status is STATUS_DONE?
