@@ -175,7 +175,7 @@ class ScriptTreeGenerator {
         }
         case 'argument_reporter_boolean': {
             const name = block.fields.VALUE.value;
-            if (!this.isProcedure) {
+            if (!this.isProcedure || !this.procedureArguments.includes(name)) {
                 if (isCompilerDetectorArgument(name)) {
                     return {
                         kind: 'constant',
@@ -184,19 +184,7 @@ class ScriptTreeGenerator {
                 }
                 return {
                     kind: 'constant',
-                    value: false
-                };
-            }
-            if (!this.procedureArguments.includes(name)) {
-                if (isCompilerDetectorArgument(name)) {
-                    return {
-                        kind: 'constant',
-                        value: true
-                    };
-                }
-                return {
-                    kind: 'constant',
-                    value: false
+                    value: 0
                 };
             }
             return {
