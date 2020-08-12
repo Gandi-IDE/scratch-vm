@@ -1141,6 +1141,15 @@ class ScriptTreeGenerator {
         // Create it locally...
         const newVariable = new Variable(id, name, type, false);
         target.variables[id] = newVariable;
+
+        // If the sprite being compiled right now is a clone, we should also create the variable in the original sprite.
+        if (!target.isOriginal) {
+            const original = this.target.runtime.targets.find(t => t.isOriginal && t.sprite === target.sprite);
+            if (original) {
+                original.variables[id] = new Variable(id, name, type, false);
+            }
+        }
+
         return createVariableData('target', newVariable);
     }
 
