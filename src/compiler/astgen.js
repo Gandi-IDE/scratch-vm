@@ -1095,7 +1095,7 @@ class ScriptTreeGenerator {
             return this.variableCache[id];
         }
 
-        const data = this.variableCache[id] = this._descendVariable(id, variable.value, type);
+        const data = this._descendVariable(id, variable.value, type);
         this.variableCache[id] = data;
         return data;
     }
