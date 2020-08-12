@@ -1147,7 +1147,7 @@ class ScriptTreeGenerator {
         if (!target.isOriginal) {
             // The original sprite will usually be the first item of `clones`, but it's possible that it might not be.
             const original = this.target.sprite.clones.find(t => t.isOriginal);
-            if (original) {
+            if (original && !original.variables.hasOwnProperty(id)) {
                 original.variables[id] = new Variable(id, name, type, false);
             }
         }
