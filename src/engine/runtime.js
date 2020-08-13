@@ -393,10 +393,10 @@ class Runtime extends EventEmitter {
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
 
-        /**
-         * Whether the script compiler is enabled.
-         */
-        this.compilerEnabled = true;
+        this.compilerOptions = {
+            enabled: true,
+            loopStuckChecking: false
+        };
     }
 
     /**
@@ -1649,7 +1649,8 @@ class Runtime extends EventEmitter {
         thread.pushStack(id);
         this.threads.push(thread);
 
-        if (!(opts && opts.updateMonitor) && this.compilerEnabled) {
+        // tw: compile new threads. Do not attempt to compile monitor threads.
+        if (!(opts && opts.updateMonitor) && this.compilerOptions.enabled) {
             thread.tryCompile();
         }
 
@@ -1681,7 +1682,8 @@ class Runtime extends EventEmitter {
         newThread.updateMonitor = thread.updateMonitor;
         newThread.blockContainer = thread.blockContainer;
         newThread.pushStack(thread.topBlock);
-        if (thread.triedToCompile && this.compilerEnabled) {
+        // tw: when a thread is restarted, we have to check whether the previous script was attempted to be compiled.
+        if (thread.triedToCompile && this.compilerOptions.enabled) {
             newThread.tryCompile();
         }
         const i = this.threads.indexOf(thread);
@@ -2197,16 +2199,34 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Set whether the compiler is enabled.
+     * tw: Set whether the compiler is enabled.
      * This does not affect already running threads.
      * @param {boolean} compilerEnabled True iff the compiler is to be enabled.
      */
     setCompilerEnabled (compilerEnabled) {
-        this.compilerEnabled = compilerEnabled;
+        this.compilerOptions.enabled = compilerEnabled;
         if (compilerEnabled) {
             this.emit(Runtime.COMPILER_ENABLED);
         } else {
             this.emit(Runtime.COMPILER_DISABLED);
+        }
+    }
+    /**
+     * tw: Set whether stuck checking is enabled.
+     * @param {boolean} stuckChecking True iff stuck checking is to be enabled.
+     */
+    setLoopStuckChecking (stuckChecking) {
+        this.compilerOptions.loopStuckChecking = stuckChecking;
+        this.resetAllCaches();
+    }
+    /**
+     * tw: Reset the cache of all block containers.
+     */
+    resetAllCaches () {
+        for (const target of this.targets) {
+            if (target.isOriginal) {
+                target.blocks.resetCache();
+            }
         }
     }
 

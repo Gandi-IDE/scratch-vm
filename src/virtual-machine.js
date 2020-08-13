@@ -214,8 +214,12 @@ class VirtualMachine extends EventEmitter {
         this.runtime.setCompatibilityMode(!!compatibilityModeOn);
     }
 
+    // tw: add VirtualMachine methods that forward to the Runtime
     setCompilerEnabled (compilerEnabled) {
         this.runtime.setCompilerEnabled(compilerEnabled);
+    }
+    setLoopStuckChecking (stuckChecking) {
+        this.runtime.setLoopStuckChecking(stuckChecking);
     }
 
     /**

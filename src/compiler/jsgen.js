@@ -136,7 +136,7 @@ class ScriptCompiler {
 
         this.isWarp = script.isWarp;
         this.isProcedure = script.isProcedure;
-        this.checkStuckInLoop = false;
+        this.loopStuckChecking = this.target.runtime.compilerOptions.loopStuckChecking;
 
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
@@ -588,7 +588,7 @@ class ScriptCompiler {
     }
 
     yieldLoop () {
-        if (this.checkStuckInLoop) {
+        if (this.loopStuckChecking) {
             this.yieldNotWarpOrStuck();
         } else {
             this.yieldNotWarp();
