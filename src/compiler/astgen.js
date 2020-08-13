@@ -49,10 +49,15 @@ const isCompilerDetectorArgument = name => name.toLowerCase() === 'is compiled?'
 
 class ScriptTreeGenerator {
     constructor (thread) {
+        /** @private */
         this.thread = thread;
+        /** @private */
         this.target = thread.target;
+        /** @private */
         this.blocks = thread.blockContainer;
+        /** @private */
         this.runtime = this.target.runtime;
+        /** @private */
         this.stage = this.runtime.getTargetForStage();
 
         /**
@@ -60,25 +65,22 @@ class ScriptTreeGenerator {
          */
         this.dependedProcedures = [];
 
-        /**
-         * Whether the current script is a procedure definition.
-         */
+        /** @private */
         this.isProcedure = false;
-
-        /**
-         * Whether the current script is explicitly in warp mode.
-         */
+        /** @private */
         this.isWarp = false;
 
         /**
          * The names of the arguments accepted by this script, in order.
          * @type {string[]}
+         * @private
          */
         this.procedureArguments = [];
 
         /**
          * Cache of variable ID to variable data object.
          * @type {object.<string, object>}
+         * @private
          */
         this.variableCache = {};
     }
@@ -103,6 +105,7 @@ class ScriptTreeGenerator {
      * Descend into an input. (eg. "length of ( )")
      * @param {*} parentBlock The parent Scratch block that contains the input.
      * @param {string} inputName The name of the input to descend into.
+     * @private
      * @returns {Node} Compiled input node for this input.
      */
     descendInput (parentBlock, inputName) {
@@ -630,6 +633,7 @@ class ScriptTreeGenerator {
     /**
      * Descend into a stacked block. (eg. "move ( ) steps")
      * @param {*} block The Scratch block to parse.
+     * @private
      * @returns {Node} Compiled node for this block.
      */
     descendStackedBlock (block) {
@@ -1057,6 +1061,7 @@ class ScriptTreeGenerator {
      * Descend into a stack of blocks (eg. the blocks contained within an "if" block)
      * @param {*} parentBlock The parent Scratch block that contains the stack to parse.
      * @param {*} substackName The name of the stack to descend into.
+     * @private
      * @returns {Node[]} List of stacked block nodes.
      */
     descendSubstack (parentBlock, substackName) {
@@ -1068,6 +1073,12 @@ class ScriptTreeGenerator {
         return this.walkStack(stackId);
     }
 
+    /**
+     * Descend into and walk the siblings of a stack.
+     * @param {string} startingBlockId The ID of the first block of a stack.
+     * @private
+     * @returns {Node[]} List of stacked block nodes.
+     */
     walkStack (startingBlockId) {
         const result = [];
         let blockId = startingBlockId;
@@ -1087,6 +1098,14 @@ class ScriptTreeGenerator {
         return result;
     }
 
+    /**
+     * Descend into a variable.
+     * @param {*} block The block that has the variable.
+     * @param {string} fieldName The name of the field that the variable is stored in.
+     * @param {''|'list'} type Variable type, '' for scalar and 'list' for list.
+     * @private
+     * @returns {*} A parsed variable object.
+     */
     descendVariable (block, fieldName, type) {
         const variable = block.fields[fieldName];
         const id = variable.id;
@@ -1100,6 +1119,13 @@ class ScriptTreeGenerator {
         return data;
     }
 
+    /**
+     * @param {string} id The ID of the variable.
+     * @param {*} name The name of the variable.
+     * @param {''|'list'} type The variable type.
+     * @private
+     * @returns {*} A parsed variable object.
+     */
     _descendVariable (id, name, type) {
         const target = this.target;
         const stage = this.stage;
@@ -1155,6 +1181,12 @@ class ScriptTreeGenerator {
         return createVariableData('target', newVariable);
     }
 
+    /**
+     * Descend into a block that uses the compatibility layer.
+     * @param {*} block The block to use the compatibility layer for.
+     * @private
+     * @returns {Node} The parsed node.
+     */
     descendCompatLayer (block) {
         const inputs = {};
         const fields = {};
