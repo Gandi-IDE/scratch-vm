@@ -136,6 +136,7 @@ class ScriptCompiler {
 
         this.isWarp = script.isWarp;
         this.isProcedure = script.isProcedure;
+        this.checkStuckInLoop = false;
 
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
@@ -330,7 +331,7 @@ class ScriptCompiler {
             const i = this.localVariables.next();
             this.source += `for (var ${i} = ${this.descendInput(node.times).asNumber()}; ${i} >= 0.5; ${i}--) {\n`;
             this.descendStack(node.do);
-            this.yieldNotWarp();
+            this.yieldLoop();
             this.source += `}\n`;
             break;
         }
@@ -371,7 +372,7 @@ class ScriptCompiler {
         case 'control.while':
             this.source += `while (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.do);
-            this.yieldNotWarp();
+            this.yieldLoop();
             this.source += `}\n`;
             break;
 
@@ -584,6 +585,14 @@ class ScriptCompiler {
 
     retire () {
         this.source += 'retire(); yield;\n';
+    }
+
+    yieldLoop () {
+        if (this.checkStuckInLoop) {
+            this.yieldNotWarpOrStuck();
+        } else {
+            this.yieldNotWarp();
+        }
     }
 
     /**
