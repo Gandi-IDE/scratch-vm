@@ -599,7 +599,11 @@ class ScriptCompiler {
      * Write JS to yield the current thread if warp mode is disabled or if the script seems to be stuck.
      */
     yieldNotWarpOrStuck () {
-        this.source += 'if (thread.warp === 0 || isStuck()) yield;\n';
+        if (this.isWarp) {
+            this.source += 'if (isStuck()) yield;\n';
+        } else {
+            this.source += 'if (thread.warp === 0 || isStuck()) yield;\n';
+        }
     }
 
     /**
@@ -660,6 +664,7 @@ class ScriptCompiler {
         // Setup the factory
         script += `(function ${factoryName}(target) { `;
         script += 'const runtime = target.runtime; ';
+        script += 'const t = runtime.sequencer.timer; ';
         script += 'const stage = runtime.getTargetForStage();\n';
         for (const varValue of Object.keys(this._setupVariables)) {
             const varName = this._setupVariables[varValue];
