@@ -12,17 +12,25 @@ const compatibilityLayerBlockUtility = require('./compat-block-utility');
  * The currently running thread.
  * @type {Thread}
  */
-var thread;
+let thread;
 
 // All the functions defined here will be available to compiled scripts.
 // The JSDoc annotations define the function's contract.
 // Most of these functions are only used at runtime by generated scripts. Despite what your editor may say, they are not unused.
 
+let stuckCounter = 0;
 /**
  * Determine whether the current tick is likely stuck.
  * @returns {boolean} true if the current tick is likely stuck.
  */
-const isStuck = () => thread.target.runtime.sequencer.timer.timeElapsed() > 250;
+const isStuck = () => {
+    stuckCounter++;
+    if (stuckCounter === 10) {
+        stuckCounter = 0;
+        return thread.target.runtime.sequencer.timer.timeElapsed() > 500;
+    }
+    return false;
+};
 
 /**
  * Start hats by opcode.
