@@ -116,6 +116,15 @@ class Keyboard {
         if (keyArg === ' ') {
             return KEY_NAME.SPACE;
         }
+        // tw: support Scratch 2 hacked blocks
+        // There are more hacked blocks but most of them get mangled by Scratch 2 -> Scratch 3 conversion or we choose not to support them.
+        if (keyArg === '\r') {
+            // this probably belongs upstream
+            return KEY_NAME.ENTER;
+        }
+        if (keyArg === '\u001b') {
+            return KEY_NAME.ESCAPE;
+        }
 
         return keyArg.toUpperCase();
     }
