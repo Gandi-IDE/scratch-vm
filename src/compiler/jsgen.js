@@ -277,6 +277,10 @@ class ScriptCompiler {
         case 'sensing.username':
             return new TypedInput('ioQuery("userData", "getUsername")', TYPE_STRING);
 
+        case 'tw.lastKeyPressed':
+            // Not final.
+            return new TypedInput('ioQuery("keyboard", "getLastKeyPressed")', TYPE_STRING);
+
         case 'var.get':
             return new TypedInput(`${this.referenceVariable(node.variable)}.value`, TYPE_UNKNOWN);
 

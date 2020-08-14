@@ -158,14 +158,14 @@ class ScriptTreeGenerator {
             };
 
         case 'argument_reporter_string_number': {
-            if (!this.isProcedure) {
-                return {
-                    kind: 'constant',
-                    value: 0
-                };
-            }
             const name = block.fields.VALUE.value;
-            if (!this.procedureArguments.includes(name)) {
+            if (!this.isProcedure || !this.procedureArguments.includes(name)) {
+                // Not final.
+                if (name === 'last key pressed') {
+                    return {
+                        kind: 'tw.lastKeyPressed'
+                    };
+                }
                 return {
                     kind: 'constant',
                     value: 0
