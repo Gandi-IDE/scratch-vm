@@ -1243,8 +1243,12 @@ class ScriptTreeGenerator {
 
         const topBlock = this.blocks.getBlock(topBlockId);
         if (!topBlock) {
-            // This is an empty script.
-            return result;
+            if (this.isProcedure) {
+                // Empty procedure
+                return result;
+            }
+            // Probably running from toolbox. This is not currently supported.
+            throw new Error('Cannot find top block (running from toolbox?)');
         }
 
         if (topBlock.comment) {
