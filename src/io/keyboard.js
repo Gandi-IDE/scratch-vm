@@ -10,7 +10,13 @@ const KEY_NAME = {
     UP: 'up arrow',
     RIGHT: 'right arrow',
     DOWN: 'down arrow',
-    ENTER: 'enter'
+    ENTER: 'enter',
+    // tw: extra keys
+    BACKSPACE: 'backspace',
+    DELETE: 'delete',
+    SHIFT: 'shift',
+    CONTROL: 'control',
+    ESCAPE: 'escape'
 };
 
 /**
@@ -58,6 +64,12 @@ class Keyboard {
         case 'Down':
         case 'ArrowDown': return KEY_NAME.DOWN;
         case 'Enter': return KEY_NAME.ENTER;
+        // tw: extra keys
+        case 'Backspace': return KEY_NAME.BACKSPACE;
+        case 'Delete': return KEY_NAME.DELETE;
+        case 'Shift': return KEY_NAME.SHIFT;
+        case 'Control': return KEY_NAME.CONTROL;
+        case 'Escape': return KEY_NAME.ESCAPE;
         }
         // Ignore modifier keys
         if (keyString.length > 1) {
