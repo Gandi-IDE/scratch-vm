@@ -138,9 +138,9 @@ class Keyboard {
      */
     postData (data) {
         if (!data.key) return;
-        // tw: convert key to uppercase because of changes in _keyStringToScratchKey
+        // tw: convert single letter keys to uppercase because of changes in _keyStringToScratchKey
         const scratchKeyCased = this._keyStringToScratchKey(data.key);
-        const scratchKey = scratchKeyCased.toUpperCase();
+        const scratchKey = scratchKeyCased.length === 1 ? scratchKeyCased.toUpperCase() : scratchKeyCased;
         if (scratchKey === '') return;
         const index = this._keysPressed.indexOf(scratchKey);
         if (data.isDown) {
