@@ -43,6 +43,8 @@ class Keyboard {
          * @type{!Runtime}
          */
         this.runtime = runtime;
+        // tw: track last pressed key
+        this.lastkeyPressed = '';
     }
 
     /**
@@ -75,7 +77,8 @@ class Keyboard {
         if (keyString.length > 1) {
             return '';
         }
-        return keyString.toUpperCase();
+        // tw: toUpperCase() happens later. We need to track key case.
+        return keyString;
     }
 
     /**
@@ -135,10 +138,14 @@ class Keyboard {
      */
     postData (data) {
         if (!data.key) return;
-        const scratchKey = this._keyStringToScratchKey(data.key);
+        // tw: convert key to uppercase because of changes in _keyStringToScratchKey
+        const scratchKeyCased = this._keyStringToScratchKey(data.key);
+        const scratchKey = scratchKeyCased.toUpperCase();
         if (scratchKey === '') return;
         const index = this._keysPressed.indexOf(scratchKey);
         if (data.isDown) {
+            // tw: track last pressed key
+            this.lastkeyPressed = scratchKeyCased;
             this.runtime.emit('KEY_PRESSED', scratchKey);
             // If not already present, add to the list.
             if (index < 0) {
@@ -161,6 +168,11 @@ class Keyboard {
         }
         const scratchKey = this._keyArgToScratchKey(keyArg);
         return this._keysPressed.indexOf(scratchKey) > -1;
+    }
+
+    // tw: expose last pressed key
+    getLastKeyPressed () {
+        return this.lastkeyPressed;
     }
 }
 
