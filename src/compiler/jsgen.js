@@ -636,8 +636,14 @@ class ScriptCompiler {
     }
 
     isNameOfCostume (stringValue) {
-        // todo: also check backdrop
-        return this.target.getCostumeIndexByName(stringValue) !== -1;
+        for (const target of this.target.runtime.targets) {
+            if (target.isOriginal) {
+                if (target.getCostumeIndexByName(stringValue) !== -1) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
