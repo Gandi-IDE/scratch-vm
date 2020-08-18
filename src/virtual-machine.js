@@ -339,7 +339,19 @@ class VirtualMachine extends EventEmitter {
             });
 
         return validationPromise
-            .then(validatedInput => this.deserializeProject(validatedInput[0], validatedInput[1]))
+            // powered by xigua 西瓜特色sb3，只包含了project.json文件，这里为了处理无法从zip中找到资源的问题，假装这个sb3是一个json而已
+            .then(validatedInput => {
+                let [json, zip] = validatedInput;
+                if (
+                    zip &&
+                    zip.files &&
+                    Object.keys(zip.files).length === 1 &&
+                    zip.files.hasOwnProperty('project.json')
+                ) {
+                    zip = null;
+                }
+                return this.deserializeProject(json, zip);
+            })
             .then(() => this.runtime.emitProjectLoaded())
             .catch(error => {
                 // Intentionally rejecting here (want errors to be handled by caller)
