@@ -18,6 +18,7 @@ class Scratch3MotionBlocks {
     getPrimitives () {
         return {
             motion_movesteps: this.moveSteps,
+            motion_movegrids: this.moveGrids,
             motion_gotoxy: this.goToXY,
             motion_goto: this.goTo,
             motion_turnright: this.turnRight,
@@ -63,6 +64,15 @@ class Scratch3MotionBlocks {
 
     moveSteps (args, util) {
         const steps = Cast.toNumber(args.STEPS);
+        const radians = MathUtil.degToRad(90 - util.target.direction);
+        const dx = steps * Math.cos(radians);
+        const dy = steps * Math.sin(radians);
+        util.target.setXY(util.target.x + dx, util.target.y + dy);
+    }
+
+    moveGrids (args, util) {
+        let steps = Cast.toNumber(args.GRIDS);
+        steps = steps * 40; // 40步为1格
         const radians = MathUtil.degToRad(90 - util.target.direction);
         const dx = steps * Math.cos(radians);
         const dy = steps * Math.sin(radians);
