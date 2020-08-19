@@ -398,12 +398,6 @@ const _prepareBlockProfiling = function (profiler, blockCached) {
  * @param {!Thread} thread Thread which to read and execute.
  */
 const execute = function (sequencer, thread) {
-    // todo: remove this check completely when we are sure that compiled threads cannot get to this point
-    if (thread.isCompiled) {
-        log.warn('AST-based execute got a compiled thread. Skipping.');
-        return;
-    }
-
     const runtime = sequencer.runtime;
 
     // store sequencer and thread so block functions can access them through
