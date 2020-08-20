@@ -2,8 +2,8 @@ const Cast = require('../util/cast');
 const Variable = require('../engine/variable');
 const log = require('../util/log');
 
-const SCALAR_TYPE = Variable.SCALAR_TYPE;
-const LIST_TYPE = Variable.LIST_TYPE;
+const SCALAR_TYPE = '';
+const LIST_TYPE = 'list';
 
 const compatBlocks = require('./compat-blocks');
 
