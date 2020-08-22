@@ -14,7 +14,7 @@ const compatBlocks = require('./compat-blocks');
  * @property {boolean} hasArguments
  * @property {boolean} isWarp
  * @property {boolean} yields
- * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on. These procedures may have additional dependencies, and so on.
+ * @property {Array<string>} dependedProcedures The full list of procedure codes that this tree directly depends on.
  * @property {*} cachedCompileResult
  */
 
@@ -1310,7 +1310,7 @@ class ASTGenerator {
         /** @type {Object.<string, Tree>} */
         this.procedures = {};
 
-        this.procedureAnalysisStack = [];
+        this.procedureStack = [];
     }
 
     addProcedureDependencies (dependencies) {
@@ -1340,31 +1340,31 @@ class ASTGenerator {
         return result;
     }
 
-    analyzeProcedures () {
-        for (const procedureCode of Object.keys(this.procedures)) {
-            const procedureData = this.procedures[procedureCode];
-
-            if (procedureData.yields) {
+    /**
+     * Recursively analyze a script tree and its dependencies.
+     * @param {Tree} tree Root script tree.
+     */
+    analyzeScript (tree) {
+        for (const procedureCode of tree.dependedProcedures) {
+            if (this.procedureStack.includes(procedureCode)) {
                 continue;
             }
+            this.procedureStack.push(procedureCode);
 
-            const visited = [];
+            const procedureData = this.procedures[procedureCode];
+            this.analyzeScript(procedureData);
 
             for (const dependedProcedureCode of procedureData.dependedProcedures) {
-                if (visited.includes(dependedProcedureCode)) {
-                    continue;
-                }
-
-                // TODO: also have to check dependencies of dependencies
-
-                const dependedProcedureData = this.procedures[dependedProcedureCode];
-                visited.push(dependedProcedureCode);
-
-                if (dependedProcedureData.yields) {
-                    procedureData.yields = true;
-                    break;
+                if (!tree.dependedProcedures.includes(dependedProcedureCode)) {
+                    tree.dependedProcedures.push(dependedProcedureCode);
                 }
             }
+
+            if (procedureData.yields) {
+                tree.yields = true;
+            }
+
+            this.procedureStack.pop();
         }
     }
 
@@ -1412,7 +1412,8 @@ class ASTGenerator {
             }
         }
 
-        this.analyzeProcedures();
+        // This will recursively analyze procedures as well.
+        this.analyzeScript(entry);
 
         return {
             entry: entry,
