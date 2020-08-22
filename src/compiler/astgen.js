@@ -11,8 +11,11 @@ const compatBlocks = require('./compat-blocks');
  * @typedef Tree
  * @property {null|Array} stack The nodes that comprise this script. `null` is an empty stack.
  * @property {boolean} isProcedure
+ * @property {boolean} hasArguments
  * @property {boolean} isWarp
- * @property {Array} dependedProcedures
+ * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on. These procedures may have additional dependencies, and so on.
+ * @property {*} cachedCompileResult
+ * @property {*} analysis
  */
 
 /**
@@ -83,6 +86,11 @@ class ScriptTreeGenerator {
          * @private
          */
         this.variableCache = {};
+
+        this.analysis = {
+            indirectlyYields: false,
+            directlyYields: false
+        };
     }
 
     setProcedureCode (procedureCode) {
@@ -648,6 +656,7 @@ class ScriptTreeGenerator {
                 kind: 'control.deleteClone'
             };
         case 'control_forever':
+            this.analyzeLoop();
             return {
                 kind: 'control.while',
                 condition: {
@@ -657,6 +666,7 @@ class ScriptTreeGenerator {
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
         case 'control_for_each':
+            this.analyzeLoop();
             return {
                 kind: 'control.for',
                 variable: this.descendVariable(block, 'VARIABLE', SCALAR_TYPE),
@@ -678,12 +688,14 @@ class ScriptTreeGenerator {
                 whenFalse: this.descendSubstack(block, 'SUBSTACK2')
             };
         case 'control_repeat':
+            this.analyzeLoop();
             return {
                 kind: 'control.repeat',
                 times: this.descendInput(block, 'TIMES'),
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
         case 'control_repeat_until':
+            this.analyzeLoop();
             return {
                 kind: 'control.while',
                 condition: {
@@ -698,16 +710,19 @@ class ScriptTreeGenerator {
                 level: block.fields.STOP_OPTION.value
             };
         case 'control_wait':
+            this.analysis.directlyYields = true;
             return {
                 kind: 'control.wait',
                 seconds: this.descendInput(block, 'DURATION')
             };
         case 'control_wait_until':
+            this.analysis.directlyYields = true;
             return {
                 kind: 'control.waitUntil',
                 condition: this.descendInput(block, 'CONDITION')
             };
         case 'control_while':
+            this.analyzeLoop();
             return {
                 kind: 'control.while',
                 condition: this.descendInput(block, 'CONDITION'),
@@ -1121,7 +1136,7 @@ class ScriptTreeGenerator {
 
     /**
      * @param {string} id The ID of the variable.
-     * @param {*} name The name of the variable.
+     * @param {string} name The name of the variable.
      * @param {''|'list'} type The variable type.
      * @private
      * @returns {*} A parsed variable object.
@@ -1188,6 +1203,7 @@ class ScriptTreeGenerator {
      * @returns {Node} The parsed node.
      */
     descendCompatLayer (block) {
+        this.analysis.directlyYields = true;
         const inputs = {};
         const fields = {};
         for (const name of Object.keys(block.inputs)) {
@@ -1202,6 +1218,12 @@ class ScriptTreeGenerator {
             inputs,
             fields
         };
+    }
+
+    analyzeLoop () {
+        if (!this.isWarp || this.target.runtime.compilerOptions.loopStuckChecking) {
+            this.analysis.directlyYields = true;
+        }
     }
 
     readTopBlockComment (commentId) {
@@ -1232,12 +1254,14 @@ class ScriptTreeGenerator {
      * @returns {Tree} A compiled tree.
      */
     generate (topBlockId) {
+        /** @type {Tree} */
         const result = {
             stack: null,
             isProcedure: this.isProcedure,
             hasArguments: this.procedureArguments.length > 0,
             isWarp: this.isWarp,
             dependedProcedures: this.dependedProcedures,
+            analysis: this.analysis,
             cachedCompileResult: null
         };
 
@@ -1271,9 +1295,8 @@ class ScriptTreeGenerator {
             return result;
         }
 
-        const stack = this.walkStack(entryBlock);
+        result.stack = this.walkStack(entryBlock);
 
-        result.stack = stack;
         return result;
     }
 }
@@ -1285,7 +1308,10 @@ class ASTGenerator {
 
         this.uncompiledProcedures = new Map();
         this.compilingProcedures = new Map();
+        /** @type {Object.<string, Tree>} */
         this.procedures = {};
+
+        this.procedureAnalysisStack = [];
     }
 
     addProcedureDependencies (dependencies) {
@@ -1308,6 +1334,36 @@ class ASTGenerator {
         const result = generator.generate(topBlockId);
         this.addProcedureDependencies(result.dependedProcedures);
         return result;
+    }
+
+    analyzeProcedures () {
+        outer:
+        for (const procedureCode of Object.keys(this.procedures)) {
+            const procedureData = this.procedures[procedureCode];
+
+            if (procedureData.analysis.directlyYields) {
+                procedureData.analysis.indirectlyYields = true;
+                continue;
+            }
+
+            const visited = [];
+
+            for (const dependedProcedureCode of procedureData.dependedProcedures) {
+                if (visited.includes(dependedProcedureCode)) {
+                    continue;
+                }
+
+                // TODO: also have to check dependencies of dependencies
+
+                const dependedProcedureData = this.procedures[dependedProcedureCode];
+                visited.push(dependedProcedureCode);
+
+                if (dependedProcedureData.analysis.directlyYields || dependedProcedureData.analysis.indirectlyYields) {
+                    procedureData.analysis.indirectlyYields = true;
+                    continue outer;
+                }
+            }
+        }
     }
 
     /**
@@ -1353,6 +1409,8 @@ class ASTGenerator {
                 }
             }
         }
+
+        this.analyzeProcedures();
 
         return {
             entry: entry,

@@ -519,7 +519,10 @@ class ScriptCompiler {
             if (callingFromNonWarpToWarp) {
                 this.source += 'thread.warp++;\n';
             }
-            this.source += `yield* thread.procedures["${sanitize(procedureCode)}"](`;
+            if (procedureData.analysis.indirectlyYields) {
+                this.source += 'yield* ';
+            }
+            this.source += `thread.procedures["${sanitize(procedureCode)}"](`;
             // Only include arguments if the procedure accepts any.
             if (procedureData.hasArguments) {
                 this.source += '{';
@@ -693,7 +696,11 @@ class ScriptCompiler {
         }
 
         // Generated script
-        script += `return function* ${scriptName}(`;
+        script += 'return function';
+        if (!this.isProcedure || this.script.analysis.indirectlyYields) {
+            script += '*';
+        }
+        script += ` ${scriptName} (`;
         if (this.script.hasArguments) {
             script += 'C';
         }
