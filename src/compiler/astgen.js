@@ -570,20 +570,20 @@ class ScriptTreeGenerator {
             };
         case 'sensing_keypressed':
             return {
-                kind: 'sensing.keydown',
+                kind: 'keyboard.pressed',
                 key: this.descendInput(block, 'KEY_OPTION')
             };
         case 'sensing_mousedown':
             return {
-                kind: 'sensing.mousedown'
-            };
-        case 'sensing_mousey':
-            return {
-                kind: 'sensing.mouseY'
+                kind: 'mouse.down'
             };
         case 'sensing_mousex':
             return {
-                kind: 'sensing.mouseX'
+                kind: 'mouse.x'
+            };
+        case 'sensing_mousey':
+            return {
+                kind: 'mouse.y'
             };
         case 'sensing_of_object_menu':
             return {
@@ -592,7 +592,7 @@ class ScriptTreeGenerator {
             };
         case 'sensing_timer':
             return {
-                kind: 'sensing.timer'
+                kind: 'timer.get'
             };
         case 'sensing_touchingcolor':
             return {
@@ -1044,7 +1044,7 @@ class ScriptTreeGenerator {
 
         case 'sensing_resettimer':
             return {
-                kind: 'sensing.resetTimer'
+                kind: 'timer.reset'
             };
 
         default:
