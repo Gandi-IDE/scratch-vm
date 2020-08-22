@@ -686,7 +686,6 @@ class ScriptCompiler {
         // Setup the factory
         script += `(function ${factoryName}(target) { `;
         script += 'const runtime = target.runtime; ';
-        script += 'const t = runtime.sequencer.timer; ';
         script += 'const stage = runtime.getTargetForStage();\n';
         for (const varValue of Object.keys(this._setupVariables)) {
             const varName = this._setupVariables[varValue];
