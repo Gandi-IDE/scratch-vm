@@ -650,6 +650,7 @@ class ScriptTreeGenerator {
                 target: this.descendInput(block, 'CLONE_OPTION')
             };
         case 'control_delete_this_clone':
+            this.yields = true; // todo: remove
             return {
                 kind: 'control.deleteClone'
             };
@@ -813,6 +814,7 @@ class ScriptTreeGenerator {
                 broadcast: this.descendInput(block, 'BROADCAST_INPUT')
             };
         case 'event_broadcastandwait':
+            this.yields = true;
             return {
                 kind: 'event.broadcastAndWait',
                 broadcast: this.descendInput(block, 'BROADCAST_INPUT')
@@ -1034,6 +1036,8 @@ class ScriptTreeGenerator {
             };
 
         case 'procedures_call': {
+            // setting of yields will be handled later in the analysis phase
+
             const procedureCode = block.mutation.proccode;
             const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
             if (paramNamesIdsAndDefaults === null) {
