@@ -1305,7 +1305,7 @@ class ASTGenerator {
         this.thread = thread;
         this.blocks = thread.blockContainer;
 
-        this.uncompiledProcedures = new Map();
+        this.proceduresToCompile = new Map();
         this.compilingProcedures = new Map();
         /** @type {Object.<string, Tree>} */
         this.procedures = {};
@@ -1321,11 +1321,11 @@ class ASTGenerator {
             if (this.compilingProcedures.has(procedureCode)) {
                 continue;
             }
-            if (this.uncompiledProcedures.has(procedureCode)) {
+            if (this.proceduresToCompile.has(procedureCode)) {
                 continue;
             }
             const definition = this.blocks.getProcedureDefinition(procedureCode);
-            this.uncompiledProcedures.set(procedureCode, definition);
+            this.proceduresToCompile.set(procedureCode, definition);
         }
     }
 
@@ -1374,9 +1374,9 @@ class ASTGenerator {
 
         // Compile any required procedures.
         // As procedures can depend on other procedures, this process may take several iterations.
-        while (this.uncompiledProcedures.size > 0) {
-            this.compilingProcedures = this.uncompiledProcedures;
-            this.uncompiledProcedures = new Map();
+        while (this.proceduresToCompile.size > 0) {
+            this.compilingProcedures = this.proceduresToCompile;
+            this.proceduresToCompile = new Map();
 
             for (const [procedureCode, definitionId] of this.compilingProcedures.entries()) {
                 const definitionBlock = this.blocks.getBlock(definitionId);
