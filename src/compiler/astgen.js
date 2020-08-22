@@ -13,9 +13,9 @@ const compatBlocks = require('./compat-blocks');
  * @property {boolean} isProcedure
  * @property {boolean} hasArguments
  * @property {boolean} isWarp
+ * @property {boolean} yields
  * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on. These procedures may have additional dependencies, and so on.
  * @property {*} cachedCompileResult
- * @property {*} analysis
  */
 
 /**
@@ -72,6 +72,8 @@ class ScriptTreeGenerator {
         this.isProcedure = false;
         /** @private */
         this.isWarp = false;
+        /** @private */
+        this.yields = true;
 
         /**
          * The names of the arguments accepted by this script, in order.
@@ -86,11 +88,6 @@ class ScriptTreeGenerator {
          * @private
          */
         this.variableCache = {};
-
-        this.analysis = {
-            indirectlyYields: false,
-            directlyYields: false
-        };
     }
 
     setProcedureCode (procedureCode) {
@@ -107,6 +104,7 @@ class ScriptTreeGenerator {
 
     enableWarp () {
         this.isWarp = true;
+        this.yields = false;
     }
 
     /**
@@ -710,13 +708,13 @@ class ScriptTreeGenerator {
                 level: block.fields.STOP_OPTION.value
             };
         case 'control_wait':
-            this.analysis.directlyYields = true;
+            this.yields = true;
             return {
                 kind: 'control.wait',
                 seconds: this.descendInput(block, 'DURATION')
             };
         case 'control_wait_until':
-            this.analysis.directlyYields = true;
+            this.yields = true;
             return {
                 kind: 'control.waitUntil',
                 condition: this.descendInput(block, 'CONDITION')
@@ -1203,7 +1201,7 @@ class ScriptTreeGenerator {
      * @returns {Node} The parsed node.
      */
     descendCompatLayer (block) {
-        this.analysis.directlyYields = true;
+        this.yields = true;
         const inputs = {};
         const fields = {};
         for (const name of Object.keys(block.inputs)) {
@@ -1222,7 +1220,7 @@ class ScriptTreeGenerator {
 
     analyzeLoop () {
         if (!this.isWarp || this.target.runtime.compilerOptions.loopStuckChecking) {
-            this.analysis.directlyYields = true;
+            this.yields = true;
         }
     }
 
@@ -1261,7 +1259,7 @@ class ScriptTreeGenerator {
             hasArguments: this.procedureArguments.length > 0,
             isWarp: this.isWarp,
             dependedProcedures: this.dependedProcedures,
-            analysis: this.analysis,
+            yields: this.yields, // will be updated later
             cachedCompileResult: null
         };
 
@@ -1296,6 +1294,7 @@ class ScriptTreeGenerator {
         }
 
         result.stack = this.walkStack(entryBlock);
+        result.yields = this.yields;
 
         return result;
     }
@@ -1330,6 +1329,11 @@ class ASTGenerator {
         }
     }
 
+    /**
+     * @param {ScriptTreeGenerator} generator The generator to run.
+     * @param {string} topBlockId The ID of the top block in the stack.
+     * @returns {Tree} Tree for this script.
+     */
     generateScriptTree (generator, topBlockId) {
         const result = generator.generate(topBlockId);
         this.addProcedureDependencies(result.dependedProcedures);
@@ -1337,12 +1341,10 @@ class ASTGenerator {
     }
 
     analyzeProcedures () {
-        outer:
         for (const procedureCode of Object.keys(this.procedures)) {
             const procedureData = this.procedures[procedureCode];
 
-            if (procedureData.analysis.directlyYields) {
-                procedureData.analysis.indirectlyYields = true;
+            if (procedureData.yields) {
                 continue;
             }
 
@@ -1358,9 +1360,9 @@ class ASTGenerator {
                 const dependedProcedureData = this.procedures[dependedProcedureCode];
                 visited.push(dependedProcedureCode);
 
-                if (dependedProcedureData.analysis.directlyYields || dependedProcedureData.analysis.indirectlyYields) {
-                    procedureData.analysis.indirectlyYields = true;
-                    continue outer;
+                if (dependedProcedureData.yields) {
+                    procedureData.yields = true;
+                    break;
                 }
             }
         }

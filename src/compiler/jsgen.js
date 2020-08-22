@@ -519,7 +519,7 @@ class ScriptCompiler {
             if (callingFromNonWarpToWarp) {
                 this.source += 'thread.warp++;\n';
             }
-            if (procedureData.analysis.indirectlyYields) {
+            if (procedureData.yields) {
                 this.source += 'yield* ';
             }
             this.source += `thread.procedures["${sanitize(procedureCode)}"](`;
@@ -697,7 +697,7 @@ class ScriptCompiler {
 
         // Generated script
         script += 'return function';
-        if (!this.isProcedure || this.script.analysis.indirectlyYields) {
+        if (this.script.yields) {
             script += '*';
         }
         script += ` ${scriptName} (`;
