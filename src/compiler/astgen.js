@@ -14,7 +14,7 @@ const compatBlocks = require('./compat-blocks');
  * @property {boolean} hasArguments
  * @property {boolean} isWarp
  * @property {boolean} yields
- * @property {Array<string>} dependedProcedures The full list of procedure codes that this tree directly depends on.
+ * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on. Does not include dependencies of dependencies, etc.
  * @property {*} cachedCompileResult
  */
 
@@ -1346,20 +1346,15 @@ class ASTGenerator {
      */
     analyzeScript (tree) {
         for (const procedureCode of tree.dependedProcedures) {
-            if (this.analyzedProcedures.includes(procedureCode)) {
-                continue;
-            }
-            this.analyzedProcedures.push(procedureCode);
-
             const procedureData = this.procedures[procedureCode];
-            this.analyzeScript(procedureData);
 
-            for (const dependedProcedureCode of procedureData.dependedProcedures) {
-                if (!tree.dependedProcedures.includes(dependedProcedureCode)) {
-                    tree.dependedProcedures.push(dependedProcedureCode);
-                }
+            // Analyze newly found procedures.
+            if (!this.analyzedProcedures.includes(procedureCode)) {
+                this.analyzedProcedures.push(procedureCode);
+                this.analyzeScript(procedureData);
             }
 
+            // If a procedure used by a script may yield, the script itself may yield.
             if (procedureData.yields) {
                 tree.yields = true;
             }
