@@ -31,7 +31,7 @@ const factoryNameVariablePool = new VariablePool('factory');
 /**
  * Variable pool used for generated script names.
  */
-const generatorNameVariablePool = new VariablePool('generator');
+const functionNameVariablePool = new VariablePool('fn');
 
 /**
  * @typedef Input
@@ -681,7 +681,7 @@ class ScriptCompiler {
      * @returns {string} JS to pass into eval()
      */
     createScriptFactory () {
-        const scriptName = generatorNameVariablePool.next();
+        const scriptName = functionNameVariablePool.next();
         const factoryName = factoryNameVariablePool.next();
 
         let script = '';
