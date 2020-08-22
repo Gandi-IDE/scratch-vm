@@ -702,11 +702,27 @@ class ScriptTreeGenerator {
                 },
                 do: this.descendSubstack(block, 'SUBSTACK')
             };
-        case 'control_stop':
+        case 'control_stop': {
+            const level = block.fields.STOP_OPTION.value;
+            if (level === 'all') {
+                this.yields = true; // todo: remove
+                return {
+                    kind: 'control.stopAll'
+                };
+            } else if (level === 'other scripts in sprite' || level === 'other scripts in stage') {
+                return {
+                    kind: 'control.stopOthers'
+                };
+            } else if (level === 'this script') {
+                this.yields = true; // todo: remove
+                return {
+                    kind: 'control.stopScript'
+                };
+            }
             return {
-                kind: 'control.stop',
-                level: block.fields.STOP_OPTION.value
+                kind: 'noop'
             };
+        }
         case 'control_wait':
             this.yields = true;
             return {

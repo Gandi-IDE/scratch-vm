@@ -342,21 +342,20 @@ class ScriptCompiler {
             this.source += `}\n`;
             break;
         }
-        case 'control.stop': {
-            if (node.level === 'all') {
-                this.source += 'runtime.stopAll();\n';
+        case 'control.stopAll':
+            this.source += 'runtime.stopAll();\n';
+            this.retire();
+            break;
+        case 'control.stopOthers':
+            this.source += 'runtime.stopForTarget(target, thread);\n';
+            break;
+        case 'control.stopScript':
+            if (this.isProcedure) {
+                this.source += 'return;\n';
+            } else {
                 this.retire();
-            } else if (node.level === 'other scripts in sprite' || node.level === 'other scripts in stage') {
-                this.source += 'runtime.stopForTarget(target, thread);\n';
-            } else if (node.level === 'this script') {
-                if (this.isProcedure) {
-                    this.source += 'return;\n';
-                } else {
-                    this.retire();
-                }
             }
             break;
-        }
         case 'control.wait': {
             const timer = this.localVariables.next();
             const duration = this.localVariables.next();
