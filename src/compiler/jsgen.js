@@ -738,30 +738,10 @@ class JSCompiler {
     constructor (ast, target) {
         this.ast = ast;
         this.target = target;
-        this.compilingProcedures = [];
-        this.compiledProcedures = {};
+        this.procedures = {};
     }
 
     compileTree (script) {
-        for (const procedureCode of script.dependedProcedures) {
-            if (this.compiledProcedures.hasOwnProperty(procedureCode)) {
-                // Already compiled
-                continue;
-            }
-            if (this.compilingProcedures.includes(procedureCode)) {
-                // Being compiled, most likely circular dependencies
-                continue;
-            }
-
-            this.compilingProcedures.push(procedureCode);
-
-            const procedureRoot = this.ast.procedures[procedureCode];
-            const procedureTree = this.compileTree(procedureRoot);
-            this.compiledProcedures[procedureCode] = procedureTree;
-
-            this.compilingProcedures.pop();
-        }
-
         if (script.cachedCompileResult) {
             return script.cachedCompileResult;
         }
@@ -775,9 +755,15 @@ class JSCompiler {
     compile () {
         const entry = this.compileTree(this.ast.entry);
 
+        for (const procedureCode of this.ast.entry.dependedProcedures) {
+            const procedureData = this.ast.procedures[procedureCode];
+            const procedureTree = this.compileTree(procedureData);
+            this.procedures[procedureCode] = procedureTree;
+        }
+
         return {
             startingFunction: entry,
-            procedures: this.compiledProcedures
+            procedures: this.procedures
         };
     }
 }
