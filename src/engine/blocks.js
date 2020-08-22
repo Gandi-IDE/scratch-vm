@@ -458,6 +458,7 @@ class Blocks {
             break;
         }
         case 'comment_create':
+            this.resetCache(); // tw: comments can affect compilation
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
                 currTarget.createComment(e.commentId, e.blockId, e.text,
@@ -478,6 +479,7 @@ class Blocks {
             this.emitProjectChanged();
             break;
         case 'comment_change':
+            this.resetCache(); // tw: comments can affect compilation
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
                 if (!currTarget.comments.hasOwnProperty(e.commentId)) {
@@ -515,6 +517,7 @@ class Blocks {
             }
             break;
         case 'comment_delete':
+            this.resetCache(); // tw: comments can affect compilation
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
                 if (!currTarget.comments.hasOwnProperty(e.commentId)) {
