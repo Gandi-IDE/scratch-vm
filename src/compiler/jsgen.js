@@ -755,7 +755,7 @@ class JSCompiler {
     compile () {
         const entry = this.compileTree(this.ast.entry);
 
-        for (const procedureCode of this.ast.entry.dependedProcedures) {
+        for (const procedureCode of Object.keys(this.ast.procedures)) {
             const procedureData = this.ast.procedures[procedureCode];
             const procedureTree = this.compileTree(procedureData);
             this.procedures[procedureCode] = procedureTree;
