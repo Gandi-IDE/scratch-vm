@@ -1310,7 +1310,7 @@ class ASTGenerator {
         /** @type {Object.<string, Tree>} */
         this.procedures = {};
 
-        this.procedureStack = [];
+        this.analyzedProcedures = [];
     }
 
     addProcedureDependencies (dependencies) {
@@ -1346,10 +1346,10 @@ class ASTGenerator {
      */
     analyzeScript (tree) {
         for (const procedureCode of tree.dependedProcedures) {
-            if (this.procedureStack.includes(procedureCode)) {
+            if (this.analyzedProcedures.includes(procedureCode)) {
                 continue;
             }
-            this.procedureStack.push(procedureCode);
+            this.analyzedProcedures.push(procedureCode);
 
             const procedureData = this.procedures[procedureCode];
             this.analyzeScript(procedureData);
@@ -1363,8 +1363,6 @@ class ASTGenerator {
             if (procedureData.yields) {
                 tree.yields = true;
             }
-
-            this.procedureStack.pop();
         }
     }
 
