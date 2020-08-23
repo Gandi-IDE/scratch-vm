@@ -172,8 +172,7 @@ class ScriptTreeGenerator {
             // lastIndexOf because multiple parameters with the same name will use the value of the last definition
             const index = this.procedureArguments.lastIndexOf(name);
             if (index === -1) {
-                // Not final.
-                if (name === 'last key pressed') {
+                if (name.toLowerCase() === 'last key pressed') {
                     return {
                         kind: 'tw.lastKeyPressed'
                     };
