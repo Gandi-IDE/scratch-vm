@@ -593,7 +593,15 @@ class ScriptCompiler {
     }
 
     retire () {
-        this.source += 'retire(); yield;\n';
+        // After running retire(), we need to return to the event loop.
+        // When in a procedure, return will only send us back to the previous procedure.
+        // So instead, we yield back to the event loop.
+        // Outside of a procedure, return will work correctly.
+        if (this.isProcedure) {
+            this.source += 'retire(); yield;\n';
+        } else {
+            this.source += 'retire(); return;\n';
+        }
     }
 
     yieldLoop () {
