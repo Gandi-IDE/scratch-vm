@@ -29,9 +29,14 @@ const penState = `${pen}._getPenState(target)`;
 const factoryNameVariablePool = new VariablePool('factory');
 
 /**
- * Variable pool used for generated script names.
+ * Variable pool used for generated functions (non-generator)
  */
-const functionNameVariablePool = new VariablePool('fn');
+const functionNameVariablePool = new VariablePool('fun');
+
+/**
+ * Variable pool used for generated generator functions.
+ */
+const generatorNameVariablePool = new VariablePool('gen');
 
 /**
  * @typedef Input
@@ -688,13 +693,10 @@ class ScriptCompiler {
      * @returns {string} JS to pass into eval()
      */
     createScriptFactory () {
-        const scriptName = functionNameVariablePool.next();
-        const factoryName = factoryNameVariablePool.next();
-
         let script = '';
 
         // Setup the factory
-        script += `(function ${factoryName}(target) { `;
+        script += `(function ${factoryNameVariablePool.next()}(target) { `;
         script += 'const runtime = target.runtime; ';
         script += 'const stage = runtime.getTargetForStage();\n';
         for (const varValue of Object.keys(this._setupVariables)) {
@@ -703,11 +705,13 @@ class ScriptCompiler {
         }
 
         // Generated script
-        script += 'return function';
+        script += 'return ';
         if (this.script.yields) {
-            script += '*';
+            script += `function* ${generatorNameVariablePool.next()} `;
+        } else {
+            script += `function ${functionNameVariablePool.next()} `;
         }
-        script += ` ${scriptName} (`;
+        script += ` (`;
         if (this.script.hasArguments) {
             script += 'C';
         }
