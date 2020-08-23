@@ -96,6 +96,7 @@ class ScriptTreeGenerator {
     setProcedureCode (procedureCode) {
         this.procedureCode = procedureCode;
         this.isProcedure = true;
+        this.yields = false;
 
         const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
         if (paramNamesIdsAndDefaults === null) {
@@ -108,7 +109,6 @@ class ScriptTreeGenerator {
 
     enableWarp () {
         this.isWarp = true;
-        this.yields = false;
     }
 
     /**
