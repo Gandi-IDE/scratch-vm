@@ -711,7 +711,7 @@ class ScriptCompiler {
         } else {
             script += `function ${functionNameVariablePool.next()} `;
         }
-        script += ` (`;
+        script += '(';
         if (this.script.hasArguments) {
             script += 'C';
         }
