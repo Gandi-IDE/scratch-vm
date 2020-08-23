@@ -10,6 +10,7 @@ const compatBlocks = require('./compat-blocks');
 /**
  * @typedef Tree
  * @property {null|Array} stack The nodes that comprise this script. `null` is an empty stack.
+ * @property {string} procedureCode
  * @property {boolean} isProcedure
  * @property {boolean} hasArguments
  * @property {boolean} isWarp
@@ -71,6 +72,8 @@ class ScriptTreeGenerator {
         /** @private */
         this.isProcedure = false;
         /** @private */
+        this.procedureCode = '';
+        /** @private */
         this.isWarp = false;
         /** @private */
         this.yields = true;
@@ -84,13 +87,14 @@ class ScriptTreeGenerator {
 
         /**
          * Cache of variable ID to variable data object.
-         * @type {object.<string, object>}
+         * @type {Object.<string, object>}
          * @private
          */
         this.variableCache = {};
     }
 
     setProcedureCode (procedureCode) {
+        this.procedureCode = procedureCode;
         this.isProcedure = true;
 
         const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
@@ -1275,6 +1279,7 @@ class ScriptTreeGenerator {
         /** @type {Tree} */
         const result = {
             stack: null,
+            procedureCode: this.procedureCode,
             isProcedure: this.isProcedure,
             hasArguments: this.procedureArguments.length > 0,
             isWarp: this.isWarp,
