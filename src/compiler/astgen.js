@@ -716,9 +716,6 @@ class ScriptTreeGenerator {
                     kind: 'control.stopOthers'
                 };
             } else if (level === 'this script') {
-                if (!this.isProcedure) {
-                    this.yields = true;
-                }
                 return {
                     kind: 'control.stopScript'
                 };
