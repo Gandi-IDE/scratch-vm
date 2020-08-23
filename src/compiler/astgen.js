@@ -169,7 +169,9 @@ class ScriptTreeGenerator {
 
         case 'argument_reporter_string_number': {
             const name = block.fields.VALUE.value;
-            if (!this.isProcedure || !this.procedureArguments.includes(name)) {
+            // lastIndexOf because multiple parameters with the same name will use the value of the last definition
+            const index = this.procedureArguments.lastIndexOf(name);
+            if (index === -1) {
                 // Not final.
                 if (name === 'last key pressed') {
                     return {
@@ -177,8 +179,6 @@ class ScriptTreeGenerator {
                     };
                 }
             }
-            // lastIndexOf because multiple parameters with the same name will use the value of the last definition
-            const index = this.procedureArguments.lastIndexOf(name);
             if (index === -1) {
                 return {
                     kind: 'constant',
@@ -191,8 +191,10 @@ class ScriptTreeGenerator {
             };
         }
         case 'argument_reporter_boolean': {
+            // see argument_reporter_string_number above
             const name = block.fields.VALUE.value;
-            if (!this.isProcedure || !this.procedureArguments.includes(name)) {
+            const index = this.procedureArguments.lastIndexOf(name);
+            if (index === -1) {
                 if (isCompilerDetectorArgument(name)) {
                     return {
                         kind: 'constant',
@@ -204,7 +206,6 @@ class ScriptTreeGenerator {
                     value: 0
                 };
             }
-            const index = this.procedureArguments.lastIndexOf(name);
             return {
                 kind: 'args.boolean',
                 index: index
