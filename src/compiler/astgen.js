@@ -387,7 +387,8 @@ class ScriptTreeGenerator {
             };
         case 'operator_mathop': {
             const value = this.descendInput(block, 'NUM');
-            switch (block.fields.OPERATOR.value) {
+            const operator = block.fields.OPERATOR.value.toLowerCase();
+            switch (operator) {
             case 'abs': return {
                 kind: 'op.abs',
                 value
