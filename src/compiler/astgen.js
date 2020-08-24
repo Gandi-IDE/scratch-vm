@@ -44,13 +44,6 @@ const createVariableData = (scope, varObj) => ({
     isCloud: varObj.isCloud
 });
 
-/**
- * Determine whether an input is used as a compiler detector.
- * @param {string} name The name of the argument.
- * @returns {boolean} true if this argument is a compiler detector, and its value should become `true`
- */
-const isCompilerDetectorArgument = name => name.toLowerCase() === 'is compiled?' || name.toLowerCase() === 'is turbowarp?';
-
 class ScriptTreeGenerator {
     constructor (thread) {
         /** @private */
@@ -194,7 +187,7 @@ class ScriptTreeGenerator {
             const name = block.fields.VALUE.value;
             const index = this.procedureArguments.lastIndexOf(name);
             if (index === -1) {
-                if (isCompilerDetectorArgument(name)) {
+                if (name.toLowerCase() === 'is compiled?' || name.toLowerCase() === 'is turbowarp?') {
                     return {
                         kind: 'constant',
                         value: true
