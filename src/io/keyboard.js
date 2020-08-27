@@ -44,7 +44,7 @@ class Keyboard {
          */
         this.runtime = runtime;
         // tw: track last pressed key
-        this.lastkeyPressed = '';
+        this.lastKeyPressed = '';
     }
 
     /**
@@ -145,7 +145,7 @@ class Keyboard {
         const index = this._keysPressed.indexOf(scratchKey);
         if (data.isDown) {
             // tw: track last pressed key
-            this.lastkeyPressed = scratchKeyCased;
+            this.lastKeyPressed = scratchKeyCased;
             this.runtime.emit('KEY_PRESSED', scratchKey);
             // If not already present, add to the list.
             if (index < 0) {
@@ -172,7 +172,7 @@ class Keyboard {
 
     // tw: expose last pressed key
     getLastKeyPressed () {
-        return this.lastkeyPressed;
+        return this.lastKeyPressed;
     }
 }
 
