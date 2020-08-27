@@ -1147,7 +1147,34 @@ class Scratch3MusicBlocks {
         });
 
         // Start playing the note
-        player.play();
+        // powered by xigua start
+        player.play({
+            /**
+             * 这里其实是重复了上面的工作 为了处理录制舞台时的音频长短问题以及音调问题
+             * @param {AudioBufferSourceNode} source 音频源
+             * @param {AudioContext} audioContext 音频源
+             * @param {MediaStreamAudioDestinationNode} destination 音频目的地
+             */
+            callback: (source, audioContext, destination) => {
+                const startTime = audioContext.currentTime + durationSec;
+                const endTime = startTime + releaseDuration;
+
+                const inputNode = audioContext.createGain();
+                const volumeGainInner = audioContext.createGain();
+                volumeGainInner.gain.setValueAtTime(util.target.volume / 100, engine.currentTime);
+                const releaseGainInner = audioContext.createGain();
+                volumeGainInner.connect(releaseGainInner);
+                releaseGainInner.connect(inputNode);
+                inputNode.connect(destination);
+                releaseGainInner.gain.setValueAtTime(1, startTime);
+                source.start();
+                source.connect(volumeGainInner);
+                releaseGainInner.gain.linearRampToValueAtTime(0.0001, endTime);
+                source.playbackRate.value = notePitchInterval;
+                source.stop(endTime);
+            }
+        });
+        // powered by xigua end
         // Connect the player to the gain node.
         player.connect({getInputNode () {
             return volumeGain;
