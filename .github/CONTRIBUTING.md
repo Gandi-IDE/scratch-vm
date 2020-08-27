@@ -1,3 +1,8 @@
+The TurboWarp contributing guidelines are available here:
+
+https://github.com/TurboWarp/scratch-gui/blob/develop/.github/CONTRIBUTING.md
+
+<!--
 ## Contributing
 The development of Scratch is an ongoing process, and we love to have people in the Scratch and open source communities help us along the way.
 
@@ -64,3 +69,4 @@ Beyond this repo, there are also some other resources that you might want to tak
 * [Open Source forum](https://scratch.mit.edu/discuss/49/) on Scratch
 * [Suggestions forum](https://scratch.mit.edu/discuss/1/) on Scratch
 * [Bugs & Glitches forum](https://scratch.mit.edu/discuss/3/) on Scratch
+-->
