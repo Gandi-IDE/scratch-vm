@@ -15,8 +15,15 @@ const KEY_NAME = {
     BACKSPACE: 'backspace',
     DELETE: 'delete',
     SHIFT: 'shift',
+    CAPS_LOCK: 'caps lock',
+    SCROLL_LOCK: 'scroll lock',
     CONTROL: 'control',
-    ESCAPE: 'escape'
+    ESCAPE: 'escape',
+    INSERT: 'insert',
+    HOME: 'home',
+    END: 'end',
+    PAGE_UP: 'page up',
+    PAGE_DOWN: 'page down'
 };
 
 /**
@@ -70,8 +77,15 @@ class Keyboard {
         case 'Backspace': return KEY_NAME.BACKSPACE;
         case 'Delete': return KEY_NAME.DELETE;
         case 'Shift': return KEY_NAME.SHIFT;
+        case 'CapsLock': return KEY_NAME.CAPS_LOCK;
+        case 'ScrollLock': return KEY_NAME.SCROLL_LOCK;
         case 'Control': return KEY_NAME.CONTROL;
         case 'Escape': return KEY_NAME.ESCAPE;
+        case 'Insert': return KEY_NAME.INSERT;
+        case 'Home': return KEY_NAME.HOME;
+        case 'End': return KEY_NAME.END;
+        case 'PageUp': return KEY_NAME.PAGE_UP;
+        case 'PageDown': return KEY_NAME.PAGE_DOWN;
         }
         // Ignore modifier keys
         if (keyString.length > 1) {
