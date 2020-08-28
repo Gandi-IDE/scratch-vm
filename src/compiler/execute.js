@@ -172,14 +172,6 @@ const retire = () => {
 };
 
 /**
- * Scratch cast to number.
- * Similar to Cast.toNumber()
- * @param {*} value The value to cast
- * @returns {number} The value cast to a number.
- */
-const toNumber = value => +value || 0;
-
-/**
  * Scratch cast to boolean.
  * Similar to Cast.toBoolean()
  * @param {*} value The value to cast
@@ -345,7 +337,7 @@ const listIndex = (index, length) => {
             }
             return -1;
         }
-        index = toNumber(index);
+        index = +index || 0;
     }
     index = Math.floor(index);
     if (index < 1 || index > length) {
