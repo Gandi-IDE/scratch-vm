@@ -485,7 +485,7 @@ class ScriptTreeGenerator {
                 const sTo = to.value;
                 const nFrom = Cast.toNumber(sFrom);
                 const nTo = Cast.toNumber(sTo);
-                // If both numbers are the same, remove the random
+                // If both numbers are the same, random is unnecessary.
                 // todo: this probably never happens so consider removing
                 if (nFrom === nTo) {
                     return {
@@ -512,6 +512,7 @@ class ScriptTreeGenerator {
                     useFloats: true
                 };
             } else if (from.kind === 'constant') {
+                // If only one value is known at compile-time, we can still attempt some optimizations.
                 if (!Cast.isInt(Cast.toNumber(from.value))) {
                     return {
                         kind: 'op.random',
@@ -527,7 +528,6 @@ class ScriptTreeGenerator {
                         kind: 'op.random',
                         low: from,
                         high: to,
-                        checkedOrder: false,
                         useInts: false,
                         useFloats: true
                     };
@@ -538,7 +538,6 @@ class ScriptTreeGenerator {
                 kind: 'op.random',
                 low: from,
                 high: to,
-                checkedOrder: false,
                 useInts: false,
                 useFloats: false
             };
