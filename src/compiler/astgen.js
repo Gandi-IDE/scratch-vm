@@ -639,7 +639,13 @@ class ScriptTreeGenerator {
                 kind: 'constant',
                 value: block.fields.voices.value
             };
-        
+
+        case 'translate_menu_languages':
+            return {
+                kind: 'constant',
+                value: block.fields.languages.value
+            };
+
         case 'videoSensing_menu_ATTRIBUTE':
             return {
                 kind: 'constant',
