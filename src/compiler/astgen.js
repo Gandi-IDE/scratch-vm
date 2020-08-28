@@ -629,6 +629,17 @@ class ScriptTreeGenerator {
                 value: block.fields.SOUND_MENU.value
             };
 
+        case 'text2speech_menu_languages':
+            return {
+                kind: 'constant',
+                value: block.fields.languages.value
+            };
+        case 'text2speech_menu_voices':
+            return {
+                kind: 'constant',
+                value: block.fields.voices.value
+            };
+
         default:
             // It might be a block that uses the compatibility layer
             if (compatBlocks.inputs.includes(block.opcode)) {

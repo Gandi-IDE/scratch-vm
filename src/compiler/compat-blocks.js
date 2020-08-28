@@ -37,7 +37,10 @@ const stacked = [
     'sound_seteffectto',
     'sound_seteffectto',
     'sound_setvolumeto',
-    'sound_stopallsounds'
+    'sound_stopallsounds',
+    'text2speech_setLanguage',
+    'text2speech_setVoice',
+    'text2speech_speakAndWait'
 ];
 
 const inputs = [
