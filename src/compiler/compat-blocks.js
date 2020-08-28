@@ -40,7 +40,9 @@ const stacked = [
     'sound_stopallsounds',
     'text2speech_setLanguage',
     'text2speech_setVoice',
-    'text2speech_speakAndWait'
+    'text2speech_speakAndWait',
+    'videoSensing_setVideoTransparency',
+    'videoSensing_videoToggle'
 ];
 
 const inputs = [
@@ -52,7 +54,8 @@ const inputs = [
     'sensing_loud',
     'sensing_loudness',
     'sensing_of',
-    'sound_volume'
+    'sound_volume',
+    'videoSensing_videoOn'
 ];
 
 module.exports = {

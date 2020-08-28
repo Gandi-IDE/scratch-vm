@@ -639,6 +639,22 @@ class ScriptTreeGenerator {
                 kind: 'constant',
                 value: block.fields.voices.value
             };
+        
+        case 'videoSensing_menu_ATTRIBUTE':
+            return {
+                kind: 'constant',
+                value: block.fields.ATTRIBUTE.value
+            };
+        case 'videoSensing_menu_SUBJECT':
+            return {
+                kind: 'constant',
+                value: block.fields.SUBJECT.value
+            };
+        case 'videoSensing_menu_VIDEO_STATE':
+            return {
+                kind: 'constant',
+                value: block.fields.VIDEO_STATE.value
+            };
 
         default:
             // It might be a block that uses the compatibility layer
