@@ -1452,7 +1452,7 @@ class ASTGenerator {
                     const generator = new ScriptTreeGenerator(this.thread);
                     generator.setProcedureCode(procedureCode);
                     if (isWarp) generator.enableWarp();
-                    const compiledProcedure = this.generateScriptTree(generator, bodyStart);
+                    const compiledProcedure = this.generateScriptTree(generator, definitionId);
                     this.procedures[procedureCode] = compiledProcedure;
                     this.blocks._cache.compiledProcedures[procedureCode] = compiledProcedure;
                 }
