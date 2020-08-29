@@ -291,7 +291,7 @@ class ScriptCompiler {
         case 'op.equals': {
             const left = this.descendInput(node.left);
             const right = this.descendInput(node.right);
-            // If either argument is known to never be a valid number, only use string comparison to avoid all number parsing.
+            // When both operands are known to never be numbers, only use string comparison to avoid all number parsing.
             if (left.isNeverNumber() || right.isNeverNumber()) {
                 return new TypedInput(`(${left.asString()}.toLowerCase() === ${right.asString()}.toLowerCase())`, TYPE_BOOLEAN);
             }
@@ -303,6 +303,7 @@ class ScriptCompiler {
             }
             // When one operand is known to be a non-zero constant, we can use ===
             // 0 is not allowed here as NaN will get converted to zero, and "apple or any other NaN value = 0" should not return true.
+            // todo: this might be unsafe
             if (leftAlwaysNumber && isNonZeroNumberConstant(left)) {
                 return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
@@ -319,19 +320,12 @@ class ScriptCompiler {
         case 'op.greater': {
             const left = this.descendInput(node.left);
             const right = this.descendInput(node.right);
-            // see op.equals for these optimizations
+            // When both operands are known to never be numbers, only use string comparison to avoid all number parsing.
             if (left.isNeverNumber() || right.isNeverNumber()) {
                 return new TypedInput(`(${left.asString()}.toLowerCase() > ${right.asString()}.toLowerCase())`, TYPE_BOOLEAN);
             }
-            const leftAlwaysNumber = left.isAlwaysNumber();
-            const rightAlwaysNumber = right.isAlwaysNumber();
-            if (leftAlwaysNumber && rightAlwaysNumber) {
-                return new TypedInput(`(${left.asNumber()} > ${right.asNumber()})`, TYPE_BOOLEAN);
-            }
-            if (leftAlwaysNumber && isNonZeroNumberConstant(left)) {
-                return new TypedInput(`(${left.asNumber()} > ${right.asNumber()})`, TYPE_BOOLEAN);
-            }
-            if (rightAlwaysNumber && isNonZeroNumberConstant(right)) {
+            // When both operands are known to be numbers, we can use >
+            if (left.isAlwaysNumber() && right.isAlwaysNumber()) {
                 return new TypedInput(`(${left.asNumber()} > ${right.asNumber()})`, TYPE_BOOLEAN);
             }
             // No compile-time optimizations possible - use fallback method.
@@ -344,19 +338,12 @@ class ScriptCompiler {
         case 'op.less': {
             const left = this.descendInput(node.left);
             const right = this.descendInput(node.right);
-            // see op.equals for these optimizations
+            // When both operands are known to never be numbers, only use string comparison to avoid all number parsing.
             if (left.isNeverNumber() || right.isNeverNumber()) {
                 return new TypedInput(`(${left.asString()}.toLowerCase() < ${right.asString()}.toLowerCase())`, TYPE_BOOLEAN);
             }
-            const leftAlwaysNumber = left.isAlwaysNumber();
-            const rightAlwaysNumber = right.isAlwaysNumber();
-            if (leftAlwaysNumber && rightAlwaysNumber) {
-                return new TypedInput(`(${left.asNumber()} < ${right.asNumber()})`, TYPE_BOOLEAN);
-            }
-            if (leftAlwaysNumber && isNonZeroNumberConstant(left)) {
-                return new TypedInput(`(${left.asNumber()} < ${right.asNumber()})`, TYPE_BOOLEAN);
-            }
-            if (rightAlwaysNumber && isNonZeroNumberConstant(right)) {
+            // When both operands are known to be numbers, we can use >
+            if (left.isAlwaysNumber() && right.isAlwaysNumber()) {
                 return new TypedInput(`(${left.asNumber()} < ${right.asNumber()})`, TYPE_BOOLEAN);
             }
             // No compile-time optimizations possible - use fallback method.
