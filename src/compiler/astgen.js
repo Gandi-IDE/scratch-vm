@@ -1430,7 +1430,6 @@ class ASTGenerator {
             for (const [procedureCode, definitionId] of this.compilingProcedures.entries()) {
                 const definitionBlock = this.blocks.getBlock(definitionId);
                 const innerDefinition = this.blocks.getBlock(definitionBlock.inputs.custom_block.block);
-                const bodyStart = definitionBlock.next;
 
                 // Extract the function's warp mode.
                 // See Sequencer.stepToProcedure
