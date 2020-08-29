@@ -372,7 +372,6 @@ class ScriptCompiler {
             return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
 
         case 'tw.lastKeyPressed':
-            // Not final.
             return new TypedInput('ioQuery("keyboard", "getLastKeyPressed")', TYPE_STRING);
 
         case 'var.get':
