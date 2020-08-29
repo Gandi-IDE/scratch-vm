@@ -12,7 +12,7 @@ const compatBlocks = require('./compat-blocks');
  * @property {null|Array} stack The nodes that comprise this script. `null` is an empty stack.
  * @property {string} procedureCode
  * @property {boolean} isProcedure
- * @property {boolean} hasArguments
+ * @property {string[]} arguments
  * @property {boolean} isWarp
  * @property {boolean} yields
  * @property {boolean} loopStuckChecking
