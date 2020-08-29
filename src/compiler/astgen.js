@@ -1289,20 +1289,25 @@ class ScriptTreeGenerator {
         }
 
         const text = comment.text;
-        if (!/^tw\b/.test(text)) {
-            // not a comment that we care about
-            return;
-        }
 
-        const flags = text.split(' ');
-        for (const flag of flags) {
-            switch (flag) {
-            case 'nocompile':
-                throw new Error('Script explicitly disables compilation');
-            case 'stuck':
-                this.loopStuckChecking = true;
-                break;
+        for (const line of text.split('\n')) {
+            if (!/^tw\b/.test(line)) {
+                continue;
             }
+
+            const flags = line.split(' ');
+            for (const flag of flags) {
+                switch (flag) {
+                case 'nocompile':
+                    throw new Error('Script explicitly disables compilation');
+                case 'stuck':
+                    this.loopStuckChecking = true;
+                    break;
+                }
+            }
+
+            // Only the first 'tw' line is parsed.
+            break;
         }
     }
 
