@@ -303,10 +303,10 @@ class ScriptCompiler {
             }
             // When one operand is known to be a non-zero constant, we can use ===
             // 0 is not allowed here as NaN will get converted to zero, and "apple or any other NaN value = 0" should not return true.
-            if (left.isAlwaysNumber() && isNonZeroNumberConstant(left)) {
+            if (leftAlwaysNumber && isNonZeroNumberConstant(left)) {
                 return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
-            if (right.isAlwaysNumber() && isNonZeroNumberConstant(right)) {
+            if (rightAlwaysNumber && isNonZeroNumberConstant(right)) {
                 return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
             return new TypedInput(`compareEqual(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
