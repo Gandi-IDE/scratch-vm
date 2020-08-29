@@ -15,6 +15,7 @@ const compatBlocks = require('./compat-blocks');
  * @property {boolean} hasArguments
  * @property {boolean} isWarp
  * @property {boolean} yields
+ * @property {boolean} loopStuckChecking
  * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on. Does not include dependencies of dependencies, etc.
  * @property {*} cachedCompileResult
  */
@@ -70,6 +71,8 @@ class ScriptTreeGenerator {
         this.isWarp = false;
         /** @private */
         this.yields = true;
+        /** @private */
+        this.loopStuckChecking = this.target.runtime.compilerOptions.loopStuckChecking;
 
         /**
          * The names of the arguments accepted by this script, in order.
@@ -1272,7 +1275,7 @@ class ScriptTreeGenerator {
     }
 
     analyzeLoop () {
-        if (!this.isWarp || this.target.runtime.compilerOptions.loopStuckChecking) {
+        if (!this.isWarp || this.loopStuckChecking) {
             this.yields = true;
         }
     }
@@ -1296,6 +1299,9 @@ class ScriptTreeGenerator {
             switch (flag) {
             case 'nocompile':
                 throw new Error('Script explicitly disables compilation');
+            case 'stuck':
+                this.loopStuckChecking = true;
+                break;
             }
         }
     }

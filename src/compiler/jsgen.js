@@ -141,7 +141,7 @@ class ScriptCompiler {
 
         this.isWarp = script.isWarp;
         this.isProcedure = script.isProcedure;
-        this.loopStuckChecking = this.target.runtime.compilerOptions.loopStuckChecking;
+        this.loopStuckChecking = script.loopStuckChecking;
 
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
