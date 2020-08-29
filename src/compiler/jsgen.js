@@ -254,8 +254,13 @@ class ScriptCompiler {
         case 'op.equals': {
             const left = this.descendInput(node.left);
             const right = this.descendInput(node.right);
+            // If both arguments are known to be numbers, we will use the faster === instead.
             if (left.isAlwaysNumber() && right.isAlwaysNumber()) {
                 return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            // If either argument is known to never be a valid number, only use string comparison.
+            if (left.isNeverNumber() || right.isNeverNumber()) {
+                return new TypedInput(`(${left.asString()}.toLowerCase() === ${right.asString()}.toLowerCase())`, TYPE_BOOLEAN);
             }
             return new TypedInput(`compareEqual(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
         }
@@ -266,6 +271,7 @@ class ScriptCompiler {
         case 'op.greater': {
             const left = this.descendInput(node.left);
             const right = this.descendInput(node.right);
+            // If both arguments are known to be numbers, we will use the faster > instead.
             if (left.isAlwaysNumber() && right.isAlwaysNumber()) {
                 return new TypedInput(`(${left.asNumber()} > ${right.asNumber()})`, TYPE_BOOLEAN);
             }
@@ -278,6 +284,7 @@ class ScriptCompiler {
         case 'op.less': {
             const left = this.descendInput(node.left);
             const right = this.descendInput(node.right);
+            // If both arguments are known to be numbers, we will use the faster < instead.
             if (left.isAlwaysNumber() && right.isAlwaysNumber()) {
                 return new TypedInput(`(${left.asNumber()} < ${right.asNumber()})`, TYPE_BOOLEAN);
             }
