@@ -194,7 +194,7 @@ class ScriptCompiler {
 
         case 'keyboard.pressed':
             return new TypedInput(`ioQuery("keyboard", "getKeyIsDown", [${this.descendInput(node.key).asUnknown()}])`, TYPE_BOOLEAN);
-    
+
         case 'list.contains':
             return new TypedInput(`listContains(${this.referenceVariable(node.list)}, ${this.descendInput(node.item).asUnknown()})`, TYPE_BOOLEAN);
         case 'list.contents':
@@ -221,14 +221,14 @@ class ScriptCompiler {
             return new TypedInput('target.getCostumes()[target.currentCostume].name', TYPE_STRING);
         case 'looks.costumeNumber':
             return new TypedInput('(target.currentCostume + 1)', TYPE_NUMBER);
-    
+
         case 'motion.direction':
             return new TypedInput('target.direction', TYPE_NUMBER);
         case 'motion.x':
             return new TypedInput('target.x', TYPE_NUMBER);
         case 'motion.y':
             return new TypedInput('target.y', TYPE_NUMBER);
-        
+
         case 'mouse.down':
             return new TypedInput('ioQuery("mouse", "getIsDown")', TYPE_BOOLEAN);
         case 'mouse.x':
@@ -338,7 +338,7 @@ class ScriptCompiler {
             return new TypedInput(`target.isTouchingColor(colorToList(${this.descendInput(node.color).asUnknown()}))`, TYPE_BOOLEAN);
         case 'sensing.username':
             return new TypedInput('ioQuery("userData", "getUsername")', TYPE_STRING);
-        
+
         case 'timer.get':
             return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
 
