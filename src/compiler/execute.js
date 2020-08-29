@@ -197,8 +197,6 @@ const toBoolean = value => {
  * @returns {boolean} true if the value is whitespace
  */
 const isWhiteSpace = val => {
-    // todo: everywhere this is used we don't care about "is whitespace", but rather "has whitespace"
-    // we might able to optimize for that
     return val === null || (typeof val === 'string' && val.trim().length === 0);
 };
 
@@ -316,6 +314,22 @@ const timer = () => {
     return t;
 };
 
+// This is the "epoch" for the daysSince2000() function.
+// Storing this in a variable is faster than constantly recreating it.
+const daysSince2000Epoch = new Date(2000, 0, 1);
+
+/**
+ * Returns the amount of days since January 1st, 2000.
+ * @returns {number} Days since 2000.
+ */
+const daysSince2000 = () => {
+    const today = new Date();
+    const dstAdjust = today.getTimezoneOffset() - daysSince2000Epoch.getTimezoneOffset();
+    let mSecsSinceStart = today.valueOf() - daysSince2000Epoch.valueOf();
+    mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
+    return mSecsSinceStart / (24 * 60 * 60 * 1000);
+};
+
 /**
  * Convert a Scratch list index to a JavaScript list index.
  * "all" is not considered as a list index.
@@ -348,16 +362,29 @@ const listIndex = (index, length) => {
 
 /**
  * Get a value from a list.
- * @param {import('../engine/variable')} list The list
+ * @param {Array} list The list
  * @param {*} idx The 1-indexed index in the list.
  * @returns The list item, otherwise empty string if it does not exist.
  */
 const listGet = (list, idx) => {
-    const index = listIndex(idx, list.value.length);
+    const index = listIndex(idx, list.length);
     if (index === -1) {
         return '';
     }
-    return list.value[index];
+    return list[index];
+};
+
+/**
+ * listGet() optimized for number arguments.
+ * @param {Array} list The list
+ * @param {number} idx The 1-indexed index in the list.
+ * @returns The list item, otherwise empty string if it does not exist.
+ */
+const listGetFast = (list, idx) => {
+    if (idx < 1 || idx > list.length) {
+        return '';
+    }
+    return list[Math.floor(idx) - 1];
 };
 
 /**

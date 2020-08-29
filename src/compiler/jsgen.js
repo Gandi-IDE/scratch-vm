@@ -44,6 +44,9 @@ const generatorNameVariablePool = new VariablePool('gen');
  * @property {() => string} asString
  * @property {() => string} asBoolean
  * @property {() => string} asUnknown
+ * @property {() => boolean} isAlwaysNumber
+ * @property {() => boolean} isAlwaysNumberOrNaN
+ * @property {() => boolean} isNeverNumber
  */
 
 /**
@@ -78,6 +81,18 @@ class TypedInput {
     asUnknown () {
         return this.source;
     }
+
+    isAlwaysNumber () {
+        return this.type === TYPE_NUMBER;
+    }
+
+    isAlwaysNumberOrNaN () {
+        return this.type === TYPE_NUMBER || this.type === TYPE_NUMBER_NAN;
+    }
+
+    isNeverNumber () {
+        return false;
+    }
 }
 
 /**
@@ -107,7 +122,7 @@ class ConstantInput {
     }
 
     asUnknown () {
-        // Attempt to convert strings to numbers, if it is unlikely to break things
+        // Attempt to convert strings to numbers if it is unlikely to break things
         if (typeof this.constantValue === 'number') {
             // todo: handle NaN?
             return this.constantValue;
@@ -117,6 +132,37 @@ class ConstantInput {
             return this.constantValue;
         }
         return this.asString();
+    }
+
+    isAlwaysNumber () {
+        return !Number.isNaN(+this.constantValue);
+    }
+
+    isAlwaysNumberOrNaN () {
+        return this.isAlwaysNumber();
+    }
+
+    isNeverNumber () {
+        return Number.isNaN(+this.constantValue);
+    }
+}
+
+/**
+ * SafeConstantInput is similar to ConstantInput, except that asUnknown() will always convert to String.
+ */
+class SafeConstantInput extends ConstantInput {
+    asUnknown () {
+        // This input should never be automatically converted to something else.
+        return this.asString();
+    }
+
+    // Make sure that no blocks will wrongly convert this to number.
+    isAlwaysNumber () {
+        return false;
+    }
+
+    isAlwaysNumberOrNaN () {
+        return false;
     }
 }
 
@@ -131,6 +177,19 @@ disableToString(TypedInput.prototype.asNumber);
 disableToString(TypedInput.prototype.asString);
 disableToString(TypedInput.prototype.asBoolean);
 disableToString(TypedInput.prototype.asUnknown);
+
+/**
+ * Determine if an input is a constant that is a non-zero number.
+ * @param {Input} input The input to examine.
+ * @returns {boolean} true if the input is a constant non-zero number
+ */
+const isNonZeroNumberConstant = input => {
+    if (typeof input.constantValue === 'undefined') {
+        return false;
+    }
+    const value = +input.constantValue;
+    return value !== 0;
+};
 
 class ScriptCompiler {
     constructor (script, ast, target) {
@@ -167,13 +226,18 @@ class ScriptCompiler {
 
         case 'keyboard.pressed':
             return new TypedInput(`ioQuery("keyboard", "getKeyIsDown", [${this.descendInput(node.key).asUnknown()}])`, TYPE_BOOLEAN);
-    
+
         case 'list.contains':
             return new TypedInput(`listContains(${this.referenceVariable(node.list)}, ${this.descendInput(node.item).asUnknown()})`, TYPE_BOOLEAN);
         case 'list.contents':
             return new TypedInput(`listContents(${this.referenceVariable(node.list)})`, TYPE_STRING);
-        case 'list.get':
-            return new TypedInput(`listGet(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()})`, TYPE_UNKNOWN);
+        case 'list.get': {
+            const index = this.descendInput(node.index);
+            if (index.isAlwaysNumber()) {
+                return new TypedInput(`listGetFast(${this.referenceVariable(node.list)}.value, ${index.asNumber()})`, TYPE_UNKNOWN);
+            }
+            return new TypedInput(`listGet(${this.referenceVariable(node.list)}.value, ${index.asUnknown()})`, TYPE_UNKNOWN);
+        }
         case 'list.indexOf':
             return new TypedInput(`listIndexOf(${this.referenceVariable(node.list)}, ${this.descendInput(node.item).asUnknown()})`, TYPE_NUMBER);
         case 'list.length':
@@ -189,14 +253,14 @@ class ScriptCompiler {
             return new TypedInput('target.getCostumes()[target.currentCostume].name', TYPE_STRING);
         case 'looks.costumeNumber':
             return new TypedInput('(target.currentCostume + 1)', TYPE_NUMBER);
-    
+
         case 'motion.direction':
             return new TypedInput('target.direction', TYPE_NUMBER);
         case 'motion.x':
             return new TypedInput('target.x', TYPE_NUMBER);
         case 'motion.y':
             return new TypedInput('target.y', TYPE_NUMBER);
-        
+
         case 'mouse.down':
             return new TypedInput('ioQuery("mouse", "getIsDown")', TYPE_BOOLEAN);
         case 'mouse.x':
@@ -224,20 +288,67 @@ class ScriptCompiler {
             return new TypedInput(`(Math.round(Math.cos((Math.PI * ${this.descendInput(node.value).asNumber()}) / 180) * 1e10) / 1e10)`, TYPE_NUMBER);
         case 'op.divide':
             return new TypedInput(`(${this.descendInput(node.left).asNumber()} / ${this.descendInput(node.right).asNumber()})`, TYPE_NUMBER_NAN);
-        case 'op.equals':
-            return new TypedInput(`compareEqual(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
+        case 'op.equals': {
+            const left = this.descendInput(node.left);
+            const right = this.descendInput(node.right);
+            // When both operands are known to never be numbers, only use string comparison to avoid all number parsing.
+            if (left.isNeverNumber() || right.isNeverNumber()) {
+                return new TypedInput(`(${left.asString()}.toLowerCase() === ${right.asString()}.toLowerCase())`, TYPE_BOOLEAN);
+            }
+            const leftAlwaysNumber = left.isAlwaysNumber();
+            const rightAlwaysNumber = right.isAlwaysNumber();
+            // When both operands are known to be numbers, we can use ===
+            if (leftAlwaysNumber && rightAlwaysNumber) {
+                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            // When one operand is known to be a non-zero constant, we can use ===
+            // 0 is not allowed here as NaN will get converted to zero, and "apple or any other NaN value = 0" should not return true.
+            // todo: this might be unsafe
+            if (leftAlwaysNumber && isNonZeroNumberConstant(left)) {
+                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            if (rightAlwaysNumber && isNonZeroNumberConstant(right)) {
+                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            // No compile-time optimizations possible - use fallback method.
+            return new TypedInput(`compareEqual(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
+        }
         case 'op.e^':
             return new TypedInput(`Math.exp(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
         case 'op.floor':
             return new TypedInput(`Math.floor(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
-        case 'op.greater':
-            return new TypedInput(`compareGreaterThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
+        case 'op.greater': {
+            const left = this.descendInput(node.left);
+            const right = this.descendInput(node.right);
+            // When both operands are known to never be numbers, only use string comparison to avoid all number parsing.
+            if (left.isNeverNumber() || right.isNeverNumber()) {
+                return new TypedInput(`(${left.asString()}.toLowerCase() > ${right.asString()}.toLowerCase())`, TYPE_BOOLEAN);
+            }
+            // When both operands are known to be numbers, we can use >
+            if (left.isAlwaysNumber() && right.isAlwaysNumber()) {
+                return new TypedInput(`(${left.asNumber()} > ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            // No compile-time optimizations possible - use fallback method.
+            return new TypedInput(`compareGreaterThan(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
+        }
         case 'op.join':
             return new TypedInput(`(${this.descendInput(node.left).asString()} + ${this.descendInput(node.right).asString()})`, TYPE_STRING);
         case 'op.length':
             return new TypedInput(`${this.descendInput(node.string).asString()}.length`, TYPE_NUMBER);
-        case 'op.less':
-            return new TypedInput(`compareLessThan(${this.descendInput(node.left).asUnknown()}, ${this.descendInput(node.right).asUnknown()})`, TYPE_BOOLEAN);
+        case 'op.less': {
+            const left = this.descendInput(node.left);
+            const right = this.descendInput(node.right);
+            // When both operands are known to never be numbers, only use string comparison to avoid all number parsing.
+            if (left.isNeverNumber() || right.isNeverNumber()) {
+                return new TypedInput(`(${left.asString()}.toLowerCase() < ${right.asString()}.toLowerCase())`, TYPE_BOOLEAN);
+            }
+            // When both operands are known to be numbers, we can use >
+            if (left.isAlwaysNumber() && right.isAlwaysNumber()) {
+                return new TypedInput(`(${left.asNumber()} < ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            // No compile-time optimizations possible - use fallback method.
+            return new TypedInput(`compareLessThan(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
+        }
         case 'op.letterOf':
             return new TypedInput(`((${this.descendInput(node.string).asString()})[(${this.descendInput(node.letter).asNumber()} | 0) - 1] || "")`, TYPE_STRING);
         case 'op.ln':
@@ -275,18 +386,19 @@ class ScriptCompiler {
 
         case 'sensing.colorTouchingColor':
             return new TypedInput(`target.colorIsTouchingColor(colorToList(${this.descendInput(node.target).asUnknown()}), colorToList(${this.descendInput(node.mask).asUnknown()}))`, TYPE_BOOLEAN);
+        case 'sensing.daysSince2000':
+            return new TypedInput('daysSince2000()', TYPE_NUMBER);
         case 'sensing.touching':
             return new TypedInput(`target.isTouchingObject(${this.descendInput(node.object).asUnknown()})`, TYPE_BOOLEAN);
         case 'sensing.touchingColor':
             return new TypedInput(`target.isTouchingColor(colorToList(${this.descendInput(node.color).asUnknown()}))`, TYPE_BOOLEAN);
         case 'sensing.username':
             return new TypedInput('ioQuery("userData", "getUsername")', TYPE_STRING);
-        
+
         case 'timer.get':
             return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
 
         case 'tw.lastKeyPressed':
-            // Not final.
             return new TypedInput('ioQuery("keyboard", "getLastKeyPressed")', TYPE_STRING);
 
         case 'var.get':
@@ -598,10 +710,9 @@ class ScriptCompiler {
     }
 
     retire () {
-        // After running retire(), we need to return to the event loop.
-        // When in a procedure, return will only send us back to the previous procedure.
-        // So instead, we yield back to the event loop.
-        // Outside of a procedure, return will work correctly.
+        // After running retire() (sets thread status and cleans up some unused data), we need to return to the event loop.
+        // When in a procedure, return will only send us back to the previous procedure, so instead we yield back to the sequencer.
+        // Outside of a procedure, return will correctly bring us back to the sequencer.
         if (this.isProcedure) {
             this.source += 'retire(); yield;\n';
         } else {
@@ -647,7 +758,7 @@ class ScriptCompiler {
     safeConstantInput (value) {
         if (typeof value === 'string') {
             if (this.isNameOfCostume(value)) {
-                return new TypedInput(`"${sanitize(value)}"`, TYPE_STRING);
+                return new SafeConstantInput(value);
             }
         }
         return new ConstantInput(value);
@@ -683,7 +794,8 @@ class ScriptCompiler {
             const field = node.fields[fieldName];
             result += `"${sanitize(fieldName)}":"${sanitize(field)}",`;
         }
-        result += `}, runtime.getOpcodeFunction("${sanitize(opcode)}"))`;
+        const opcodeFunction = this.evaluateOnce(`runtime.getOpcodeFunction("${sanitize(opcode)}")`);
+        result += `}, ${opcodeFunction})`;
 
         return result;
     }

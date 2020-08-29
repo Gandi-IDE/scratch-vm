@@ -12,7 +12,7 @@ const compatBlocks = require('./compat-blocks');
  * @property {null|Array} stack The nodes that comprise this script. `null` is an empty stack.
  * @property {string} procedureCode
  * @property {boolean} isProcedure
- * @property {boolean} hasArguments
+ * @property {string[]} arguments
  * @property {boolean} isWarp
  * @property {boolean} yields
  * @property {boolean} loopStuckChecking
@@ -568,6 +568,10 @@ class ScriptTreeGenerator {
                 kind: 'sensing.colorTouchingColor',
                 target: this.descendInput(block, 'COLOR2'),
                 mask: this.descendInput(block, 'COLOR')
+            };
+        case 'sensing_dayssince2000':
+            return {
+                kind: 'sensing.daysSince2000'
             };
         case 'sensing_distancetomenu':
             return {
