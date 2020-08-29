@@ -197,8 +197,6 @@ const toBoolean = value => {
  * @returns {boolean} true if the value is whitespace
  */
 const isWhiteSpace = val => {
-    // todo: everywhere this is used we don't care about "is whitespace", but rather "has whitespace"
-    // we might able to optimize for that
     return val === null || (typeof val === 'string' && val.trim().length === 0);
 };
 
