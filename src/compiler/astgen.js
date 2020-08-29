@@ -1320,6 +1320,7 @@ class ScriptTreeGenerator {
             isWarp: this.isWarp,
             dependedProcedures: this.dependedProcedures,
             yields: this.yields, // will be updated later
+            loopStuckChecking: this.loopStuckChecking, // will be updated later
             cachedCompileResult: null
         };
 
@@ -1355,6 +1356,7 @@ class ScriptTreeGenerator {
 
         result.stack = this.walkStack(entryBlock);
         result.yields = this.yields;
+        result.loopStuckChecking = this.loopStuckChecking;
 
         return result;
     }
