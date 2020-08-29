@@ -49,7 +49,6 @@ const inputs = [
     'music_getTempo',
     'sensing_answer',
     'sensing_current',
-    'sensing_dayssince2000',
     'sensing_distanceto',
     'sensing_loud',
     'sensing_loudness',

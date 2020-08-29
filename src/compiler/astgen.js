@@ -569,6 +569,10 @@ class ScriptTreeGenerator {
                 target: this.descendInput(block, 'COLOR2'),
                 mask: this.descendInput(block, 'COLOR')
             };
+        case 'sensing_dayssince2000':
+            return {
+                kind: 'sensing.daysSince2000'
+            };
         case 'sensing_distancetomenu':
             return {
                 kind: 'constant',

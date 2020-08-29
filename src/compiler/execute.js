@@ -314,6 +314,22 @@ const timer = () => {
     return t;
 };
 
+// This is the "epoch" for the daysSince2000() function.
+// Storing this in a variable is faster than constantly recreating it.
+const daysSince2000Epoch = new Date(2000, 0, 1);
+
+/**
+ * Returns the amount of days since January 1st, 2000.
+ * @returns {number} Days since 2000.
+ */
+const daysSince2000 = () => {
+    const today = new Date();
+    const dstAdjust = today.getTimezoneOffset() - daysSince2000Epoch.getTimezoneOffset();
+    let mSecsSinceStart = today.valueOf() - daysSince2000Epoch.valueOf();
+    mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
+    return mSecsSinceStart / (24 * 60 * 60 * 1000);
+};
+
 /**
  * Convert a Scratch list index to a JavaScript list index.
  * "all" is not considered as a list index.
