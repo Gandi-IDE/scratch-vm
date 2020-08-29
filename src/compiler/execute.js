@@ -348,16 +348,29 @@ const listIndex = (index, length) => {
 
 /**
  * Get a value from a list.
- * @param {import('../engine/variable')} list The list
+ * @param {Array} list The list
  * @param {*} idx The 1-indexed index in the list.
  * @returns The list item, otherwise empty string if it does not exist.
  */
 const listGet = (list, idx) => {
-    const index = listIndex(idx, list.value.length);
+    const index = listIndex(idx, list.length);
     if (index === -1) {
         return '';
     }
-    return list.value[index];
+    return list[index];
+};
+
+/**
+ * listGet() optimized for number arguments.
+ * @param {Array} list The list
+ * @param {number} idx The 1-indexed index in the list.
+ * @returns The list item, otherwise empty string if it does not exist.
+ */
+const listGetFast = (list, idx) => {
+    if (idx < 1 || idx > list.length) {
+        return '';
+    }
+    return list[Math.floor(idx) - 1];
 };
 
 /**

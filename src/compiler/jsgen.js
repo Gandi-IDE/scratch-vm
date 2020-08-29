@@ -199,8 +199,13 @@ class ScriptCompiler {
             return new TypedInput(`listContains(${this.referenceVariable(node.list)}, ${this.descendInput(node.item).asUnknown()})`, TYPE_BOOLEAN);
         case 'list.contents':
             return new TypedInput(`listContents(${this.referenceVariable(node.list)})`, TYPE_STRING);
-        case 'list.get':
-            return new TypedInput(`listGet(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()})`, TYPE_UNKNOWN);
+        case 'list.get': {
+            const index = this.descendInput(node.index);
+            if (index.isAlwaysNumber()) {
+                return new TypedInput(`listGetFast(${this.referenceVariable(node.list)}.value, ${index.asNumber()})`, TYPE_UNKNOWN);
+            }
+            return new TypedInput(`listGet(${this.referenceVariable(node.list)}.value, ${index.asUnknown()})`, TYPE_UNKNOWN);
+        }
         case 'list.indexOf':
             return new TypedInput(`listIndexOf(${this.referenceVariable(node.list)}, ${this.descendInput(node.item).asUnknown()})`, TYPE_NUMBER);
         case 'list.length':
