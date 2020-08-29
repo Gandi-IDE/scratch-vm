@@ -740,7 +740,8 @@ class ScriptCompiler {
             const field = node.fields[fieldName];
             result += `"${sanitize(fieldName)}":"${sanitize(field)}",`;
         }
-        result += `}, runtime.getOpcodeFunction("${sanitize(opcode)}"))`;
+        const opcodeFunction = this.evaluateOnce(`runtime.getOpcodeFunction("${sanitize(opcode)}")`);
+        result += `}, ${opcodeFunction})`;
 
         return result;
     }
