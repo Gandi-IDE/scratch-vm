@@ -122,7 +122,7 @@ class ConstantInput {
     }
 
     asUnknown () {
-        // Attempt to convert strings to numbers, if it is unlikely to break things
+        // Attempt to convert strings to numbers if it is unlikely to break things
         if (typeof this.constantValue === 'number') {
             // todo: handle NaN?
             return this.constantValue;
@@ -144,6 +144,15 @@ class ConstantInput {
 
     isNeverNumber () {
         return Number.isNaN(+this.constantValue);
+    }
+}
+
+/**
+ * SafeConstantInput is similar to ConstantInput, except that asUnknown() will always convert to String.
+ */
+class SafeConstantInput extends ConstantInput {
+    asUnknown () {
+        return this.asString();
     }
 }
 
@@ -706,7 +715,7 @@ class ScriptCompiler {
     safeConstantInput (value) {
         if (typeof value === 'string') {
             if (this.isNameOfCostume(value)) {
-                return new TypedInput(`"${sanitize(value)}"`, TYPE_STRING);
+                return new SafeConstantInput(value);
             }
         }
         return new ConstantInput(value);
