@@ -178,6 +178,19 @@ disableToString(TypedInput.prototype.asString);
 disableToString(TypedInput.prototype.asBoolean);
 disableToString(TypedInput.prototype.asUnknown);
 
+/**
+ * Determine if an input is a constant that is a non-zero number.
+ * @param {Input} input The input to examine.
+ * @returns {boolean} true if the input is a constant non-zero number
+ */
+const isNonZeroNumberConstant = input => {
+    if (typeof input.constantValue === 'undefined') {
+        return false;
+    }
+    const value = +input.constantValue;
+    return value !== 0;
+};
+
 class ScriptCompiler {
     constructor (script, ast, target) {
         this.script = script;
@@ -290,19 +303,11 @@ class ScriptCompiler {
             }
             // When one operand is known to be a non-zero constant, we can use ===
             // 0 is not allowed here as NaN will get converted to zero, and "apple or any other NaN value = 0" should not return true.
-            if (left.isAlwaysNumber()) {
-                if (typeof left.constantValue !== 'undefined') {
-                    if (+left.constantValue !== 0) {
-                        return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
-                    }
-                }
+            if (left.isAlwaysNumber() && isNonZeroNumberConstant(left)) {
+                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
-            if (right.isAlwaysNumber()) {
-                if (typeof right.constantValue !== 'undefined') {
-                    if (+right.constantValue !== 0) {
-                        return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
-                    }
-                }
+            if (right.isAlwaysNumber() && isNonZeroNumberConstant(right)) {
+                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
             return new TypedInput(`compareEqual(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
         }
