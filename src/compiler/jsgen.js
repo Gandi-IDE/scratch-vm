@@ -309,6 +309,7 @@ class ScriptCompiler {
             if (rightAlwaysNumber && isNonZeroNumberConstant(right)) {
                 return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
+            // No compile-time optimizations possible - use fallback method.
             return new TypedInput(`compareEqual(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
         }
         case 'op.e^':
@@ -318,10 +319,22 @@ class ScriptCompiler {
         case 'op.greater': {
             const left = this.descendInput(node.left);
             const right = this.descendInput(node.right);
-            // If both arguments are known to be numbers, we will use the faster > instead.
-            if (left.isAlwaysNumber() && right.isAlwaysNumber()) {
+            // see op.equals for these optimizations
+            if (left.isNeverNumber() || right.isNeverNumber()) {
+                return new TypedInput(`(${left.asString()}.toLowerCase() > ${right.asString()}.toLowerCase())`, TYPE_BOOLEAN);
+            }
+            const leftAlwaysNumber = left.isAlwaysNumber();
+            const rightAlwaysNumber = right.isAlwaysNumber();
+            if (leftAlwaysNumber && rightAlwaysNumber) {
                 return new TypedInput(`(${left.asNumber()} > ${right.asNumber()})`, TYPE_BOOLEAN);
             }
+            if (leftAlwaysNumber && isNonZeroNumberConstant(left)) {
+                return new TypedInput(`(${left.asNumber()} > ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            if (rightAlwaysNumber && isNonZeroNumberConstant(right)) {
+                return new TypedInput(`(${left.asNumber()} > ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            // No compile-time optimizations possible - use fallback method.
             return new TypedInput(`compareGreaterThan(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
         }
         case 'op.join':
@@ -331,10 +344,22 @@ class ScriptCompiler {
         case 'op.less': {
             const left = this.descendInput(node.left);
             const right = this.descendInput(node.right);
-            // If both arguments are known to be numbers, we will use the faster < instead.
-            if (left.isAlwaysNumber() && right.isAlwaysNumber()) {
+            // see op.equals for these optimizations
+            if (left.isNeverNumber() || right.isNeverNumber()) {
+                return new TypedInput(`(${left.asString()}.toLowerCase() < ${right.asString()}.toLowerCase())`, TYPE_BOOLEAN);
+            }
+            const leftAlwaysNumber = left.isAlwaysNumber();
+            const rightAlwaysNumber = right.isAlwaysNumber();
+            if (leftAlwaysNumber && rightAlwaysNumber) {
                 return new TypedInput(`(${left.asNumber()} < ${right.asNumber()})`, TYPE_BOOLEAN);
             }
+            if (leftAlwaysNumber && isNonZeroNumberConstant(left)) {
+                return new TypedInput(`(${left.asNumber()} < ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            if (rightAlwaysNumber && isNonZeroNumberConstant(right)) {
+                return new TypedInput(`(${left.asNumber()} < ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            // No compile-time optimizations possible - use fallback method.
             return new TypedInput(`compareLessThan(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
         }
         case 'op.letterOf':
