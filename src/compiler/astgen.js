@@ -15,6 +15,7 @@ const compatBlocks = require('./compat-blocks');
  * @property {boolean} hasArguments
  * @property {boolean} isWarp
  * @property {boolean} yields
+ * @property {boolean} loopStuckChecking
  * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on. Does not include dependencies of dependencies, etc.
  * @property {*} cachedCompileResult
  */
@@ -70,6 +71,8 @@ class ScriptTreeGenerator {
         this.isWarp = false;
         /** @private */
         this.yields = true;
+        /** @private */
+        this.loopStuckChecking = this.target.runtime.compilerOptions.loopStuckChecking;
 
         /**
          * The names of the arguments accepted by this script, in order.
@@ -1272,7 +1275,7 @@ class ScriptTreeGenerator {
     }
 
     analyzeLoop () {
-        if (!this.isWarp || this.target.runtime.compilerOptions.loopStuckChecking) {
+        if (!this.isWarp || this.loopStuckChecking) {
             this.yields = true;
         }
     }
@@ -1296,6 +1299,9 @@ class ScriptTreeGenerator {
             switch (flag) {
             case 'nocompile':
                 throw new Error('Script explicitly disables compilation');
+            case 'stuck':
+                this.loopStuckChecking = true;
+                break;
             }
         }
     }
@@ -1314,6 +1320,7 @@ class ScriptTreeGenerator {
             isWarp: this.isWarp,
             dependedProcedures: this.dependedProcedures,
             yields: this.yields, // will be updated later
+            loopStuckChecking: this.loopStuckChecking, // will be updated later
             cachedCompileResult: null
         };
 
@@ -1333,7 +1340,7 @@ class ScriptTreeGenerator {
 
         // If the top block is a hat, advance to its child.
         let entryBlock;
-        if (this.runtime.getIsHat(topBlock.opcode)) {
+        if (this.runtime.getIsHat(topBlock.opcode) || topBlock.opcode === 'procedures_definition') {
             if (this.runtime.getIsEdgeActivatedHat(topBlock.opcode)) {
                 throw new Error('Not compiling an edge-activated hat');
             }
@@ -1349,6 +1356,7 @@ class ScriptTreeGenerator {
 
         result.stack = this.walkStack(entryBlock);
         result.yields = this.yields;
+        result.loopStuckChecking = this.loopStuckChecking;
 
         return result;
     }
@@ -1430,7 +1438,6 @@ class ASTGenerator {
             for (const [procedureCode, definitionId] of this.compilingProcedures.entries()) {
                 const definitionBlock = this.blocks.getBlock(definitionId);
                 const innerDefinition = this.blocks.getBlock(definitionBlock.inputs.custom_block.block);
-                const bodyStart = definitionBlock.next;
 
                 // Extract the function's warp mode.
                 // See Sequencer.stepToProcedure
@@ -1452,7 +1459,7 @@ class ASTGenerator {
                     const generator = new ScriptTreeGenerator(this.thread);
                     generator.setProcedureCode(procedureCode);
                     if (isWarp) generator.enableWarp();
-                    const compiledProcedure = this.generateScriptTree(generator, bodyStart);
+                    const compiledProcedure = this.generateScriptTree(generator, definitionId);
                     this.procedures[procedureCode] = compiledProcedure;
                     this.blocks._cache.compiledProcedures[procedureCode] = compiledProcedure;
                 }
