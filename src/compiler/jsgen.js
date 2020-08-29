@@ -152,7 +152,17 @@ class ConstantInput {
  */
 class SafeConstantInput extends ConstantInput {
     asUnknown () {
+        // This input should never be automatically converted to something else.
         return this.asString();
+    }
+
+    // Make sure that no blocks will wrongly convert this to number.
+    isAlwaysNumber () {
+        return false;
+    }
+
+    isAlwaysNumberOrNaN () {
+        return false;
     }
 }
 
