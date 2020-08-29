@@ -268,13 +268,31 @@ class ScriptCompiler {
         case 'op.equals': {
             const left = this.descendInput(node.left);
             const right = this.descendInput(node.right);
-            // If both arguments are known to be numbers, we will use the faster === instead.
-            if (left.isAlwaysNumber() && right.isAlwaysNumber()) {
-                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
-            }
-            // If either argument is known to never be a valid number, only use string comparison.
+            // If either argument is known to never be a valid number, only use string comparison to avoid all number parsing.
             if (left.isNeverNumber() || right.isNeverNumber()) {
                 return new TypedInput(`(${left.asString()}.toLowerCase() === ${right.asString()}.toLowerCase())`, TYPE_BOOLEAN);
+            }
+            const leftAlwaysNumber = left.isAlwaysNumber();
+            const rightAlwaysNumber = right.isAlwaysNumber();
+            // When both operands are known to be numbers, we can use ===
+            if (leftAlwaysNumber && rightAlwaysNumber) {
+                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            // When one operand is known to be a non-zero constant, we can use ===
+            // 0 is not allowed here as NaN will get converted to zero, and "apple or any other NaN value = 0" should not return true.
+            if (left.isAlwaysNumber()) {
+                if (typeof left.constantValue !== 'undefined') {
+                    if (+left.constantValue !== 0) {
+                        return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
+                    }
+                }
+            }
+            if (right.isAlwaysNumber()) {
+                if (typeof right.constantValue !== 'undefined') {
+                    if (+right.constantValue !== 0) {
+                        return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
+                    }
+                }
             }
             return new TypedInput(`compareEqual(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
         }
@@ -666,10 +684,9 @@ class ScriptCompiler {
     }
 
     retire () {
-        // After running retire(), we need to return to the event loop.
-        // When in a procedure, return will only send us back to the previous procedure.
-        // So instead, we yield back to the event loop.
-        // Outside of a procedure, return will work correctly.
+        // After running retire() (sets thread status and cleans up some unused data), we need to return to the event loop.
+        // When in a procedure, return will only send us back to the previous procedure, so instead we yield back to the sequencer.
+        // Outside of a procedure, return will correctly bring us back to the sequencer.
         if (this.isProcedure) {
             this.source += 'retire(); yield;\n';
         } else {
