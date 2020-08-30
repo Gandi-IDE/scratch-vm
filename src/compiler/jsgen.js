@@ -171,10 +171,13 @@ class VariableInput {
      * @param {Input} input The input this variable was most recently set to.
      */
     setLastInput (input) {
+        if (input instanceof VariableInput) {
+            // A variable input pointing to itself may cause infinite recursion in analysis methods.
+            // todo: see if it's worthwhile to allow variables to point to other variables as long as it doesn't cause infinite loops (would require some logic to check)
+            return;
+        }
         this._lastInput = input;
-        // @ts-ignore
-        if (typeof input.type === 'number') {
-            // @ts-ignore
+        if (input instanceof TypedInput) {
             this.type = input.type;
         } else {
             this.type = TYPE_UNKNOWN;
