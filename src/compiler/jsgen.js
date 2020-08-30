@@ -668,14 +668,6 @@ class JSGenerator {
             this.source += 'ioQuery("clock", "resetProjectTimer");\n';
             break;
 
-        case 'var.change': {
-            const variable = this.referenceVariable(node.variable);
-            this.source += `${variable}.value = (+${variable}.value || 0) + ${this.descendInput(node.value).asNumber()};\n`;
-            if (node.variable.isCloud) {
-                this.source += `ioQuery("cloud", "requestUpdateVariable", ["${sanitize(node.variable.name)}", ${variable}.value]);\n`;
-            }
-            break;
-        }
         case 'var.hide':
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.variable.id)}", element: "checkbox", value: false }, runtime);\n`;
             break;

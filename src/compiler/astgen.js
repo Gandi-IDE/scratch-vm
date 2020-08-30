@@ -791,12 +791,21 @@ class ScriptTreeGenerator {
                 list: this.descendVariable(block, 'LIST', LIST_TYPE),
                 item: this.descendInput(block, 'ITEM')
             };
-        case 'data_changevariableby':
+        case 'data_changevariableby': {
+            const variable = this.descendVariable(block, 'VARIABLE', SCALAR_TYPE);
             return {
-                kind: 'var.change',
-                variable: this.descendVariable(block, 'VARIABLE', SCALAR_TYPE),
-                value: this.descendInput(block, 'VALUE')
+                kind: 'var.set',
+                variable,
+                value: {
+                    kind: 'op.add',
+                    left: {
+                        kind: 'var.get',
+                        variable
+                    },
+                    right: this.descendInput(block, 'VALUE')
+                }
             };
+        }
         case 'data_deletealloflist':
             return {
                 kind: 'list.deleteAll',
