@@ -154,6 +154,47 @@ class SafeConstantInput extends ConstantInput {
     }
 }
 
+/**
+ * @implements {Input}
+ */
+class VariableInput {
+    constructor (source) {
+        this.source = source;
+        /** @type {Input} */
+        this.lastInput = null;
+    }
+
+    asNumber () {
+        return `(+${this.source} || 0)`;
+    }
+
+    asString () {
+        return `("" + ${this.source})`;
+    }
+
+    asBoolean () {
+        return `toBoolean(${this.source})`;
+    }
+
+    asUnknown () {
+        return this.source;
+    }
+
+    isAlwaysNumber () {
+        if (this.lastInput) {
+            return this.lastInput.isAlwaysNumber();
+        }
+        return false;
+    }
+
+    isNeverNumber () {
+        if (this.lastInput) {
+            return this.lastInput.isNeverNumber();
+        }
+        return false;
+    }
+}
+
 // Running toString() on any of these methods is a mistake.
 disableToString(ConstantInput.prototype);
 disableToString(ConstantInput.prototype.asNumber);
@@ -165,6 +206,11 @@ disableToString(TypedInput.prototype.asNumber);
 disableToString(TypedInput.prototype.asString);
 disableToString(TypedInput.prototype.asBoolean);
 disableToString(TypedInput.prototype.asUnknown);
+disableToString(VariableInput.prototype);
+disableToString(VariableInput.prototype.asNumber);
+disableToString(VariableInput.prototype.asString);
+disableToString(VariableInput.prototype.asBoolean);
+disableToString(VariableInput.prototype.asUnknown);
 
 /**
  * @param {Input} input The input to examine.
@@ -185,39 +231,6 @@ const isNonZeroNumberConstant = input => {
     const value = +input.constantValue;
     return value !== 0;
 };
-
-/**
- * @implements {Input}
- */
-class VariableInput {
-    constructor (source) {
-        this.source = source;
-    }
-
-    asNumber () {
-        return `(+${this.source} || 0)`;
-    }
-
-    asString () {
-        return `("" + ${this.source})`;
-    }
-
-    asBoolean () {
-        return `toBoolean(${this.source})`;
-    }
-
-    asUnknown () {
-        return this.source;
-    }
-
-    isAlwaysNumber () {
-        return false;
-    }
-
-    isNeverNumber () {
-        return false;
-    }
-}
 
 class Frame {
     constructor () {
@@ -710,6 +723,7 @@ class JSGenerator {
         case 'var.set': {
             const variable = this.descendVariable(node.variable);
             const value = this.descendInput(node.value);
+            variable.lastInput = value;
             this.source += `${variable.source} = ${value.asUnknown()};\n`;
             if (node.variable.isCloud) {
                 this.source += `ioQuery("cloud", "requestUpdateVariable", ["${sanitize(node.variable.name)}", ${variable}.value]);\n`;
