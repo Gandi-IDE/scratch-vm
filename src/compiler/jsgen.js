@@ -495,25 +495,25 @@ class JSGenerator {
             this.source += `while (${index} < ${this.descendInput(node.count).asNumber()}) { `;
             this.source += `${index}++; `;
             this.source += `${this.referenceVariable(node.variable)}.value = ${index};\n`;
-            this.descendStack(node.do);
+            this.descendStack(node.do, false);
             this.source += '}\n';
             break;
         }
         case 'control.if':
             this.source += `if (${this.descendInput(node.condition).asBoolean()}) {\n`;
-            this.descendStack(node.whenTrue);
+            this.descendStack(node.whenTrue, true);
             // only add the else branch if it won't be empty
             // this makes scripts have a bit less useless noise in them
             if (node.whenFalse.length) {
                 this.source += `} else {\n`;
-                this.descendStack(node.whenFalse);
+                this.descendStack(node.whenFalse, true);
             }
             this.source += `}\n`;
             break;
         case 'control.repeat': {
             const i = this.localVariables.next();
             this.source += `for (var ${i} = ${this.descendInput(node.times).asNumber()}; ${i} >= 0.5; ${i}--) {\n`;
-            this.descendStack(node.do);
+            this.descendStack(node.do, false);
             this.yieldLoop();
             this.source += `}\n`;
             break;
@@ -553,7 +553,7 @@ class JSGenerator {
         }
         case 'control.while':
             this.source += `while (${this.descendInput(node.condition).asBoolean()}) {\n`;
-            this.descendStack(node.do);
+            this.descendStack(node.do, false);
             this.yieldLoop();
             this.source += `}\n`;
             break;
@@ -740,8 +740,16 @@ class JSGenerator {
         }
     }
 
-    descendStack (nodes) {
-        this.currentFrame = new Frame();
+    /**
+     * @param {*} nodes The list of nodes to walk.
+     * @param {boolean} inheritValues true if the new stack frame should inherit values from the current frame.
+     */
+    descendStack (nodes, inheritValues) {
+        const newFrame = new Frame();
+        if (inheritValues) {
+            Object.setPrototypeOf(newFrame.variables, this.currentFrame.variables);
+        }
+        this.currentFrame = newFrame;
         this.frames.push(this.currentFrame);
 
         for (const node of nodes) {
@@ -920,7 +928,7 @@ class JSGenerator {
      */
     compile () {
         if (this.script.stack) {
-            this.descendStack(this.script.stack);
+            this.descendStack(this.script.stack, false);
         }
 
         const factory = this.createScriptFactory();
