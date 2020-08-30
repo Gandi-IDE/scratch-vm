@@ -186,6 +186,12 @@ const isNonZeroNumberConstant = input => {
     return value !== 0;
 };
 
+class Frame {
+    constructor () {
+
+    }
+}
+
 class JSGenerator {
     constructor (script, ast, target) {
         this.script = script;
@@ -196,6 +202,12 @@ class JSGenerator {
         this.isWarp = script.isWarp;
         this.isProcedure = script.isProcedure;
         this.loopStuckChecking = script.loopStuckChecking;
+
+        // The first frame will be setup when the first stack is walked.
+        /** @type {Frame} */
+        this.currentFrame = null;
+        /** @type {Frame[]} */
+        this.frames = [];
 
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
@@ -686,9 +698,15 @@ class JSGenerator {
     }
 
     descendStack (nodes) {
+        this.currentFrame = new Frame();
+        this.frames.push(this.currentFrame);
+
         for (const node of nodes) {
             this.descendStackedBlock(node);
         }
+
+        this.frames.pop();
+        this.currentFrame = this.frames[this.frames.length - 1];
     }
 
     referenceVariable (variable) {
