@@ -167,12 +167,19 @@ disableToString(TypedInput.prototype.asBoolean);
 disableToString(TypedInput.prototype.asUnknown);
 
 /**
+ * @param {Input} input The input to examine.
+ * @returns {input is ConstantInput} true if the input is a ConstantInput or subclass of ConstantInput
+ */
+// @ts-expect-error
+const isConstantInput = input => typeof input.constantValue !== 'undefined';
+
+/**
  * Determine if an input is a constant that is a non-zero number.
  * @param {Input} input The input to examine.
  * @returns {boolean} true if the input is a constant non-zero number
  */
 const isNonZeroNumberConstant = input => {
-    if (typeof input.constantValue === 'undefined') {
+    if (!isConstantInput(input)) {
         return false;
     }
     const value = +input.constantValue;
