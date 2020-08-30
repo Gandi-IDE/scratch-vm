@@ -3,6 +3,7 @@ const Cast = require('../util/cast');
 const VariablePool = require('./variable-pool');
 const execute = require('./execute');
 const {disableToString} = require('./util');
+const environment = require('./environment');
 
 /* eslint-disable max-len */
 
@@ -221,6 +222,9 @@ class ScriptCompiler {
         case 'list.get': {
             const index = this.descendInput(node.index);
             if (index.isAlwaysNumber()) {
+                if (environment.supportsNullishCoalescing) {
+                    return new TypedInput(`(${this.referenceVariable(node.list)}.value[Math.floor(${index.asNumber()}) - 1] ?? "")`, TYPE_UNKNOWN);
+                }
                 return new TypedInput(`listGetFast(${this.referenceVariable(node.list)}.value, ${index.asNumber()})`, TYPE_UNKNOWN);
             }
             return new TypedInput(`listGet(${this.referenceVariable(node.list)}.value, ${index.asUnknown()})`, TYPE_UNKNOWN);
