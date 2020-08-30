@@ -56,9 +56,7 @@ class TypedInput {
     constructor (source, type) {
         // for debugging
         if (typeof type !== 'number') throw new Error('type is invalid');
-        /** @private */
         this.source = source;
-        /** @private */
         this.type = type;
     }
 
@@ -160,19 +158,42 @@ class SafeConstantInput extends ConstantInput {
 class VariableInput {
     constructor (source) {
         this.source = source;
-        /** @type {Input} */
-        this.lastInput = null;
+        this.type = TYPE_UNKNOWN;
+        /**
+         * The value this variable was most recently set to, if any.
+         * @type {Input}
+         * @private
+         */
+        this._lastInput = null;
+    }
+
+    /**
+     * @param {Input} input The input this variable was most recently set to.
+     */
+    setLastInput (input) {
+        this._lastInput = input;
+        // @ts-ignore
+        if (typeof input.type === 'number') {
+            // @ts-ignore
+            this.type = input.type;
+        } else {
+            this.type = TYPE_UNKNOWN;
+        }
     }
 
     asNumber () {
+        if (this.type === TYPE_NUMBER) return this.source;
+        if (this.type === TYPE_NUMBER_NAN) return `(${this.source} || 0)`;
         return `(+${this.source} || 0)`;
     }
 
     asString () {
+        if (this.type === TYPE_STRING) return this.source;
         return `("" + ${this.source})`;
     }
 
     asBoolean () {
+        if (this.type === TYPE_BOOLEAN) return this.source;
         return `toBoolean(${this.source})`;
     }
 
@@ -181,15 +202,15 @@ class VariableInput {
     }
 
     isAlwaysNumber () {
-        if (this.lastInput) {
-            return this.lastInput.isAlwaysNumber();
+        if (this._lastInput) {
+            return this._lastInput.isAlwaysNumber();
         }
         return false;
     }
 
     isNeverNumber () {
-        if (this.lastInput) {
-            return this.lastInput.isNeverNumber();
+        if (this._lastInput) {
+            return this._lastInput.isNeverNumber();
         }
         return false;
     }
@@ -723,7 +744,7 @@ class JSGenerator {
         case 'var.set': {
             const variable = this.descendVariable(node.variable);
             const value = this.descendInput(node.value);
-            variable.lastInput = value;
+            variable.setLastInput(value);
             this.source += `${variable.source} = ${value.asUnknown()};\n`;
             if (node.variable.isCloud) {
                 this.source += `ioQuery("cloud", "requestUpdateVariable", ["${sanitize(node.variable.name)}", ${variable}.value]);\n`;
