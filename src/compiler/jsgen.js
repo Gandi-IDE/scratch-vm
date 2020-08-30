@@ -45,7 +45,6 @@ const generatorNameVariablePool = new VariablePool('gen');
  * @property {() => string} asBoolean
  * @property {() => string} asUnknown
  * @property {() => boolean} isAlwaysNumber
- * @property {() => boolean} isAlwaysNumberOrNaN
  * @property {() => boolean} isNeverNumber
  */
 
@@ -84,10 +83,6 @@ class TypedInput {
 
     isAlwaysNumber () {
         return this.type === TYPE_NUMBER;
-    }
-
-    isAlwaysNumberOrNaN () {
-        return this.type === TYPE_NUMBER || this.type === TYPE_NUMBER_NAN;
     }
 
     isNeverNumber () {
@@ -138,10 +133,6 @@ class ConstantInput {
         return !Number.isNaN(+this.constantValue);
     }
 
-    isAlwaysNumberOrNaN () {
-        return this.isAlwaysNumber();
-    }
-
     isNeverNumber () {
         return Number.isNaN(+this.constantValue);
     }
@@ -158,10 +149,6 @@ class SafeConstantInput extends ConstantInput {
 
     // Make sure that no blocks will wrongly convert this to number.
     isAlwaysNumber () {
-        return false;
-    }
-
-    isAlwaysNumberOrNaN () {
         return false;
     }
 }
