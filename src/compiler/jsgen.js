@@ -158,7 +158,6 @@ class SafeConstantInput extends ConstantInput {
 class VariableInput {
     constructor (source) {
         this.source = source;
-        this.type = TYPE_UNKNOWN;
         /**
          * The value this variable was most recently set to, if any.
          * @type {Input}
@@ -177,26 +176,17 @@ class VariableInput {
             return;
         }
         this._lastInput = input;
-        if (input instanceof TypedInput) {
-            this.type = input.type;
-        } else {
-            this.type = TYPE_UNKNOWN;
-        }
     }
 
     asNumber () {
-        if (this.type === TYPE_NUMBER) return this.source;
-        if (this.type === TYPE_NUMBER_NAN) return `(${this.source} || 0)`;
         return `(+${this.source} || 0)`;
     }
 
     asString () {
-        if (this.type === TYPE_STRING) return this.source;
         return `("" + ${this.source})`;
     }
 
     asBoolean () {
-        if (this.type === TYPE_BOOLEAN) return this.source;
         return `toBoolean(${this.source})`;
     }
 
