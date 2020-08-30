@@ -186,9 +186,45 @@ const isNonZeroNumberConstant = input => {
     return value !== 0;
 };
 
+/**
+ * @implements {Input}
+ */
+class VariableInput {
+    constructor (source) {
+        this.source = source;
+    }
+
+    asNumber () {
+        return `(+${this.source} || 0)`;
+    }
+
+    asString () {
+        return `("" + ${this.source})`;
+    }
+
+    asBoolean () {
+        return `toBoolean(${this.source})`;
+    }
+
+    asUnknown () {
+        return this.source;
+    }
+
+    isAlwaysNumber () {
+        return false;
+    }
+
+    isNeverNumber () {
+        return false;
+    }
+}
+
 class Frame {
     constructor () {
-
+        /**
+         * @type {Object.<string, VariableInput>}
+         */
+        this.variables = {};
     }
 }
 
@@ -412,7 +448,7 @@ class JSGenerator {
             return new TypedInput('ioQuery("keyboard", "getLastKeyPressed")', TYPE_STRING);
 
         case 'var.get':
-            return new TypedInput(`${this.referenceVariable(node.variable)}.value`, TYPE_UNKNOWN);
+            return this.descendVariable(node.variable);
 
         default:
             log.warn(`JS: Unknown input: ${node.kind}`, node);
@@ -672,8 +708,9 @@ class JSGenerator {
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.variable.id)}", element: "checkbox", value: false }, runtime);\n`;
             break;
         case 'var.set': {
-            const variable = this.referenceVariable(node.variable);
-            this.source += `${variable}.value = ${this.descendInput(node.value).asUnknown()};\n`;
+            const variable = this.descendVariable(node.variable);
+            const value = this.descendInput(node.value);
+            this.source += `${variable.source} = ${value.asUnknown()};\n`;
             if (node.variable.isCloud) {
                 this.source += `ioQuery("cloud", "requestUpdateVariable", ["${sanitize(node.variable.name)}", ${variable}.value]);\n`;
             }
@@ -699,6 +736,24 @@ class JSGenerator {
 
         this.frames.pop();
         this.currentFrame = this.frames[this.frames.length - 1];
+    }
+
+    descendVariable (variable) {
+        const id = variable.id;
+        if (this.currentFrame.variables[id]) {
+            return this.currentFrame.variables[id];
+        }
+
+        let source;
+        if (variable.scope === 'target') {
+            source = `${this.evaluateOnce(`target.variables["${sanitize(variable.id)}"]`)}.value`;
+        } else {
+            source = `${this.evaluateOnce(`stage.variables["${sanitize(variable.id)}"]`)}.value`;
+        }
+
+        const input = new VariableInput(source);
+        this.currentFrame.variables[id] = input;
+        return input;
     }
 
     referenceVariable (variable) {
