@@ -258,7 +258,7 @@ class Frame {
         /**
          * @type {Object.<string, VariableInput>}
          */
-        this.variables = {};
+        this.variables = Object.create(null);
     }
 }
 
