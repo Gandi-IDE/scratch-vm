@@ -186,7 +186,7 @@ const isNonZeroNumberConstant = input => {
     return value !== 0;
 };
 
-class ScriptCompiler {
+class JSGenerator {
     constructor (script, ast, target) {
         this.script = script;
         this.ast = ast;
@@ -860,38 +860,4 @@ class ScriptCompiler {
     }
 }
 
-class JSCompiler {
-    constructor (ast, target) {
-        this.ast = ast;
-        this.target = target;
-        this.procedures = {};
-    }
-
-    compileTree (script) {
-        if (script.cachedCompileResult) {
-            return script.cachedCompileResult;
-        }
-
-        const compiler = new ScriptCompiler(script, this.ast, this.target);
-        const result = compiler.compile();
-        script.cachedCompileResult = result;
-        return result;
-    }
-
-    compile () {
-        const entry = this.compileTree(this.ast.entry);
-
-        for (const procedureCode of Object.keys(this.ast.procedures)) {
-            const procedureData = this.ast.procedures[procedureCode];
-            const procedureTree = this.compileTree(procedureData);
-            this.procedures[procedureCode] = procedureTree;
-        }
-
-        return {
-            startingFunction: entry,
-            procedures: this.procedures
-        };
-    }
-}
-
-module.exports = JSCompiler;
+module.exports = JSGenerator;
