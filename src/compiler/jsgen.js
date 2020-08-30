@@ -743,14 +743,7 @@ class JSGenerator {
         if (this.currentFrame.variables[id]) {
             return this.currentFrame.variables[id];
         }
-
-        let source;
-        if (variable.scope === 'target') {
-            source = `${this.evaluateOnce(`target.variables["${sanitize(variable.id)}"]`)}.value`;
-        } else {
-            source = `${this.evaluateOnce(`stage.variables["${sanitize(variable.id)}"]`)}.value`;
-        }
-
+        const source = `${this.referenceVariable(variable)}.value`;
         const input = new VariableInput(source);
         this.currentFrame.variables[id] = input;
         return input;
