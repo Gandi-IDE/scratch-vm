@@ -7,7 +7,6 @@ const log = require('../util/log');
 
 const compatibilityLayerBlockUtility = require('./compat-block-utility');
 
-
 /**
  * The currently running thread.
  * @type {Thread}
@@ -518,15 +517,16 @@ const execute = (_thread) => {
 };
 
 /**
- * eval() some JS
- * @param {string} source
+ * eval() some JS in the scope of the executor
+ * @param {string} source The string to eval()
+ * @returns {*} The result of eval()ing the string.
  */
 const scopedEval = source => {
     try {
         // eslint-disable-next-line no-eval
         return eval(source);
     } catch (e) {
-        console.error('was unable to compile script', source);
+        log.error('was unable to compile script', source);
         throw e;
     }
 };
