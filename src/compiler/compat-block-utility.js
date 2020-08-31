@@ -2,21 +2,21 @@ const BlockUtility = require('../engine/block-utility');
 
 class CompatibilityLayerBlockUtility extends BlockUtility {
     // Branching operations are not supported.
-    startBranch() {
+    startBranch () {
         throw new Error('startBranch is not supported by this BlockUtility');
     }
-    startProcedure() {
+    startProcedure () {
         throw new Error('startProcedure is not supported by this BlockUtility');
     }
 
     // Parameters are not used by compiled scripts.
-    initParams() {
+    initParams () {
         throw new Error('initParams is not supported by this BlockUtility');
     }
-    pushParam() {
+    pushParam () {
         throw new Error('pushParam is not supported by this BlockUtility');
     }
-    getParam() {
+    getParam () {
         throw new Error('getParam is not supported by this BlockUtility');
     }
 }
