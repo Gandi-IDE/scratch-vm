@@ -6,8 +6,9 @@
  */
 const supportsNullishCoalescing = () => {
     try {
-        eval('undefined ?? 3');
-        // if eval succeeds, the browser understood the syntax.
+        // eslint-disable-next-line no-unused-vars
+        const fn = new Function('undefined ?? 3');
+        // if function construction succeeds, the browser understood the syntax.
         return true;
     } catch (e) {
         return false;
