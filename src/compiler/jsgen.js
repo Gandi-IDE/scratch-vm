@@ -152,73 +152,6 @@ class SafeConstantInput extends ConstantInput {
     }
 }
 
-/**
- * @implements {Input}
- */
-class VariableInput {
-    constructor (source) {
-        this.source = source;
-        this.type = TYPE_UNKNOWN;
-        /**
-         * The value this variable was most recently set to, if any.
-         * @type {Input}
-         * @private
-         */
-        this._lastInput = null;
-    }
-
-    /**
-     * @param {Input} input The input this variable was most recently set to.
-     */
-    setLastInput (input) {
-        if (input instanceof VariableInput) {
-            // A variable input pointing to itself may cause infinite recursion in analysis methods.
-            // todo: see if it's worthwhile to allow variables to point to other variables as long as it doesn't cause infinite loops (would require some logic to check)
-            return;
-        }
-        this._lastInput = input;
-        if (input instanceof TypedInput) {
-            this.type = input.type;
-        } else {
-            this.type = TYPE_UNKNOWN;
-        }
-    }
-
-    asNumber () {
-        if (this.type === TYPE_NUMBER) return this.source;
-        if (this.type === TYPE_NUMBER_NAN) return `(${this.source} || 0)`;
-        return `(+${this.source} || 0)`;
-    }
-
-    asString () {
-        if (this.type === TYPE_STRING) return this.source;
-        return `("" + ${this.source})`;
-    }
-
-    asBoolean () {
-        if (this.type === TYPE_BOOLEAN) return this.source;
-        return `toBoolean(${this.source})`;
-    }
-
-    asUnknown () {
-        return this.source;
-    }
-
-    isAlwaysNumber () {
-        if (this._lastInput) {
-            return this._lastInput.isAlwaysNumber();
-        }
-        return false;
-    }
-
-    isNeverNumber () {
-        if (this._lastInput) {
-            return this._lastInput.isNeverNumber();
-        }
-        return false;
-    }
-}
-
 // Running toString() on any of these methods is a mistake.
 disableToString(ConstantInput.prototype);
 disableToString(ConstantInput.prototype.asNumber);
@@ -230,11 +163,6 @@ disableToString(TypedInput.prototype.asNumber);
 disableToString(TypedInput.prototype.asString);
 disableToString(TypedInput.prototype.asBoolean);
 disableToString(TypedInput.prototype.asUnknown);
-disableToString(VariableInput.prototype);
-disableToString(VariableInput.prototype.asNumber);
-disableToString(VariableInput.prototype.asString);
-disableToString(VariableInput.prototype.asBoolean);
-disableToString(VariableInput.prototype.asUnknown);
 
 /**
  * @param {Input} input The input to examine.
@@ -256,15 +184,6 @@ const isNonZeroNumberConstant = input => {
     return value !== 0;
 };
 
-class Frame {
-    constructor () {
-        /**
-         * @type {Object.<string, VariableInput>}
-         */
-        this.variables = Object.create(null);
-    }
-}
-
 class JSGenerator {
     constructor (script, ast, target) {
         this.script = script;
@@ -275,12 +194,6 @@ class JSGenerator {
         this.isWarp = script.isWarp;
         this.isProcedure = script.isProcedure;
         this.loopStuckChecking = script.loopStuckChecking;
-
-        // The first frame will be setup when the first stack is walked.
-        /** @type {Frame} */
-        this.currentFrame = null;
-        /** @type {Frame[]} */
-        this.frames = [];
 
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
@@ -745,10 +658,9 @@ class JSGenerator {
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.variable.id)}", element: "checkbox", value: false }, runtime);\n`;
             break;
         case 'var.set': {
-            const variable = this.descendVariable(node.variable);
+            const variable = this.referenceVariable(node.variable);
             const value = this.descendInput(node.value);
-            variable.setLastInput(value);
-            this.source += `${variable.source} = ${value.asUnknown()};\n`;
+            this.source += `${variable}.value = ${value.asUnknown()};\n`;
             if (node.variable.isCloud) {
                 this.source += `ioQuery("cloud", "requestUpdateVariable", ["${sanitize(node.variable.name)}", ${variable}.value]);\n`;
             }
@@ -765,27 +677,13 @@ class JSGenerator {
     }
 
     descendStack (nodes) {
-        const newFrame = new Frame();
-        this.currentFrame = newFrame;
-        this.frames.push(this.currentFrame);
-
         for (const node of nodes) {
             this.descendStackedBlock(node);
         }
-
-        this.frames.pop();
-        this.currentFrame = this.frames[this.frames.length - 1];
     }
 
     descendVariable (variable) {
-        const id = variable.id;
-        if (this.currentFrame.variables[id]) {
-            return this.currentFrame.variables[id];
-        }
-        const source = `${this.referenceVariable(variable)}.value`;
-        const input = new VariableInput(source);
-        this.currentFrame.variables[id] = input;
-        return input;
+        return new TypedInput(`${this.referenceVariable(variable)}.value`, TYPE_UNKNOWN);
     }
 
     referenceVariable (variable) {
