@@ -7,12 +7,12 @@ const environment = require('./environment');
 
 /* eslint-disable max-len */
 
-const sanitize = string => string
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, '\\\'')
-    .replace(/"/g, '\\"')
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '\\r');
+const sanitize = string => {
+    if (typeof string === 'string') {
+        return JSON.stringify(string).slice(1, -1);
+    }
+    throw new Error(`sanitize got unexpected type: ${typeof string}`);
+};
 
 const TYPE_NUMBER = 1;
 const TYPE_STRING = 2;
