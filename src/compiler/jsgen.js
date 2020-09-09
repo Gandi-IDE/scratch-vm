@@ -42,6 +42,7 @@ const generatorNameVariablePool = new VariablePool('gen');
 /**
  * @typedef Input
  * @property {() => string} asNumber
+ * @property {() => string} asNumberOrNaN
  * @property {() => string} asString
  * @property {() => string} asBoolean
  * @property {() => string} asUnknown
@@ -64,6 +65,11 @@ class TypedInput {
         if (this.type === TYPE_NUMBER) return this.source;
         if (this.type === TYPE_NUMBER_NAN) return `(${this.source} || 0)`;
         return `(+${this.source} || 0)`;
+    }
+
+    asNumberOrNaN () {
+        if (this.type === TYPE_NUMBER || this.type === TYPE_NUMBER_NAN) return this.source;
+        return `(+${this.source})`;
     }
 
     asString () {
@@ -104,6 +110,10 @@ class ConstantInput {
             return this.constantValue;
         }
         return '0';
+    }
+
+    asNumberOrNaN () {
+        return this.asNumber();
     }
 
     asString () {
