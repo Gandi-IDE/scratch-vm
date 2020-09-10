@@ -162,6 +162,83 @@ class SafeConstantInput extends ConstantInput {
     }
 }
 
+/**
+ * @implements {Input}
+ */
+class VariableInput {
+    constructor (source) {
+        this.source = source;
+        this.type = TYPE_UNKNOWN;
+        /**
+         * The value this variable was most recently set to, if any.
+         * @type {Input}
+         * @private
+         */
+        this._value = null;
+    }
+
+    /**
+     * @param {Input} input The input this variable was most recently set to.
+     */
+    setInput (input) {
+        if (input instanceof VariableInput) {
+            // When being set to another variable, extract the value it was set to.
+            // Otherwise, you may end up with infinite recursion in analysis methods when a variable is set to itself.
+            if (input._value) {
+                input = input._value;
+            } else {
+                this.type = TYPE_UNKNOWN;
+                return;
+            }
+        }
+        this._value = input;
+        if (input instanceof TypedInput) {
+            this.type = input.type;
+        } else {
+            this.type = TYPE_UNKNOWN;
+        }
+    }
+
+    asNumber () {
+        if (this.type === TYPE_NUMBER) return this.source;
+        if (this.type === TYPE_NUMBER_NAN) return `(${this.source} || 0)`;
+        return `(+${this.source} || 0)`;
+    }
+
+    asNumberOrNaN () {
+        if (this.type === TYPE_NUMBER || this.type === TYPE_NUMBER_NAN) return this.source;
+        return `(+${this.source})`;
+    }
+
+    asString () {
+        if (this.type === TYPE_STRING) return this.source;
+        return `("" + ${this.source})`;
+    }
+
+    asBoolean () {
+        if (this.type === TYPE_BOOLEAN) return this.source;
+        return `toBoolean(${this.source})`;
+    }
+
+    asUnknown () {
+        return this.source;
+    }
+
+    isAlwaysNumber () {
+        if (this._value) {
+            return this._value.isAlwaysNumber();
+        }
+        return false;
+    }
+
+    isNeverNumber () {
+        if (this._value) {
+            return this._value.isNeverNumber();
+        }
+        return false;
+    }
+}
+
 // Running toString() on any of these methods is a mistake.
 disableToString(ConstantInput.prototype);
 disableToString(ConstantInput.prototype.asNumber);
@@ -200,6 +277,11 @@ class JSGenerator {
         this.ast = ast;
         this.target = target;
         this.source = '';
+
+        /**
+         * @type {Object.<string, VariableInput>}
+         */
+        this.variableInputs = {};
 
         this.isWarp = script.isWarp;
         this.isProcedure = script.isProcedure;
@@ -665,11 +747,12 @@ class JSGenerator {
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.variable.id)}", element: "checkbox", value: false }, runtime);\n`;
             break;
         case 'var.set': {
-            const variable = this.referenceVariable(node.variable);
+            const variable = this.descendVariable(node.variable);
             const value = this.descendInput(node.value);
-            this.source += `${variable}.value = ${value.asUnknown()};\n`;
+            variable.setInput(value);
+            this.source += `${variable.source} = ${value.asUnknown()};\n`;
             if (node.variable.isCloud) {
-                this.source += `ioQuery("cloud", "requestUpdateVariable", ["${sanitize(node.variable.name)}", ${variable}.value]);\n`;
+                this.source += `ioQuery("cloud", "requestUpdateVariable", ["${sanitize(node.variable.name)}", ${variable.source}]);\n`;
             }
             break;
         }
@@ -684,13 +767,26 @@ class JSGenerator {
     }
 
     descendStack (nodes) {
+        // Entering a stack -- all bets are off.
+        // TODO: allow if/else to inherit values
+        this.variableInputs = {};
+
         for (const node of nodes) {
             this.descendStackedBlock(node);
         }
+
+        // Leaving a stack -- any assumptions made in the current stack do not apply outside of it
+        // TODO: in if/else this might create an extra unused object
+        this.variableInputs = {};
     }
 
     descendVariable (variable) {
-        return new TypedInput(`${this.referenceVariable(variable)}.value`, TYPE_UNKNOWN);
+        if (this.variableInputs.hasOwnProperty(variable.id)) {
+            return this.variableInputs[variable.id];
+        }
+        const input = new VariableInput(`${this.referenceVariable(variable)}.value`);
+        this.variableInputs[variable.id] = input;
+        return input;
     }
 
     referenceVariable (variable) {
@@ -734,6 +830,7 @@ class JSGenerator {
     yieldNotWarp () {
         if (!this.isWarp) {
             this.source += 'if (thread.warp === 0) yield;\n';
+            this.yielded();
         }
     }
 
@@ -746,6 +843,12 @@ class JSGenerator {
         } else {
             this.source += 'if (thread.warp === 0 || isStuck()) yield;\n';
         }
+        this.yielded();
+    }
+
+    yielded () {
+        // Control may have been yielded to another script -- all bets are off.
+        this.variableInputs = {};
     }
 
     /**
