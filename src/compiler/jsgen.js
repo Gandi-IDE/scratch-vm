@@ -217,7 +217,7 @@ class JSGenerator {
         case 'list.get': {
             const index = this.descendInput(node.index);
             if (environment.supportsNullishCoalescing && index.isAlwaysNumber()) {
-                return new TypedInput(`(${this.referenceVariable(node.list)}.value[Math.floor(${index.asNumber()}) - 1] ?? "")`, TYPE_UNKNOWN);
+                return new TypedInput(`(${this.referenceVariable(node.list)}.value[(${index.asNumber()} | 0) - 1] ?? "")`, TYPE_UNKNOWN);
             }
             return new TypedInput(`listGet(${this.referenceVariable(node.list)}.value, ${index.asUnknown()})`, TYPE_UNKNOWN);
         }
