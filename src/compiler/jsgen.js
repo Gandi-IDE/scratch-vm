@@ -174,6 +174,26 @@ disableToString(TypedInput.prototype.asString);
 disableToString(TypedInput.prototype.asBoolean);
 disableToString(TypedInput.prototype.asUnknown);
 
+/**
+ * @param {Input} input The input to examine.
+ * @returns {input is ConstantInput} true if the input is a ConstantInput or subclass of ConstantInput
+ */
+// @ts-expect-error
+const isConstantInput = input => typeof input.constantValue !== 'undefined';
+
+/**
+ * Determine if an input is a constant that is a non-zero number.
+ * @param {Input} input The input to examine.
+ * @returns {boolean} true if the input is a constant non-zero number
+ */
+const isNonZeroNumberConstant = input => {
+    if (!isConstantInput(input)) {
+        return false;
+    }
+    const value = +input.constantValue;
+    return value !== 0;
+};
+
 class JSGenerator {
     constructor (script, ast, target) {
         this.script = script;
@@ -284,13 +304,14 @@ class JSGenerator {
             if (leftAlwaysNumber && rightAlwaysNumber) {
                 return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
-            // When one operand is known to be a number constant, we can use ===
+            // When one operand is known to be a non-zero constant, we can use ===
+            // 0 is not allowed here as NaN will get converted to zero, and "apple or any other NaN value = 0" should not return true.
             // todo: this might be unsafe
-            if (leftAlwaysNumber && left instanceof ConstantInput) {
-                return new TypedInput(`(${left.asNumber()} === ${right.asNumberOrNaN()})`, TYPE_BOOLEAN);
+            if (leftAlwaysNumber && isNonZeroNumberConstant(left)) {
+                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
-            if (rightAlwaysNumber && right instanceof ConstantInput) {
-                return new TypedInput(`(${left.asNumberOrNaN()} === ${right.asNumber()})`, TYPE_BOOLEAN);
+            if (rightAlwaysNumber && isNonZeroNumberConstant(right)) {
+                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
             // No compile-time optimizations possible - use fallback method.
             return new TypedInput(`compareEqual(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
