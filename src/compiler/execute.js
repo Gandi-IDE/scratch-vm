@@ -346,17 +346,16 @@ const listIndex = (index, length) => {
             return -1;
         } else if (index === 'random' || index === '*') {
             if (length > 0) {
-                return Math.floor(Math.random() * length);
+                return (Math.random() * length) | 0;
             }
             return -1;
         }
         index = +index || 0;
     }
-    index = Math.floor(index);
     if (index < 1 || index > length) {
         return -1;
     }
-    return index - 1;
+    return (index | 0) - 1;
 };
 
 /**
