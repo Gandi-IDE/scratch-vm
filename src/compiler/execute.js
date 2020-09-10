@@ -352,10 +352,11 @@ const listIndex = (index, length) => {
         }
         index = +index || 0;
     }
+    index = index | 0;
     if (index < 1 || index > length) {
         return -1;
     }
-    return (index | 0) - 1;
+    return index - 1;
 };
 
 /**
