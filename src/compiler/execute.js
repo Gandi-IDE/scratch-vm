@@ -374,19 +374,6 @@ const listGet = (list, idx) => {
 };
 
 /**
- * listGet() optimized for number arguments.
- * @param {Array} list The list
- * @param {number} idx The 1-indexed index in the list.
- * @returns The list item, otherwise empty string if it does not exist.
- */
-const listGetFast = (list, idx) => {
-    if (idx < 1 || idx > list.length) {
-        return '';
-    }
-    return list[Math.floor(idx) - 1];
-};
-
-/**
  * Replace a value in a list.
  * @param {import('../engine/variable')} list The list
  * @param {*} idx List index, Scratch style.

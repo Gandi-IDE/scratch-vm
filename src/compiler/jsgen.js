@@ -216,11 +216,8 @@ class JSGenerator {
             return new TypedInput(`listContents(${this.referenceVariable(node.list)})`, TYPE_STRING);
         case 'list.get': {
             const index = this.descendInput(node.index);
-            if (index.isAlwaysNumber()) {
-                if (environment.supportsNullishCoalescing) {
-                    return new TypedInput(`(${this.referenceVariable(node.list)}.value[Math.floor(${index.asNumber()}) - 1] ?? "")`, TYPE_UNKNOWN);
-                }
-                return new TypedInput(`listGetFast(${this.referenceVariable(node.list)}.value, ${index.asNumber()})`, TYPE_UNKNOWN);
+            if (environment.supportsNullishCoalescing && index.isAlwaysNumber()) {
+                return new TypedInput(`(${this.referenceVariable(node.list)}.value[Math.floor(${index.asNumber()}) - 1] ?? "")`, TYPE_UNKNOWN);
             }
             return new TypedInput(`listGet(${this.referenceVariable(node.list)}.value, ${index.asUnknown()})`, TYPE_UNKNOWN);
         }
