@@ -811,12 +811,20 @@ class ScriptTreeGenerator {
                 kind: 'list.deleteAll',
                 list: this.descendVariable(block, 'LIST', LIST_TYPE)
             };
-        case 'data_deleteoflist':
+        case 'data_deleteoflist': {
+            const index = this.descendInput(block, 'INDEX');
+            if (index.kind === 'constant' && index.value === 'all') {
+                return {
+                    kind: 'list.deleteAll',
+                    list: this.descendVariable(block, 'LIST', LIST_TYPE)
+                };
+            }
             return {
                 kind: 'list.delete',
                 list: this.descendVariable(block, 'LIST', LIST_TYPE),
-                index: this.descendInput(block, 'INDEX')
+                index: index
             };
+        }
         case 'data_hidelist':
             return {
                 kind: 'list.hide',
