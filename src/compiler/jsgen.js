@@ -712,6 +712,9 @@ class JSGenerator {
             const callingFromNonWarpToWarp = !this.isWarp && procedureData.isWarp;
             if (callingFromNonWarpToWarp) {
                 this.source += 'thread.warp++;\n';
+            } else if (procedureCode === this.script.procedureCode) {
+                // Direct recursion yields.
+                this.yieldNotWarp();
             }
             if (procedureData.yields) {
                 this.source += 'yield* ';

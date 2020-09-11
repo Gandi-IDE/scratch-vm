@@ -1110,6 +1110,13 @@ class ScriptTreeGenerator {
                 this.dependedProcedures.push(procedureCode);
             }
 
+            // Non-warp recursion yields.
+            if (!this.isWarp) {
+                if (procedureCode === this.procedureCode) {
+                    this.yields = true;
+                }
+            }
+
             const args = [];
             for (let i = 0; i < paramIds.length; i++) {
                 let value;
