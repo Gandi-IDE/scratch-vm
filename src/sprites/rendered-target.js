@@ -275,14 +275,14 @@ class RenderedTarget extends Target {
 
             this.renderer.updateDrawablePosition(this.drawableID, position);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         } else {
             this.x = x;
             this.y = y;
         }
-        this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY, force);
+        this.emitFast(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY, force);
         this.runtime.requestTargetsUpdate(this);
     }
 
@@ -323,7 +323,7 @@ class RenderedTarget extends Target {
             const {direction: renderedDirection, scale} = this._getRenderedDirectionAndScale();
             this.renderer.updateDrawableDirectionScale(this.drawableID, renderedDirection, scale);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -352,7 +352,7 @@ class RenderedTarget extends Target {
         if (this.renderer) {
             this.renderer.updateDrawableVisible(this.drawableID, this.visible);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -382,7 +382,7 @@ class RenderedTarget extends Target {
             const {direction, scale} = this._getRenderedDirectionAndScale();
             this.renderer.updateDrawableDirectionScale(this.drawableID, direction, scale);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -400,7 +400,7 @@ class RenderedTarget extends Target {
         if (this.renderer) {
             this.renderer.updateDrawableEffect(this.drawableID, effectName, value);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -420,7 +420,7 @@ class RenderedTarget extends Target {
                 this.renderer.updateDrawableEffect(this.drawableID, effectName, 0);
             }
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -443,7 +443,7 @@ class RenderedTarget extends Target {
             this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
 
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -581,7 +581,7 @@ class RenderedTarget extends Target {
             const {direction, scale} = this._getRenderedDirectionAndScale();
             this.renderer.updateDrawableDirectionScale(this.drawableID, direction, scale);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -687,7 +687,7 @@ class RenderedTarget extends Target {
             }
 
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -1105,7 +1105,7 @@ class RenderedTarget extends Target {
                 StageLayering.BACKGROUND_LAYER :
                 StageLayering.SPRITE_LAYER);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
