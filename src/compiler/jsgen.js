@@ -599,9 +599,18 @@ class JSGenerator {
         case 'list.hide':
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.list.id)}", element: "checkbox", value: false }, runtime);\n`;
             break;
-        case 'list.insert':
-            this.source += `listInsert(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()}, ${this.descendInput(node.item).asUnknown()});\n`;
+        case 'list.insert': {
+            const list = this.referenceVariable(node.list);
+            const index = this.descendInput(node.index);
+            const item = this.descendInput(node.item);
+            if (index instanceof ConstantInput && +index.constantValue === 1) {
+                this.source += `${list}.value.unshift(${item.asUnknown()});\n`;
+                this.source += `${list}._monitorUpToDate = false;\n`;
+                break;
+            }
+            this.source += `listInsert(${list}, ${index.asUnknown()}, ${item.asUnknown()});\n`;
             break;
+        }
         case 'list.replace':
             this.source += `listReplace(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()}, ${this.descendInput(node.item).asUnknown()});\n`;
             break;
