@@ -322,7 +322,7 @@ class JSGenerator {
             return new TypedInput(`${this.referenceVariable(node.list)}.value.length`, TYPE_NUMBER);
 
         case 'looks.size':
-            return new TypedInput('target.size', TYPE_NUMBER);
+            return new TypedInput('Math.round(target.size)', TYPE_NUMBER);
         case 'looks.backdropName':
             return new TypedInput('stage.getCostumes()[stage.currentCostume].name', TYPE_STRING);
         case 'looks.backdropNumber':
