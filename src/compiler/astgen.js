@@ -1447,6 +1447,9 @@ class ASTGenerator {
             if (!this.analyzedProcedures.includes(procedureCode)) {
                 this.analyzedProcedures.push(procedureCode);
                 this.analyzeScript(procedureData);
+                // There seems to be some problems with recursive functions being analyzed incorrectly.
+                // I need to look into it more, but for now it seems that less aggressively skipping unnecessary analysis fixes it.
+                this.analyzedProcedures.pop();
             }
 
             // If a procedure used by a script may yield, the script itself may yield.
