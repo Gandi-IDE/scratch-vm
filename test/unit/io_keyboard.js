@@ -103,3 +103,42 @@ test('keyup', t => {
     t.strictEquals(k.getKeyIsDown('any'), false);
     t.end();
 });
+
+test('tw: extended spec', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
+
+    t.type(k.getLastKeyPressed, 'function');
+    t.end();
+});
+
+test('tw: extended key support', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
+
+    k.postData({
+        key: 'Backspace',
+        isDown: true
+    });
+    t.strictDeepEquals(k._keysPressed, ['backspace']);
+    t.strictEqual(k.getKeyIsDown('backspace'), true);
+    t.end();
+});
+
+test('tw: last key pressed', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
+
+    t.strictEqual(k.getLastKeyPressed(), '');
+    k.postData({
+        key: 'a',
+        isDown: true
+    });
+    t.strictEqual(k.getLastKeyPressed(), 'a');
+    k.postData({
+        key: 'b',
+        isDown: true
+    });
+    t.strictEqual(k.getLastKeyPressed(), 'b');
+    t.end();
+});

@@ -35,3 +35,27 @@ test('cycle', t => {
     rt._step();
     t.ok(c.projectTimer() > 0);
 });
+
+test('tw: extended spec', t => {
+    const rt = new Runtime();
+    const c = new Clock(rt);
+
+    t.type(c.preciseProjectTimer, 'function');
+    t.end();
+});
+
+test('tw: precise timer', t => {
+    const rt = new Runtime();
+    const c = new Clock(rt);
+
+    t.ok(c.preciseProjectTimer() <= 0.1);
+    setTimeout(() => {
+        c.resetProjectTimer();
+        setTimeout(() => {
+            t.ok(c.preciseProjectTimer() > 0);
+            t.end();
+        }, 100);
+    }, 100);
+    rt._step();
+    t.ok(c.preciseProjectTimer() > 0);
+});
