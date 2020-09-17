@@ -967,7 +967,8 @@ class JSGenerator {
         const factory = this.createScriptFactory();
         const fn = execute.scopedEval(factory);
 
-        log.info(`JS: ${this.target.sprite.name}: compiled ${this.script.procedureCode || 'script'}`, factory);
+        const spriteName = this.target.sprite ? this.target.sprite.name : 'unnamed';
+        log.info(`JS: ${spriteName}: compiled ${this.script.procedureCode || 'script'}`, factory);
 
         return fn;
     }
