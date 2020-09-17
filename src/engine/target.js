@@ -9,6 +9,8 @@ const log = require('../util/log');
 const StringUtil = require('../util/string-util');
 const VariableUtil = require('../util/variable-util');
 
+require('../emit-fast');
+
 /**
  * @fileoverview
  * A Target is an abstract "code-running" object for the Scratch VM.
