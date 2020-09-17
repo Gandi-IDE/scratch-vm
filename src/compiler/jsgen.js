@@ -471,6 +471,8 @@ class JSGenerator {
         case 'sensing.distance':
             // TODO: on stages, this can be computed at compile time
             return new TypedInput(`distance(${this.descendInput(node.target).asString()})`, TYPE_NUMBER);
+        case 'sensing.of':
+            return new TypedInput(`runtime.ext_scratch3_sensing.getAttributeOf({OBJECT: ${this.descendInput(node.object).asString()}, PROPERTY: "${sanitize(node.property)}" })`, TYPE_UNKNOWN);
         case 'sensing.touching':
             return new TypedInput(`target.isTouchingObject(${this.descendInput(node.object).asUnknown()})`, TYPE_BOOLEAN);
         case 'sensing.touchingColor':

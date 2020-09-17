@@ -614,6 +614,12 @@ class ScriptTreeGenerator {
                 kind: 'constant',
                 value: block.fields.OBJECT.value
             };
+        case 'sensing_of':
+            return {
+                kind: 'sensing.of',
+                property: block.fields.PROPERTY.value,
+                object: this.descendInput(block, 'OBJECT')
+            };
         case 'sensing_timer':
             return {
                 kind: 'timer.get'

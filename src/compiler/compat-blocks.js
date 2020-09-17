@@ -50,7 +50,6 @@ const inputs = [
     'sensing_current',
     'sensing_loud',
     'sensing_loudness',
-    'sensing_of',
     'sound_volume',
     'translate_getTranslate',
     'translate_getViewerLanguage',
