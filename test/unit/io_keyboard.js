@@ -71,6 +71,7 @@ test('non-english key', t => {
     t.end();
 });
 
+/* tw: disable test: we intentionally add support for modifier keys
 test('ignore modifier key', t => {
     const rt = new Runtime();
     const k = new Keyboard(rt);
@@ -83,6 +84,7 @@ test('ignore modifier key', t => {
     t.strictEquals(k.getKeyIsDown('any'), false);
     t.end();
 });
+*/
 
 test('keyup', t => {
     const rt = new Runtime();
