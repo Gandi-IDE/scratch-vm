@@ -466,6 +466,9 @@ class JSGenerator {
             return new TypedInput(`target.colorIsTouchingColor(colorToList(${this.descendInput(node.target).asUnknown()}), colorToList(${this.descendInput(node.mask).asUnknown()}))`, TYPE_BOOLEAN);
         case 'sensing.daysSince2000':
             return new TypedInput('daysSince2000()', TYPE_NUMBER);
+        case 'sensing.distance':
+            // TODO: on stages, this can be computed at compile time
+            return new TypedInput(`distance(${this.descendInput(node.target).asString()})`, TYPE_NUMBER);
         case 'sensing.touching':
             return new TypedInput(`target.isTouchingObject(${this.descendInput(node.object).asUnknown()})`, TYPE_BOOLEAN);
         case 'sensing.touchingColor':

@@ -578,6 +578,11 @@ class ScriptTreeGenerator {
                 kind: 'constant',
                 value: block.fields.DISTANCETOMENU.value
             };
+        case 'sensing_distanceto':
+            return {
+                kind: 'sensing.distance',
+                target: this.descendInput(block, 'DISTANCETOMENU')
+            };
         case 'sensing_keyoptions':
             return {
                 kind: 'constant',

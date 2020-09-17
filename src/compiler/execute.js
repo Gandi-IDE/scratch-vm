@@ -289,7 +289,7 @@ const randomFloat = (low, high) => {
  * Perform an IO query
  * @param {string} device The name of the device to query
  * @param {string} func The function of the device to query
- * @param {*} args The arguments to pass to the device
+ * @param {*} [args] The arguments to pass to the device
  * @returns {*} The value returned by the IO device
  */
 const ioQuery = (device, func, args) => {
@@ -327,6 +327,31 @@ const daysSince2000 = () => {
     let mSecsSinceStart = today.valueOf() - daysSince2000Epoch.valueOf();
     mSecsSinceStart += ((today.getTimezoneOffset() - dstAdjust) * 60 * 1000);
     return mSecsSinceStart / (24 * 60 * 60 * 1000);
+};
+
+/**
+ * Determine distance to a sprite or point.
+ * @param {string} menu The name of the sprite or location to find.
+ * @returns {number} Distance to the point, or 10000 if it cannot be calculated.
+ */
+const distance = menu => {
+    if (thread.target.isStage) return 10000;
+
+    let targetX = 0;
+    let targetY = 0;
+    if (menu === '_mouse_') {
+        targetX = ioQuery('mouse', 'getScratchX');
+        targetY = ioQuery('mouse', 'getScratchY');
+    } else {
+        const distTarget = thread.target.runtime.getSpriteTargetByName(menu);
+        if (!distTarget) return 10000;
+        targetX = distTarget.x;
+        targetY = distTarget.y;
+    }
+
+    const dx = thread.target.x - targetX;
+    const dy = thread.target.y - targetY;
+    return Math.sqrt((dx * dx) + (dy * dy));
 };
 
 /**
