@@ -15,7 +15,6 @@ test('spec', t => {
     t.end();
 });
 
-/* tw: disable test: we intentionally make timer precise
 test('cycle', t => {
     const rt = new Runtime();
     const c = new Clock(rt);
@@ -36,4 +35,3 @@ test('cycle', t => {
     rt._step();
     t.ok(c.projectTimer() > 0);
 });
-*/
