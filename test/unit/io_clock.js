@@ -50,12 +50,8 @@ test('tw: precise timer', t => {
 
     t.ok(c.preciseProjectTimer() <= 0.1);
     setTimeout(() => {
-        c.resetProjectTimer();
-        setTimeout(() => {
-            t.ok(c.preciseProjectTimer() > 0);
-            t.end();
-        }, 100);
-    }, 100);
-    rt._step();
-    t.ok(c.preciseProjectTimer() > 0);
+        // Precise timer should increase independent of thread stepping.
+        t.ok(c.preciseProjectTimer() > 0.1);
+        t.end();
+    }, 200);
 });
