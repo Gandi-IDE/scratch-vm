@@ -477,7 +477,7 @@ class JSGenerator {
             return new TypedInput('ioQuery("userData", "getUsername")', TYPE_STRING);
 
         case 'timer.get':
-            return new TypedInput('ioQuery("clock", "projectTimer")', TYPE_NUMBER);
+            return new TypedInput('ioQuery("clock", "preciseProjectTimer")', TYPE_NUMBER);
 
         case 'tw.lastKeyPressed':
             return new TypedInput('ioQuery("keyboard", "getLastKeyPressed")', TYPE_STRING);

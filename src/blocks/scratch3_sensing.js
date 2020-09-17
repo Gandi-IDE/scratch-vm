@@ -211,7 +211,8 @@ class Scratch3SensingBlocks {
     }
 
     getTimer (args, util) {
-        return util.ioQuery('clock', 'projectTimer');
+        // tw: use precise time
+        return util.ioQuery('clock', 'preciseProjectTimer');
     }
 
     resetTimer (args, util) {
