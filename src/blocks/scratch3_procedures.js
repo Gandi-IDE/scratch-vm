@@ -58,6 +58,10 @@ class Scratch3ProcedureBlocks {
     argumentReporterStringNumber (args, util) {
         const value = util.getParam(args.VALUE);
         if (value === null) {
+            // tw: support some more blocks
+            if (`${args.VALUE}`.toLowerCase() === 'last key pressed') {
+                return util.ioQuery('keyboard', 'getLastKeyPressed');
+            }
             // When the parameter is not found in the most recent procedure
             // call, the default is always 0.
             return 0;
