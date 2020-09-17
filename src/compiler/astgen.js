@@ -563,6 +563,10 @@ class ScriptTreeGenerator {
                 value: block.fields.colorParam.value
             };
 
+        case 'sensing_answer':
+            return {
+                kind: 'sensing.answer'
+            };
         case 'sensing_coloristouchingcolor':
             return {
                 kind: 'sensing.colorTouchingColor',
