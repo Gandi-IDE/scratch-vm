@@ -47,7 +47,6 @@ const stacked = [
 
 const inputs = [
     'music_getTempo',
-    'sensing_current',
     'sensing_loud',
     'sensing_loudness',
     'sound_volume',

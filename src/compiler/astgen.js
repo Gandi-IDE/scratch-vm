@@ -573,6 +573,11 @@ class ScriptTreeGenerator {
                 target: this.descendInput(block, 'COLOR2'),
                 mask: this.descendInput(block, 'COLOR')
             };
+        case 'sensing_current':
+            return {
+                kind: 'sensing.current',
+                property: block.fields.CURRENTMENU.value.toLowerCase()
+            };
         case 'sensing_dayssince2000':
             return {
                 kind: 'sensing.daysSince2000'

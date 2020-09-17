@@ -466,6 +466,24 @@ class JSGenerator {
             return new TypedInput(`runtime.ext_scratch3_sensing._answer`, TYPE_STRING);
         case 'sensing.colorTouchingColor':
             return new TypedInput(`target.colorIsTouchingColor(colorToList(${this.descendInput(node.target).asUnknown()}), colorToList(${this.descendInput(node.mask).asUnknown()}))`, TYPE_BOOLEAN);
+        case 'sensing.current':
+            switch (node.property) {
+            case 'year':
+                return new TypedInput(`(new Date().getFullYear())`, TYPE_NUMBER);
+            case 'month':
+                return new TypedInput(`(new Date().getMonth() + 1)`, TYPE_NUMBER);
+            case 'date':
+                return new TypedInput(`(new Date().getDate())`, TYPE_NUMBER);
+            case 'dayofweek':
+                return new TypedInput(`(new Date().getDay() + 1)`, TYPE_NUMBER);
+            case 'hour':
+                return new TypedInput(`(new Date().getHours())`, TYPE_NUMBER);
+            case 'minute':
+                return new TypedInput(`(new Date().getMinutes())`, TYPE_NUMBER);
+            case 'second':
+                return new TypedInput(`(new Date().getSeconds())`, TYPE_NUMBER);
+            }
+            return new ConstantInput(0);
         case 'sensing.daysSince2000':
             return new TypedInput('daysSince2000()', TYPE_NUMBER);
         case 'sensing.distance':
