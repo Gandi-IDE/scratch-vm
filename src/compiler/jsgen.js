@@ -590,12 +590,14 @@ class JSGenerator {
             break;
         }
         case 'control.waitUntil': {
+            this.resetVariableInputs();
             this.source += `while (!${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.yieldNotWarpOrStuck();
             this.source += `}\n`;
             break;
         }
         case 'control.while':
+            this.resetVariableInputs();
             this.source += `while (${this.descendInput(node.condition).asBoolean()}) {\n`;
             this.descendStack(node.do);
             this.yieldLoop();
