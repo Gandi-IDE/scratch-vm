@@ -800,10 +800,14 @@ class JSGenerator {
         }
     }
 
+    resetVariableInputs () {
+        this.variableInputs = {};
+    }
+
     descendStack (nodes) {
         // Entering a stack -- all bets are off.
         // TODO: allow if/else to inherit values
-        this.variableInputs = {};
+        this.resetVariableInputs();
 
         for (const node of nodes) {
             this.descendStackedBlock(node);
@@ -811,7 +815,7 @@ class JSGenerator {
 
         // Leaving a stack -- any assumptions made in the current stack do not apply outside of it
         // TODO: in if/else this might create an extra unused object
-        this.variableInputs = {};
+        this.resetVariableInputs();
     }
 
     descendVariable (variable) {
@@ -882,7 +886,7 @@ class JSGenerator {
 
     yielded () {
         // Control may have been yielded to another script -- all bets are off.
-        this.variableInputs = {};
+        this.resetVariableInputs();
     }
 
     /**
