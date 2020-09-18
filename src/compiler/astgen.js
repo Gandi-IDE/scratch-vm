@@ -1117,6 +1117,11 @@ class ScriptTreeGenerator {
             // setting of yields will be handled later in the analysis phase
 
             const procedureCode = block.mutation.proccode;
+            if (procedureCode === 'tw:debugger;') {
+                return {
+                    kind: 'tw.debugger'
+                };
+            }
             const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
             if (paramNamesIdsAndDefaults === null) {
                 return {

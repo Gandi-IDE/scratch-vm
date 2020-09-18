@@ -773,6 +773,10 @@ class JSGenerator {
             this.source += 'ioQuery("clock", "resetProjectTimer");\n';
             break;
 
+        case 'tw.debugger':
+            this.source += 'debugger;\n';
+            break;
+
         case 'var.hide':
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.variable.id)}", element: "checkbox", value: false }, runtime);\n`;
             break;
