@@ -534,6 +534,7 @@ class JSGenerator {
             this.source += '}\n';
             break;
         case 'control.for': {
+            this.resetVariableInputs();
             const index = this.localVariables.next();
             this.source += `var ${index} = 0; `;
             this.source += `while (${index} < ${this.descendInput(node.count).asNumber()}) { `;
