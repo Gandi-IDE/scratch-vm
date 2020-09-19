@@ -2195,7 +2195,8 @@ class Runtime extends EventEmitter {
      * @param {*} compilerOptions New options
      */
     setCompilerOptions (compilerOptions) {
-        this.compilerOptions = Object.assign({}, compilerOptions, this.compilerOptions);
+        this.compilerOptions = Object.assign({}, this.compilerOptions, compilerOptions);
+        this.resetAllCaches();
         this.emit(Runtime.COMPILER_OPTIONS_CHANGED, this.compilerOptions);
     }
 
