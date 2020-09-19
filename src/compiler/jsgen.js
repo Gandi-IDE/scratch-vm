@@ -901,18 +901,26 @@ class JSGenerator {
 
     safeConstantInput (value) {
         if (typeof value === 'string') {
-            if (this.isNameOfCostume(value)) {
+            if (this.isNameOfCostumeOrSound(value)) {
                 return new SafeConstantInput(value);
             }
         }
         return new ConstantInput(value);
     }
 
-    isNameOfCostume (stringValue) {
+    isNameOfCostumeOrSound (stringValue) {
         for (const target of this.target.runtime.targets) {
             if (target.isOriginal) {
-                if (target.getCostumeIndexByName(stringValue) !== -1) {
-                    return true;
+                const sprite = target.sprite;
+                for (const costume of sprite.costumes) {
+                    if (costume.name === stringValue) {
+                        return true;
+                    }
+                }
+                for (const sound of sprite.sounds) {
+                    if (sound.name === stringValue) {
+                        return true;
+                    }
                 }
             }
         }
