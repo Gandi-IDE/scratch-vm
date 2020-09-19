@@ -394,7 +394,7 @@ class JSGenerator {
         case 'op.e^':
             return new TypedInput(`Math.exp(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
         case 'op.floor':
-            return new TypedInput(`(${this.descendInput(node.value).asNumber()} | 0)`, TYPE_NUMBER);
+            return new TypedInput(`Math.floor(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
         case 'op.greater': {
             const left = this.descendInput(node.left);
             const right = this.descendInput(node.right);
