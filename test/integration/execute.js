@@ -61,7 +61,7 @@ const executeDir = path.resolve(__dirname, '../fixtures/execute');
 fs.readdirSync(executeDir)
     .filter(uri => uri.endsWith('.sb2'))
     .forEach(uri => {
-        const run = (t, compiled) => {
+        const run = (t, enableCompiler) => {
             // Disable logging during this test.
             log.suggest.deny('vm', 'error');
             t.tearDown(() => log.suggest.clear());
@@ -109,7 +109,7 @@ fs.readdirSync(executeDir)
             vm.clear();
             vm.setCompatibilityMode(false);
             vm.setTurboMode(false);
-            vm.setCompilerEnabled(compiled);
+            vm.setCompilerOptions({enabled: enableCompiler});
 
             // Stop the runtime interval once the test is complete so the test
             // process may naturally exit.
