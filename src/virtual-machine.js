@@ -157,11 +157,8 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.COMPATIBILITY_MODE_ON, () => {
             this.emit(Runtime.COMPATIBILITY_MODE_ON);
         });
-        this.runtime.on(Runtime.COMPILER_ENABLED, () => {
-            this.emit(Runtime.COMPILER_ENABLED);
-        });
-        this.runtime.on(Runtime.COMPILER_DISABLED, () => {
-            this.emit(Runtime.COMPILER_DISABLED);
+        this.runtime.on(Runtime.COMPILER_OPTIONS_CHANGED, compilerOptions => {
+            this.emit(Runtime.COMPILER_OPTIONS_CHANGED, compilerOptions);
         });
 
         this.extensionManager = new ExtensionManager(this.runtime);
@@ -215,11 +212,8 @@ class VirtualMachine extends EventEmitter {
     }
 
     // tw: add VirtualMachine methods that forward to the Runtime
-    setCompilerEnabled (compilerEnabled) {
-        this.runtime.setCompilerEnabled(compilerEnabled);
-    }
-    setLoopStuckChecking (stuckChecking) {
-        this.runtime.setLoopStuckChecking(stuckChecking);
+    setCompilerOptions (compilerOptions) {
+        this.runtime.setCompilerOptions(compilerOptions);
     }
 
     /**

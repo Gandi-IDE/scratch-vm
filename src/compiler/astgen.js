@@ -15,7 +15,7 @@ const compatBlocks = require('./compat-blocks');
  * @property {string[]} arguments
  * @property {boolean} isWarp
  * @property {boolean} yields
- * @property {boolean} loopStuckChecking
+ * @property {boolean} warpTimer
  * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on. Does not include dependencies of dependencies, etc.
  * @property {*} cachedCompileResult
  */
@@ -72,7 +72,7 @@ class ScriptTreeGenerator {
         /** @private */
         this.yields = true;
         /** @private */
-        this.loopStuckChecking = this.target.runtime.compilerOptions.loopStuckChecking;
+        this.warpTimer = this.target.runtime.compilerOptions.warpTimer;
 
         /**
          * The names of the arguments accepted by this script, in order.
@@ -1328,7 +1328,7 @@ class ScriptTreeGenerator {
     }
 
     analyzeLoop () {
-        if (!this.isWarp || this.loopStuckChecking) {
+        if (!this.isWarp || this.warpTimer) {
             this.yields = true;
         }
     }
@@ -1354,7 +1354,7 @@ class ScriptTreeGenerator {
                 case 'nocompile':
                     throw new Error('Script explicitly disables compilation');
                 case 'stuck':
-                    this.loopStuckChecking = true;
+                    this.warpTimer = true;
                     break;
                 }
             }
@@ -1378,7 +1378,7 @@ class ScriptTreeGenerator {
             isWarp: this.isWarp,
             dependedProcedures: this.dependedProcedures,
             yields: this.yields, // will be updated later
-            loopStuckChecking: this.loopStuckChecking, // will be updated later
+            warpTimer: this.warpTimer, // will be updated later
             cachedCompileResult: null
         };
 
@@ -1414,7 +1414,7 @@ class ScriptTreeGenerator {
 
         result.stack = this.walkStack(entryBlock);
         result.yields = this.yields;
-        result.loopStuckChecking = this.loopStuckChecking;
+        result.warpTimer = this.warpTimer;
 
         return result;
     }

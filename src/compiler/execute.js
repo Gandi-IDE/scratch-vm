@@ -20,9 +20,11 @@ let thread;
 let stuckCounter = 0;
 /**
  * Determine whether the current tick is likely stuck.
+ * This implements similar functionality to the warp timer found in Scratch.
  * @returns {boolean} true if the current tick is likely stuck.
  */
 const isStuck = () => {
+    // The real time is not checked on every call for performance, as can be a very hot function.
     stuckCounter++;
     if (stuckCounter === 10) {
         stuckCounter = 0;

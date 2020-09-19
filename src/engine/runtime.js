@@ -395,7 +395,7 @@ class Runtime extends EventEmitter {
 
         this.compilerOptions = {
             enabled: true,
-            loopStuckChecking: false
+            warpTimer: false
         };
     }
 
@@ -489,19 +489,11 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for enabling the compiler.
+     * Event name for compiler options changing.
      * @const {string}
      */
-    static get COMPILER_ENABLED () {
-        return 'COMPILER_ENABLED';
-    }
-
-    /**
-     * Event name for disabling the compiler.
-     * @const {string}
-     */
-    static get COMPILER_DISABLED () {
-        return 'COMPILER_DISABLED';
+    static get COMPILER_OPTIONS_CHANGED () {
+        return 'COMPILER_OPTIONS_CHANGED';
     }
 
     /**
@@ -2199,26 +2191,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * tw: Set whether the compiler is enabled.
-     * This does not affect already running threads.
-     * @param {boolean} compilerEnabled True iff the compiler is to be enabled.
+     * tw: Update compiler options
+     * @param {*} compilerOptions New options
      */
-    setCompilerEnabled (compilerEnabled) {
-        this.compilerOptions.enabled = compilerEnabled;
-        if (compilerEnabled) {
-            this.emit(Runtime.COMPILER_ENABLED);
-        } else {
-            this.emit(Runtime.COMPILER_DISABLED);
-        }
+    setCompilerOptions (compilerOptions) {
+        this.compilerOptions = compilerOptions;
+        this.emit(Runtime.COMPILER_OPTIONS_CHANGED, this.compilerOptions);
     }
-    /**
-     * tw: Set whether stuck checking is enabled.
-     * @param {boolean} stuckChecking True iff stuck checking is to be enabled.
-     */
-    setLoopStuckChecking (stuckChecking) {
-        this.compilerOptions.loopStuckChecking = stuckChecking;
-        this.resetAllCaches();
-    }
+
     /**
      * tw: Reset the cache of all block containers.
      */

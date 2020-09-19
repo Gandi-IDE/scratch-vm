@@ -278,7 +278,7 @@ class JSGenerator {
 
         this.isWarp = script.isWarp;
         this.isProcedure = script.isProcedure;
-        this.loopStuckChecking = script.loopStuckChecking;
+        this.warpTimer = script.warpTimer;
 
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
@@ -858,7 +858,7 @@ class JSGenerator {
     }
 
     yieldLoop () {
-        if (this.loopStuckChecking) {
+        if (this.warpTimer) {
             this.yieldNotWarpOrStuck();
         } else {
             this.yieldNotWarp();
