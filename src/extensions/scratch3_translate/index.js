@@ -26,6 +26,15 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
  */
 const serverURL = 'https://translate-service.scratch.mit.edu/';
 
+// powered by xigua start
+/**
+ * 翻译API --- https://help.aliyun.com/document_detail/158269.html;
+ */
+const xiguaServerURL = `${process.env.STUDY_WEB_HOST || ''}/bfs-external/v1/mt/translate/`;
+
+const translateSupportLanguage = ['en', 'zh', 'yue', 'ja', 'ko', 'fr', 'es', 'th', 'ar', 'ru', 'pt', 'de'];
+
+// powered by xigua end
 /**
  * How long to wait in ms before timing out requests to translate server.
  * @type {int}
@@ -96,7 +105,10 @@ class Scratch3TranslateBlocks {
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
-        this._supportedLanguages = this._getSupportedLanguages(this.getViewerLanguageCode());
+        // this._supportedLanguages = this._getSupportedLanguages(this.getViewerLanguageCode());
+        // powered by xigua start
+        this._supportedLanguages = this._getXiguaSupportedLanguages(this.getViewerLanguageCode());
+        // powered by xigua end
         this._randomLanguageCode = this._supportedLanguages[
             Math.floor(Math.random() * this._supportedLanguages.length)].value;
 
@@ -167,6 +179,14 @@ class Scratch3TranslateBlocks {
             return obj;
         });
     }
+
+    // powered by xigua start
+    _getXiguaSupportedLanguages (code) {
+        return this._getSupportedLanguages(code).filter(item => (
+            translateSupportLanguage.includes(item.value)
+        ));
+    }
+    // powered by xigua end
     /**
      * Get the human readable language value for the reporter block.
      * @return {string} the language name of the project viewer.
@@ -255,23 +275,41 @@ class Scratch3TranslateBlocks {
 
         const lang = this.getLanguageCodeFromArg(args.LANGUAGE);
 
-        let urlBase = `${serverURL}translate?language=`;
-        urlBase += lang;
-        urlBase += '&text=';
-        urlBase += encodeURIComponent(args.WORDS);
+        // let urlBase = `${serverURL}translate?language=`;
+        // urlBase += lang;
+        // urlBase += '&text=';
+        // urlBase += encodeURIComponent(args.WORDS);
 
         const tempThis = this;
         const translatePromise = new Promise(resolve => {
+            // powered by xigua start
             nets({
-                url: urlBase,
+                method: 'post',
+                url: xiguaServerURL,
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json;charset=UTF-8',
+                    token: this._cookies.token
+                },
+                body: JSON.stringify({
+                    sourceLanguage: 'auto',
+                    targetLanguage: lang,
+                    sourceText: encodeURIComponent(args.WORDS),
+                }),
                 timeout: serverTimeoutMs
-            }, (err, res, body) => {
+            }, (err, res, data) => {
                 if (err) {
                     log.warn(`error fetching translate result! ${res}`);
-                    resolve('');
+                    resolve(`翻译出错, ${res}`);
                     return '';
                 }
-                const translated = JSON.parse(body).result;
+                const { body, msg } = JSON.parse(data);
+                if(!body) {
+                    log.warn(`error, ${msg}`);
+                    resolve(`翻译出错, ${msg}`);
+                    return '';
+                }
+                const translated = body.translatedContent;
                 tempThis._translateResult = translated;
                 // Cache what we just translated so we don't keep making the
                 // same call over and over.
@@ -280,7 +318,7 @@ class Scratch3TranslateBlocks {
                 resolve(translated);
                 return translated;
             });
-
+            // powered by xigua end
         });
         translatePromise.then(translatedText => translatedText);
         return translatePromise;
