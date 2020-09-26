@@ -618,9 +618,25 @@ class JSGenerator {
             this.source += `${list}._monitorUpToDate = false;\n`;
             break;
         }
-        case 'list.delete':
-            this.source += `listDelete(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()});\n`;
+        case 'list.delete': {
+            const list = this.referenceVariable(node.list);
+            const index = this.descendInput(node.index);
+            if (index instanceof ConstantInput) {
+                if (index.constantValue === 'last') {
+                    this.source += `${list}.value.pop();\n`;
+                    this.source += `${list}._monitorUpToDate = false;\n`;
+                    break;
+                }
+                if (+index.constantValue === 1) {
+                    this.source += `${list}.value.shift();\n`;
+                    this.source += `${list}._monitorUpToDate = false;\n`;
+                    break;
+                }
+                // do not need optimization for all: that is done at the AST level
+            }
+            this.source += `listDelete(${list}, ${index.asUnknown()});\n`;
             break;
+        }
         case 'list.deleteAll':
             this.source += `${this.referenceVariable(node.list)}.value = [];\n`;
             break;
