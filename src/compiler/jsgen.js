@@ -968,6 +968,22 @@ class JSGenerator {
         return result;
     }
 
+    getScriptFactoryName () {
+        return factoryNameVariablePool.next();
+    }
+
+    getScriptName (yields) {
+        let name = yields ? generatorNameVariablePool.next() : functionNameVariablePool.next();
+        if (this.isProcedure) {
+            const simplifiedProcedureCode = this.script.procedureCode
+                .replace(/%[\w]/g, '') // remove arguments
+                .replace(/[^a-zA-Z0-9]/g, '_') // remove unsafe
+                .substring(0, 20); // keep length reasonable
+            name += `_${simplifiedProcedureCode}`;
+        }
+        return name;
+    }
+
     /**
      * Generate the JS to pass into eval() based on the current state of the compiler.
      * @returns {string} JS to pass into eval()
@@ -976,7 +992,7 @@ class JSGenerator {
         let script = '';
 
         // Setup the factory
-        script += `(function ${factoryNameVariablePool.next()}(target) { `;
+        script += `(function ${this.getScriptFactoryName()}(target) { `;
         script += 'const runtime = target.runtime; ';
         script += 'const stage = runtime.getTargetForStage();\n';
         for (const varValue of Object.keys(this._setupVariables)) {
@@ -987,11 +1003,12 @@ class JSGenerator {
         // Generated script
         script += 'return ';
         if (this.script.yields) {
-            script += `function* ${generatorNameVariablePool.next()} `;
+            script += `function* `;
         } else {
-            script += `function ${functionNameVariablePool.next()} `;
+            script += `function `;
         }
-        script += '(';
+        script += this.getScriptName(this.script.yields);
+        script += ' (';
         if (this.script.arguments.length) {
             const args = [];
             for (let i = 0; i < this.script.arguments.length; i++) {
