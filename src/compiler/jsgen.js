@@ -392,7 +392,7 @@ class JSGenerator {
             return new TypedInput(`compareEqual(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
         }
         case 'op.e^':
-            return new TypedInput(`Math.exp(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
+            return new TypedInput(`(Math.E ** ${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
         case 'op.floor':
             return new TypedInput(`Math.floor(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
         case 'op.greater': {
@@ -460,7 +460,7 @@ class JSGenerator {
         case 'op.tan':
             return new TypedInput(`Math.tan(${this.descendInput(node.value).asNumber()} * Math.PI / 180)`, TYPE_NUMBER);
         case 'op.10^':
-            return new TypedInput(`Math.pow(10, ${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
+            return new TypedInput(`(10 ** ${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
 
         case 'sensing.answer':
             return new TypedInput(`runtime.ext_scratch3_sensing._answer`, TYPE_STRING);
