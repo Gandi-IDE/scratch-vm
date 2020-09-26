@@ -393,6 +393,8 @@ class Runtime extends EventEmitter {
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
 
+        this._stageTarget = null;
+
         this.compilerOptions = {
             enabled: true,
             warpTimer: false
@@ -1929,6 +1931,9 @@ class Runtime extends EventEmitter {
     addTarget (target) {
         this.targets.push(target);
         this.executableTargets.push(target);
+        if (target.isStage && !this._stageTarget) {
+            this._stageTarget = target;
+        }
     }
 
     /**
@@ -2525,11 +2530,8 @@ class Runtime extends EventEmitter {
      * @return {?Target} The target, if found.
      */
     getTargetForStage () {
-        for (let i = 0; i < this.targets.length; i++) {
-            const target = this.targets[i];
-            if (target.isStage) {
-                return target;
-            }
+        if (this._stageTarget) {
+            return this._stageTarget;
         }
     }
 
