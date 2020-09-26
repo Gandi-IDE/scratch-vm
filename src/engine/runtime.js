@@ -2002,6 +2002,9 @@ class Runtime extends EventEmitter {
             // Remove from list of targets.
             return false;
         });
+        if (this._stageTarget === disposingTarget) {
+            this._stageTarget = null;
+        }
     }
 
     /**
@@ -2532,6 +2535,13 @@ class Runtime extends EventEmitter {
     getTargetForStage () {
         if (this._stageTarget) {
             return this._stageTarget;
+        }
+        for (let i = 0; i < this.targets.length; i++) {
+            const target = this.targets[i];
+            if (target.isStage) {
+                this._stageTarget = target;
+                return target;
+            }
         }
     }
 
