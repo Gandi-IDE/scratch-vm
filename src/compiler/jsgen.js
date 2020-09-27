@@ -149,6 +149,7 @@ class ConstantInput {
 
 /**
  * SafeConstantInput is similar to ConstantInput, except that asUnknown() will always convert to String.
+ * @implements {Input}
  */
 class SafeConstantInput extends ConstantInput {
     asUnknown () {
