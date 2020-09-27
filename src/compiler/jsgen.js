@@ -21,8 +21,8 @@ const TYPE_UNKNOWN = 4;
 const TYPE_NUMBER_NAN = 5;
 
 // Pen-related constants
-const pen = 'runtime.ext_pen';
-const penState = `${pen}._getPenState(target)`;
+const PEN_EXT = 'runtime.ext_pen';
+const PEN_STATE = `${PEN_EXT}._getPenState(target)`;
 
 /**
  * Variable pool used for factory function names.
@@ -717,43 +717,43 @@ class JSGenerator {
             break;
 
         case 'pen.clear':
-            this.source += `${pen}.clear();\n`;
+            this.source += `${PEN_EXT}.clear();\n`;
             break;
         case 'pen.down':
-            this.source += `${pen}._penDown(target);\n`;
+            this.source += `${PEN_EXT}._penDown(target);\n`;
             break;
         case 'pen.changeParam':
-            this.source += `${pen}._setOrChangeColorParam(${this.descendInput(node.param).asString()}, ${this.descendInput(node.value).asNumber()}, ${penState}, true);\n`;
+            this.source += `${PEN_EXT}._setOrChangeColorParam(${this.descendInput(node.param).asString()}, ${this.descendInput(node.value).asNumber()}, ${PEN_STATE}, true);\n`;
             break;
         case 'pen.changeSize':
-            this.source += `${pen}._changePenSizeBy(${this.descendInput(node.size).asNumber()}, target);\n`;
+            this.source += `${PEN_EXT}._changePenSizeBy(${this.descendInput(node.size).asNumber()}, target);\n`;
             break;
         case 'pen.legacyChangeHue':
-            this.source += `${pen}._changePenHueBy(${this.descendInput(node.hue).asNumber()}, target);\n`;
+            this.source += `${PEN_EXT}._changePenHueBy(${this.descendInput(node.hue).asNumber()}, target);\n`;
             break;
         case 'pen.legacyChangeShade':
-            this.source += `${pen}._changePenShadeBy(${this.descendInput(node.shade).asNumber()}, target);\n`;
+            this.source += `${PEN_EXT}._changePenShadeBy(${this.descendInput(node.shade).asNumber()}, target);\n`;
             break;
         case 'pen.legacySetHue':
-            this.source += `${pen}._setPenHueToNumber(${this.descendInput(node.hue).asNumber()}, target);\n`;
+            this.source += `${PEN_EXT}._setPenHueToNumber(${this.descendInput(node.hue).asNumber()}, target);\n`;
             break;
         case 'pen.legacySetShade':
-            this.source += `${pen}._setPenShadeToNumber(${this.descendInput(node.shade).asNumber()}, target);\n`;
+            this.source += `${PEN_EXT}._setPenShadeToNumber(${this.descendInput(node.shade).asNumber()}, target);\n`;
             break;
         case 'pen.setColor':
-            this.source += `${pen}._setPenColorToColor(${this.descendInput(node.color).asUnknown()}, target);\n`;
+            this.source += `${PEN_EXT}._setPenColorToColor(${this.descendInput(node.color).asUnknown()}, target);\n`;
             break;
         case 'pen.setParam':
-            this.source += `${pen}._setOrChangeColorParam(${this.descendInput(node.param).asString()}, ${this.descendInput(node.value).asNumber()}, ${penState}, false);\n`;
+            this.source += `${PEN_EXT}._setOrChangeColorParam(${this.descendInput(node.param).asString()}, ${this.descendInput(node.value).asNumber()}, ${PEN_STATE}, false);\n`;
             break;
         case 'pen.setSize':
-            this.source += `${pen}._setPenSizeTo(${this.descendInput(node.size).asNumber()}, target);\n`;
+            this.source += `${PEN_EXT}._setPenSizeTo(${this.descendInput(node.size).asNumber()}, target);\n`;
             break;
         case 'pen.stamp':
-            this.source += `${pen}._stamp(target);\n`;
+            this.source += `${PEN_EXT}._stamp(target);\n`;
             break;
         case 'pen.up':
-            this.source += `${pen}._penUp(target);\n`;
+            this.source += `${PEN_EXT}._penUp(target);\n`;
             break;
 
         case 'procedures.call': {
