@@ -189,6 +189,7 @@ class VariableInput {
                 input = input._value;
             } else {
                 this.type = TYPE_UNKNOWN;
+                this._value = null;
                 return;
             }
         }
