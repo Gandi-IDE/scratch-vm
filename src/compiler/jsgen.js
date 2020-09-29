@@ -253,19 +253,6 @@ disableToString(TypedInput.prototype.asString);
 disableToString(TypedInput.prototype.asBoolean);
 disableToString(TypedInput.prototype.asUnknown);
 
-/**
- * Determine if an input is a constant that is a non-zero number.
- * @param {Input} input The input to examine.
- * @returns {boolean} true if the input is a constant non-zero number
- */
-const isNonZeroNumberConstant = input => {
-    if (!(input instanceof ConstantInput)) {
-        return false;
-    }
-    const value = +input.constantValue;
-    return value !== 0;
-};
-
 class JSGenerator {
     constructor (script, ast, target) {
         this.script = script;
@@ -379,15 +366,6 @@ class JSGenerator {
             const rightAlwaysNumber = right.isAlwaysNumber();
             // When both operands are known to be numbers, we can use ===
             if (leftAlwaysNumber && rightAlwaysNumber) {
-                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
-            }
-            // When one operand is known to be a non-zero constant, we can use ===
-            // 0 is not allowed here as NaN will get converted to zero, and "apple or any other NaN value = 0" should not return true.
-            // todo: this might be unsafe
-            if (leftAlwaysNumber && isNonZeroNumberConstant(left)) {
-                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
-            }
-            if (rightAlwaysNumber && isNonZeroNumberConstant(right)) {
                 return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
             // No compile-time optimizations possible - use fallback method.
