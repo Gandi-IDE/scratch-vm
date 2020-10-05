@@ -151,14 +151,11 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData => {
             this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData);
         });
-        this.runtime.on(Runtime.COMPATIBILITY_MODE_OFF, () => {
-            this.emit(Runtime.COMPATIBILITY_MODE_OFF);
-        });
-        this.runtime.on(Runtime.COMPATIBILITY_MODE_ON, () => {
-            this.emit(Runtime.COMPATIBILITY_MODE_ON);
-        });
         this.runtime.on(Runtime.COMPILER_OPTIONS_CHANGED, compilerOptions => {
             this.emit(Runtime.COMPILER_OPTIONS_CHANGED, compilerOptions);
+        });
+        this.runtime.on(Runtime.FRAMERATE_CHANGED, framerate => {
+            this.emit(Runtime.FRAMERATE_CHANGED, framerate);
         });
 
         this.extensionManager = new ExtensionManager(this.runtime);
@@ -211,7 +208,10 @@ class VirtualMachine extends EventEmitter {
         this.runtime.setCompatibilityMode(!!compatibilityModeOn);
     }
 
-    // tw: add VirtualMachine methods that forward to the Runtime
+    setFramerate (framerate) {
+        this.runtime.setFramerate(framerate);
+    }
+
     setCompilerOptions (compilerOptions) {
         this.runtime.setCompilerOptions(compilerOptions);
     }

@@ -297,12 +297,6 @@ class Runtime extends EventEmitter {
         this.turboMode = false;
 
         /**
-         * Whether the project is in "compatibility mode" (30 TPS).
-         * @type {Boolean}
-         */
-        this.compatibilityMode = false;
-
-        /**
          * A reference to the current runtime stepping interval, set
          * by a `setInterval`.
          * @type {!number}
@@ -395,6 +389,10 @@ class Runtime extends EventEmitter {
 
         this._stageTarget = null;
 
+        // 60 to match default of compatibility mode off
+        // scratch-gui will set this to 30
+        this.framerate = 60;
+
         this.compilerOptions = {
             enabled: true,
             warpTimer: false
@@ -475,27 +473,19 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for turning on compatibility mode.
-     * @const {string}
-     */
-    static get COMPATIBILITY_MODE_ON () {
-        return 'COMPATIBILITY_MODE_ON';
-    }
-
-    /**
-     * Event name for turning off compatibility mode.
-     * @const {string}
-     */
-    static get COMPATIBILITY_MODE_OFF () {
-        return 'COMPATIBILITY_MODE_OFF';
-    }
-
-    /**
      * Event name for compiler options changing.
      * @const {string}
      */
     static get COMPILER_OPTIONS_CHANGED () {
         return 'COMPILER_OPTIONS_CHANGED';
+    }
+
+    /**
+     * Event name for framerate changing.
+     * @const {string}
+     */
+    static get FRAMERATE_CHANGED () {
+        return 'FRAMERATE_CHANGED';
     }
 
     /**
@@ -716,20 +706,6 @@ class Runtime extends EventEmitter {
      */
     static get BLOCKS_NEED_UPDATE () {
         return 'BLOCKS_NEED_UPDATE';
-    }
-
-    /**
-     * How rapidly we try to step threads by default, in ms.
-     */
-    static get THREAD_STEP_INTERVAL () {
-        return 1000 / 60;
-    }
-
-    /**
-     * In compatibility mode, how rapidly we try to step threads, in ms.
-     */
-    static get THREAD_STEP_INTERVAL_COMPATIBILITY () {
-        return 1000 / 30;
     }
 
     /**
@@ -2185,17 +2161,26 @@ class Runtime extends EventEmitter {
      * @param {boolean} compatibilityModeOn True iff in compatibility mode.
      */
     setCompatibilityMode (compatibilityModeOn) {
-        this.compatibilityMode = compatibilityModeOn;
-        if (this.compatibilityMode) {
-            this.emit(Runtime.COMPATIBILITY_MODE_ON);
+        // tw: "compatibility mode" is replaced with a generic framerate setter, but this method is kept for compatibility
+        if (compatibilityModeOn) {
+            this.setFramerate(30);
         } else {
-            this.emit(Runtime.COMPATIBILITY_MODE_OFF);
+            this.setFramerate(60);
         }
+    }
+
+    /**
+     * tw: Change runtime target frames per second
+     * @param {number} framerate Target frames per second
+     */
+    setFramerate (framerate) {
+        this.framerate = framerate;
         if (this._steppingInterval) {
             clearInterval(this._steppingInterval);
             this._steppingInterval = null;
             this.start();
         }
+        this.emit(Runtime.FRAMERATE_CHANGED, framerate);
     }
 
     /**
@@ -2645,10 +2630,7 @@ class Runtime extends EventEmitter {
         // Do not start if we are already running
         if (this._steppingInterval) return;
 
-        let interval = Runtime.THREAD_STEP_INTERVAL;
-        if (this.compatibilityMode) {
-            interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
-        }
+        const interval = 1000 / this.framerate;
         this.currentStepTime = interval;
         this._steppingInterval = setInterval(() => {
             this._step();
