@@ -709,6 +709,22 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * How rapidly we try to step threads by default, in ms.
+     */
+    static get THREAD_STEP_INTERVAL () {
+        // tw: not used, only exists for compatibility
+        return 1000 / 60;
+    }
+
+    /**
+     * In compatibility mode, how rapidly we try to step threads, in ms.
+     */
+    static get THREAD_STEP_INTERVAL_COMPATIBILITY () {
+        // tw: not used, only exists for compatibility
+        return 1000 / 30;
+    }
+
+    /**
      * How many clones can be created at a time.
      * @const {number}
      */
