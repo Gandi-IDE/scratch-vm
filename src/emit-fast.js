@@ -9,7 +9,7 @@ const EventEmitter = require('events');
 //  - only up to 4 parameters allowed
 // In performance sensitive code, use this instead of emit()
 
-EventEmitter.prototype.emitFast = function (type, a, b, c, d) {
+EventEmitter.prototype.emitFast = function emitFast (type, a, b, c, d) {
     const handler = this._events[type];
 
     if (!handler) {
