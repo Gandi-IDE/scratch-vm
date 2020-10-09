@@ -5,7 +5,9 @@ const log = require('../../util/log');
 const nets = require('nets');
 const languageNames = require('scratch-translate-extension-languages');
 const formatMessage = require('format-message');
-
+// powered by xigua start
+const {getCookies} = require('../../util/cookies');
+// powered by xigua end
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
  * @type {string}
@@ -24,13 +26,17 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
  * The url of the translate server.
  * @type {string}
  */
-const serverURL = 'https://translate-service.scratch.mit.edu/';
+// const serverURL = 'https://translate-service.scratch.mit.edu/';
 
 // powered by xigua start
 /**
  * 翻译API --- https://help.aliyun.com/document_detail/158269.html;
  */
-const xiguaServerURL = `${process.env.STUDY_WEB_HOST || ''}/bfs-external/v1/mt/translate/`;
+
+// powered by xigua start
+// eslint-disable-next-line no-undef
+const xiguaServerURL = `${process.env.STUDY_WEB_HOST || STUDY_WEB_HOST || ''}/bfs-external/v1/mt/translate/`;
+// powered by xigua end
 
 const translateSupportLanguage = ['en', 'zh', 'yue', 'ja', 'ko', 'fr', 'es', 'th', 'ar', 'ru', 'pt', 'de'];
 
@@ -91,6 +97,9 @@ class Scratch3TranslateBlocks {
          * @private
          */
         this._lastTextTranslated = '';
+        // powered by xigua start
+        this._cookies = getCookies();
+        // powered by xigua end
     }
 
     /**
@@ -287,14 +296,14 @@ class Scratch3TranslateBlocks {
                 method: 'post',
                 url: xiguaServerURL,
                 headers: {
-                    Accept: 'application/json',
+                    'Accept': 'application/json',
                     'Content-Type': 'application/json;charset=UTF-8',
-                    token: this._cookies.token
+                    'token': this._cookies.token
                 },
                 body: JSON.stringify({
                     sourceLanguage: 'auto',
                     targetLanguage: lang,
-                    sourceText: encodeURIComponent(args.WORDS),
+                    sourceText: encodeURIComponent(args.WORDS)
                 }),
                 timeout: serverTimeoutMs
             }, (err, res, data) => {
@@ -303,8 +312,8 @@ class Scratch3TranslateBlocks {
                     resolve(`翻译出错, ${res}`);
                     return '';
                 }
-                const { body, msg } = JSON.parse(data);
-                if(!body) {
+                const {body, msg} = JSON.parse(data);
+                if (!body) {
                     log.warn(`error, ${msg}`);
                     resolve(`翻译出错, ${msg}`);
                     return '';

@@ -9,6 +9,7 @@ const MathUtil = require('../../util/math-util');
 const Clone = require('../../util/clone');
 const log = require('../../util/log');
 // powered by xigua start
+const {getCookies} = require('../../util/cookies');
 const Base64Util = require('../../util/base64-util');
 // powered by xigua end
 
@@ -33,7 +34,8 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
  */
 // const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
 // powered by xigua start
-const SERVER_HOST = `${process.env.STUDY_WEB_HOST || ''}/bfs-external/v1/speech/tts`;
+// eslint-disable-next-line no-undef
+const SERVER_HOST = `${process.env.STUDY_WEB_HOST || STUDY_WEB_HOST || ''}/bfs-external/v1/speech/tts`;
 // powered by xigua end
 /**
  * How long to wait in ms before timing out requests to synthesis server.
@@ -117,13 +119,14 @@ const LANGUAGE_MAP = {
     'ja': 'JA',
     'ja-Hira': 'JA',
     'en': 'EN_US',
+    'en-US': 'EN_US',
     'ko': 'KO_KR',
     'fr': 'FR_FR',
-    'es': 'FR_FR',
+    'es': 'ES_ES',
     'ru': 'RU_RU',
     'pt': 'PT_BR',
     'de': 'DE_DE'
-}
+};
 // powered by xigua end
 /**
  * Class for the text2speech blocks.
@@ -158,6 +161,9 @@ class Scratch3Text2SpeechBlocks {
          * @type {Array}
          */
         this._supportedLocales = this._getSupportedLocales();
+        // powered by xigua start
+        this._cookies = getCookies();
+        // powered by xigua end
     }
 
     /**
@@ -238,7 +244,7 @@ class Scratch3Text2SpeechBlocks {
             [ARABIC_ID]: {
                 name: formatMessage({
                     id: 'text2speech.Arabic',
-                    default: 'Arabic',
+                    default: 'Arabic'
                 }),
                 locales: ['ar'],
                 speechSynthLocale: 'arb',
@@ -247,7 +253,7 @@ class Scratch3Text2SpeechBlocks {
             [CHINESE_ID]: {
                 name: formatMessage({
                     id: 'text2speech.Chinese',
-                    default: 'Chinese',
+                    default: 'Chinese'
                 }),
                 locales: ['zh-cn', 'zh-tw'],
                 speechSynthLocale: 'cmn-CN',
@@ -266,7 +272,7 @@ class Scratch3Text2SpeechBlocks {
             [ENGLISH_ID]: {
                 name: formatMessage({
                     id: 'text2speech.English',
-                    default: 'English',
+                    default: 'English'
                 }),
                 locales: ['en'],
                 speechSynthLocale: 'en-US'
@@ -274,7 +280,7 @@ class Scratch3Text2SpeechBlocks {
             [FRENCH_ID]: {
                 name: formatMessage({
                     id: 'text2speech.French',
-                    default: 'French',
+                    default: 'French'
                 }),
                 locales: ['fr'],
                 speechSynthLocale: 'fr-FR'
@@ -282,7 +288,7 @@ class Scratch3Text2SpeechBlocks {
             [GERMAN_ID]: {
                 name: formatMessage({
                     id: 'text2speech.German',
-                    default: 'German',
+                    default: 'German'
                 }),
                 locales: ['de'],
                 speechSynthLocale: 'de-DE'
@@ -306,7 +312,7 @@ class Scratch3Text2SpeechBlocks {
             [JAPANESE_ID]: {
                 name: formatMessage({
                     id: 'text2speech.Japanese',
-                    default: 'Japanese',
+                    default: 'Japanese'
                 }),
                 locales: ['ja', 'ja-Hira'],
                 speechSynthLocale: 'ja-JP'
@@ -314,7 +320,7 @@ class Scratch3Text2SpeechBlocks {
             [KOREAN_ID]: {
                 name: formatMessage({
                     id: 'text2speech.Korean',
-                    default: 'Korean',
+                    default: 'Korean'
                 }),
                 locales: ['ko'],
                 speechSynthLocale: 'ko-KR',
@@ -339,7 +345,7 @@ class Scratch3Text2SpeechBlocks {
             [PORTUGUESE_ID]: {
                 name: formatMessage({
                     id: 'text2speech.Portuguese',
-                    default: 'Portuguese',
+                    default: 'Portuguese'
                 }),
                 locales: ['pt'],
                 speechSynthLocale: 'pt-PT'
@@ -353,7 +359,7 @@ class Scratch3Text2SpeechBlocks {
             [RUSSIAN_ID]: {
                 name: formatMessage({
                     id: 'text2speech.Russian',
-                    default: 'Russian',
+                    default: 'Russian'
                 }),
                 locales: ['ru'],
                 speechSynthLocale: 'ru-RU'
@@ -361,11 +367,11 @@ class Scratch3Text2SpeechBlocks {
             [SPANISH_ID]: {
                 name: formatMessage({
                     id: 'text2speech.Spanish',
-                    default: 'Spanish',
+                    default: 'Spanish'
                 }),
                 locales: ['es'],
                 speechSynthLocale: 'es-ES'
-            },
+            }
             // [SPANISH_419_ID]: {
             //     name: 'Spanish (Latin American)',
             //     locales: ['es-419'],
@@ -742,8 +748,10 @@ class Scratch3Text2SpeechBlocks {
     speakAndWait (args, util) {
         // Cast input to string
         let words = Cast.toString(args.WORDS);
-        let locale = this._getSpeechSynthLocale();
-
+        // let locale = this._getSpeechSynthLocale();
+        // powered by xigua start
+        let locale = LANGUAGE_MAP[this.getCurrentLanguage()];
+        // powered by xigua end
         const state = this._getState(util.target);
 
         let gender = this.VOICE_INFO[state.voiceId].gender;
@@ -764,7 +772,7 @@ class Scratch3Text2SpeechBlocks {
 
         if (state.voiceId === KITTEN_ID) {
             words = words.replace(/\S+/g, 'meow');
-            locale = this.LANGUAGE_INFO[this.DEFAULT_LANGUAGE].speechSynthLocale;
+            locale = LANGUAGE_MAP[this.LANGUAGE_INFO[this.DEFAULT_LANGUAGE].speechSynthLocale];
         }
 
         // Build up URL
@@ -780,14 +788,14 @@ class Scratch3Text2SpeechBlocks {
                 method: 'post',
                 url: SERVER_HOST,
                 body: JSON.stringify({
-                    language: LANGUAGE_MAP[this.getCurrentLanguage()],
+                    language: locale,
                     gender: gender,
-                    text: words,
+                    text: words
                 }),
                 headers: {
-                    Accept: 'application/json',
+                    'Accept': 'application/json',
                     'Content-Type': 'application/json;charset=UTF-8',
-                    token: this._cookies.token
+                    'token': this._cookies.token
                 },
                 // powered by xigua end
                 timeout: SERVER_TIMEOUT
@@ -803,14 +811,14 @@ class Scratch3Text2SpeechBlocks {
                 }
 
                 // powered by xigua start
-                const { body } = JSON.parse(data);
+                const {body} = JSON.parse(data);
                 const array = Base64Util.base64ToUint8Array(body.speechBytes);
                 // powered by xigua end
 
                 // Play the sound
                 const sound = {
                     data: {
-                        buffer: body.buffer
+                        buffer: array.buffer
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
