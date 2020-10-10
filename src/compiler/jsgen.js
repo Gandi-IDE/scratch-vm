@@ -300,8 +300,13 @@ class JSGenerator {
             return new TypedInput(`listContents(${this.referenceVariable(node.list)})`, TYPE_STRING);
         case 'list.get': {
             const index = this.descendInput(node.index);
-            if (environment.supportsNullishCoalescing && index.isAlwaysNumber()) {
-                return new TypedInput(`(${this.referenceVariable(node.list)}.value[(${index.asNumber()} | 0) - 1] ?? "")`, TYPE_UNKNOWN);
+            if (environment.supportsNullishCoalescing) {
+                if (index.isAlwaysNumber()) {
+                    return new TypedInput(`(${this.referenceVariable(node.list)}.value[(${index.asNumber()} | 0) - 1] ?? "")`, TYPE_UNKNOWN);
+                }
+                if (index instanceof ConstantInput && index.constantValue === 'last') {
+                    return new TypedInput(`(${this.referenceVariable(node.list)}.value[${this.referenceVariable(node.list)}.value.length - 1] ?? "")`, TYPE_UNKNOWN);
+                }
             }
             return new TypedInput(`listGet(${this.referenceVariable(node.list)}.value, ${index.asUnknown()})`, TYPE_UNKNOWN);
         }
