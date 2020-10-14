@@ -256,6 +256,22 @@ disableToString(TypedInput.prototype.asBoolean);
 disableToString(TypedInput.prototype.asUnknown);
 disableToString(TypedInput.prototype.asSafe);
 
+const getNamesOfCostumesAndSounds = runtime => {
+    const result = new Set();
+    for (const target of runtime.targets) {
+        if (target.isOriginal) {
+            const sprite = target.sprite;
+            for (const costume of sprite.costumes) {
+                result.add(costume.name);
+            }
+            for (const sound of sprite.sounds) {
+                result.add(sound.name);
+            }
+        }
+    }
+    return result;
+};
+
 class JSGenerator {
     constructor (script, ast, target) {
         this.script = script;
@@ -271,6 +287,8 @@ class JSGenerator {
         this.isWarp = script.isWarp;
         this.isProcedure = script.isProcedure;
         this.warpTimer = script.warpTimer;
+
+        this.namesOfCostumesAndSounds = getNamesOfCostumesAndSounds(target.runtime);
 
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
@@ -904,27 +922,8 @@ class JSGenerator {
     }
 
     safeConstantInput (value) {
-        const unsafe = typeof value === 'string' && this.isNameOfCostumeOrSound(value);
+        const unsafe = typeof value === 'string' && this.namesOfCostumesAndSounds.has(value);
         return new ConstantInput(value, !unsafe);
-    }
-
-    isNameOfCostumeOrSound (stringValue) {
-        for (const target of this.target.runtime.targets) {
-            if (target.isOriginal) {
-                const sprite = target.sprite;
-                for (const costume of sprite.costumes) {
-                    if (costume.name === stringValue) {
-                        return true;
-                    }
-                }
-                for (const sound of sprite.sounds) {
-                    if (sound.name === stringValue) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     /**
