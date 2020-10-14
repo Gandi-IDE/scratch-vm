@@ -426,7 +426,7 @@ class Thread {
     /**
      * Attempt to compile this thread.
      */
-    tryCompile() {
+    tryCompile () {
         const blocks = this.blockContainer;
         if (!blocks) {
             return;
