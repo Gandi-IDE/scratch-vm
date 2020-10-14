@@ -1382,6 +1382,8 @@ class ScriptTreeGenerator {
             cachedCompileResult: null
         };
 
+        this.blocks.populateProcedureCache();
+
         const topBlock = this.blocks.getBlock(topBlockId);
         if (!topBlock) {
             if (this.isProcedure) {
