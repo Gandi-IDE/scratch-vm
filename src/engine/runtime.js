@@ -2221,6 +2221,22 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Eagerly (re)compile all scripts within this project.
+     */
+    precompile () {
+        this.resetAllCaches();
+        this.allScriptsDo((topBlockId, target) => {
+            const topBlock = target.blocks.getBlock(topBlockId);
+            if (this.getIsHat(topBlock.opcode)) {
+                const thread = new Thread(topBlockId);
+                thread.target = target;
+                thread.blockContainer = target.blocks;
+                thread.tryCompile();
+            }
+        });
+    }
+
+    /**
      * Emit glows/glow clears for scripts after a single tick.
      * Looks at `this.threads` and notices which have turned on/off new glows.
      * @param {Array.<Thread>=} optExtraThreads Optional list of inactive threads.
