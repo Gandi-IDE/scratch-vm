@@ -2224,7 +2224,6 @@ class Runtime extends EventEmitter {
      * Eagerly (re)compile all scripts within this project.
      */
     precompile () {
-        this.resetAllCaches();
         this.allScriptsDo((topBlockId, target) => {
             const topBlock = target.blocks.getBlock(topBlockId);
             if (this.getIsHat(topBlock.opcode)) {
