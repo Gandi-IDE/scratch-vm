@@ -84,16 +84,21 @@ class Blocks {
             scripts: {},
 
             /**
-             * A cache of top block (usually hat, but not always) opcodes to compiled scripts.
+             * tw: A cache of top block (usually hat, but not always) opcodes to compiled scripts.
              * @type {object.<string, object>}
              */
             compiledScripts: {},
             
             /**
-             * A cache of procedure code opcodes to a parsed AST
+             * tw: A cache of procedure code opcodes to a parsed AST
              * @type {object.<string, object>}
              */
-            compiledProcedures: {}
+            compiledProcedures: {},
+
+            /**
+             * tw: Whether populateProcedureCache has been run
+             */
+            proceduresPopulated: false
         };
 
         /**
@@ -267,6 +272,7 @@ class Blocks {
             if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
             if (block.opcode === 'procedures_definition') {
+                // tw: make sure that populateProcedureCache is kept up to date with this method
                 const internal = this._getCustomBlockInternal(block);
                 if (internal && internal.mutation.proccode === name) {
                     this._cache.procedureDefinitions[name] = id; // The outer define block id
@@ -304,6 +310,7 @@ class Blocks {
             const block = this._blocks[id];
             if (block.opcode === 'procedures_prototype' &&
                 block.mutation.proccode === name) {
+                // tw: make sure that populateProcedureCache is kept up to date with this method
                 const names = JSON.parse(block.mutation.argumentnames);
                 const ids = JSON.parse(block.mutation.argumentids);
                 const defaults = JSON.parse(block.mutation.argumentdefaults);
@@ -315,6 +322,39 @@ class Blocks {
 
         this._cache.procedureParamNames[name] = null;
         return null;
+    }
+
+    /**
+     * tw: Setup the procedureParamNames and procedureDefinitions caches all at once.
+     * This makes subsequent calls to these methods faster.
+     */
+    populateProcedureCache () {
+        if (this._cache.proceduresPopulated) {
+            return;
+        }
+        for (const id in this._blocks) {
+            if (!this._blocks.hasOwnProperty(id)) continue;
+            const block = this._blocks[id];
+
+            if (block.opcode === 'procedures_prototype') {
+                const name = block.mutation.proccode;
+                const names = JSON.parse(block.mutation.argumentnames);
+                const ids = JSON.parse(block.mutation.argumentids);
+                const defaults = JSON.parse(block.mutation.argumentdefaults);
+                this._cache.procedureParamNames[name] = [names, ids, defaults];
+                continue;
+            }
+
+            if (block.opcode === 'procedures_definition') {
+                const internal = this._getCustomBlockInternal(block);
+                if (internal) {
+                    const name = internal.mutation.proccode;
+                    this._cache.procedureDefinitions[name] = id;
+                    continue;
+                }
+            }
+        }
+        this._cache.proceduresPopulated = true;
     }
 
     duplicate () {
@@ -557,6 +597,7 @@ class Blocks {
         this._cache.scripts = {};
         this._cache.compiledScripts = {};
         this._cache.compiledProcedures = {};
+        this._cache.proceduresPopulated = false;
     }
 
     /**
