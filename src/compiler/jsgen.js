@@ -943,7 +943,7 @@ class JSGenerator {
 
         for (const inputName of Object.keys(node.inputs)) {
             const input = node.inputs[inputName];
-            const compiledInput = this.descendInput(input).asUnknown();
+            const compiledInput = this.descendInput(input).asSafe();
             result += `"${sanitize(inputName)}":${compiledInput},`;
         }
         for (const fieldName of Object.keys(node.fields)) {
