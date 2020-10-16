@@ -114,24 +114,39 @@ class Blocks {
     }
 
     /**
-     * Get the cached compiled script of a block.
-     * @param {string} blockId ID of the block
-     * @returns null if cannot be compiled, undefined if no entry, otherwise the result
+     * Get the cached compilation result of a block.
+     * @param {string} blockId ID of the top block.
+     * @returns {{success: boolean; value: any}|null} Value indicating success with the result or an error, or null if there is no cached value.
      */
-    getCompiledScript(blockId) {
+    getCachedCompileResult (blockId) {
         if (this._cache.compiledScripts.hasOwnProperty(blockId)) {
             return this._cache.compiledScripts[blockId];
         }
-        return undefined;
+        return null;
     }
 
     /**
-     * Set the cached compiled script of a block.
-     * @param {string} blockId ID of the top block
-     * @param {*} value The value to store, null if error, otherwise the result
+     * Set the cached compilation result of a script.
+     * @param {string} blockId ID of the top block.
+     * @param {*} value The compilation result to store.
      */
-    setCompiledScript(blockId, value) {
-        this._cache.compiledScripts[blockId] = value;
+    cacheCompileResult (blockId, value) {
+        this._cache.compiledScripts[blockId] = {
+            success: true,
+            value: value
+        };
+    }
+
+    /**
+     * Set the cached error of a script.
+     * @param {string} blockId ID of the top block.
+     * @param {*} error The error to store.
+     */
+    cacheCompileError (blockId, error) {
+        this._cache.compiledScripts[blockId] = {
+            success: false,
+            value: error
+        };
     }
 
     /**

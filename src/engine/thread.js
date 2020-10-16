@@ -438,22 +438,22 @@ class Thread {
         this.triedToCompile = true;
 
         const topBlock = this.topBlock;
-        const cachedResult = blocks.getCompiledScript(topBlock);
-        if (cachedResult === null) {
-            // null means an error was cached, cannot be compiled
+        const cachedResult = blocks.getCachedCompileResult(topBlock);
+        // If there is a cached result that indicates, error, do not attempt to compile.
+        if (cachedResult && !cachedResult.success) {
             return;
         }
 
         let result;
         if (cachedResult) {
-            result = cachedResult;
+            result = cachedResult.value;
         } else {
             try {
                 result = compile(this);
-                blocks.setCompiledScript(topBlock, result);
+                blocks.cacheCompileResult(topBlock, result);
             } catch (e) {
                 log.error('cannot compile script', this.target.getName(), e);
-                blocks.setCompiledScript(topBlock, null);
+                blocks.cacheCompileError(topBlock, e);
                 return;
             }
         }
