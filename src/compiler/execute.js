@@ -287,19 +287,6 @@ const randomFloat = (low, high) => {
     return (Math.random() * (high - low)) + low;
 };
 
-/**
- * Perform an IO query
- * @param {string} device The name of the device to query
- * @param {string} func The function of the device to query
- * @param {*} [args] The arguments to pass to the device
- * @returns {*} The value returned by the IO device
- */
-const ioQuery = (device, func, args) => {
-    // We will assume that the device always exists.
-    const devObject = thread.target.runtime.ioDevices[device];
-    return devObject[func].apply(devObject, args);
-};
-
 // nowObj used for timers.
 const timerNowObj = {
     now: () => thread.target.runtime.currentMSecs

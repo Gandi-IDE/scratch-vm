@@ -313,7 +313,7 @@ class JSGenerator {
             return this.safeConstantInput(node.value);
 
         case 'keyboard.pressed':
-            return new TypedInput(`ioQuery("keyboard", "getKeyIsDown", [${this.descendInput(node.key).asUnknown()}])`, TYPE_BOOLEAN);
+            return new TypedInput(`thread.target.runtime.ioDevices.keyboard.getKeyIsDown(${this.descendInput(node.key).asUnknown()})`, TYPE_BOOLEAN);
 
         case 'list.contains':
             return new TypedInput(`listContains(${this.referenceVariable(node.list)}, ${this.descendInput(node.item).asUnknown()})`, TYPE_BOOLEAN);
@@ -355,11 +355,11 @@ class JSGenerator {
             return new TypedInput('target.y', TYPE_NUMBER);
 
         case 'mouse.down':
-            return new TypedInput('ioQuery("mouse", "getIsDown")', TYPE_BOOLEAN);
+            return new TypedInput('thread.target.runtime.ioDevices.mouse.getIsDown()', TYPE_BOOLEAN);
         case 'mouse.x':
-            return new TypedInput('ioQuery("mouse", "getScratchX")', TYPE_NUMBER);
+            return new TypedInput('thread.target.runtime.ioDevices.mouse.getScratchX()', TYPE_NUMBER);
         case 'mouse.y':
-            return new TypedInput('ioQuery("mouse", "getScratchY")', TYPE_NUMBER);
+            return new TypedInput('thread.target.runtime.ioDevices.mouse.getScratchY()', TYPE_NUMBER);
 
         case 'op.abs':
             return new TypedInput(`Math.abs(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
@@ -507,13 +507,13 @@ class JSGenerator {
         case 'sensing.touchingColor':
             return new TypedInput(`target.isTouchingColor(colorToList(${this.descendInput(node.color).asUnknown()}))`, TYPE_BOOLEAN);
         case 'sensing.username':
-            return new TypedInput('ioQuery("userData", "getUsername")', TYPE_STRING);
+            return new TypedInput('thread.target.runtime.ioDevices.userData.getUsername()', TYPE_STRING);
 
         case 'timer.get':
-            return new TypedInput('ioQuery("clock", "preciseProjectTimer")', TYPE_NUMBER);
+            return new TypedInput('thread.target.runtime.ioDevices.clock.preciseProjectTimer()', TYPE_NUMBER);
 
         case 'tw.lastKeyPressed':
-            return new TypedInput('ioQuery("keyboard", "getLastKeyPressed")', TYPE_STRING);
+            return new TypedInput('thread.target.runtime.ioDevices.keyboard.getLastKeyPressed()', TYPE_STRING);
 
         case 'var.get':
             return this.descendVariable(node.variable);
@@ -800,7 +800,7 @@ class JSGenerator {
         }
 
         case 'timer.reset':
-            this.source += 'ioQuery("clock", "resetProjectTimer");\n';
+            this.source += 'thread.target.runtime.ioDevices.clock.resetProjectTimer();\n';
             break;
 
         case 'tw.debugger':
@@ -816,7 +816,7 @@ class JSGenerator {
             variable.setInput(value);
             this.source += `${variable.source} = ${value.asSafe()};\n`;
             if (node.variable.isCloud) {
-                this.source += `ioQuery("cloud", "requestUpdateVariable", ["${sanitize(node.variable.name)}", ${variable.source}]);\n`;
+                this.source += `thread.target.runtime.ioDevices.cloud.requestUpdateVariable("${sanitize(node.variable.name)}", ${variable.source});\n`;
             }
             break;
         }
