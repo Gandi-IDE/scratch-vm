@@ -329,8 +329,8 @@ const distance = menu => {
     let targetX = 0;
     let targetY = 0;
     if (menu === '_mouse_') {
-        targetX = ioQuery('mouse', 'getScratchX');
-        targetY = ioQuery('mouse', 'getScratchY');
+        targetX = thread.target.runtime.ioDevices.mouse.getScratchX();
+        targetY = thread.target.runtime.ioDevices.mouse.getScratchY();
     } else {
         const distTarget = thread.target.runtime.getSpriteTargetByName(menu);
         if (!distTarget) return 10000;
