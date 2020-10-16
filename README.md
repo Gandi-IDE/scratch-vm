@@ -1,4 +1,8 @@
-scratch-vm with something similar to the phosphorus runtime & compiler hacked into it.
+## TurboWarp/scratch-vm
+
+JIT compiler for Scratch projects.
+
+TurboWarp/scratch-vm is API-compatible(ish) with LLK/scratch-vm -- it should be a drop-in replacement. Any API incompatibilities are bugs and should be reported.
 
 ## Setup
 
@@ -8,10 +12,134 @@ If you just want to play with the VM then it's the same process as upstream scra
 
 ## Non-goals
 
- - upstream merging into scratch-vm
+ - upstreaming
  - generating code to be easily read or modified by humans
  - 100% compatibility with every script, block, extension
  - allow modifying compiled scripts while they are running
+
+## Extension authors
+
+The easiest way to make your extension compatible with TurboWarp is to use the same process as standard Scratch (https://github.com/LLK/scratch-vm/blob/develop/docs/extensions.md) to add your extension, and then add your opcodes to src/compiler/compat-blocks.js to make them run in the compatibility layer (described in more detail below). Stacked blocks (things that don't report a value such as "move ( ) steps") go in the `stacked` list and inputs (things that report a value such as multiplication, getting a variable, getting a line of a list, etc.) go in the `inputs` list. Your opcodes are probably in the format `extensionId_methodName`.
+
+## Compiler Overview
+
+The source code for the compiler is in src/compiler. Script compilation happens "Just In Time" when a thread is started.
+
+I'm going to try to explain some of the high-level details of the compiler below. If you have any questions, just ask. Open an issue or something, I'm very easy to get ahold of.
+
+### Abstract syntax tree
+
+Source: src/compiler/astgen.js
+
+The first stage of the compiler is to generate an AST. This is not the same as the AST that the Scratch VM maintains internally. The goal of this stage is to abstract the exact details of the project into something that can be more easily parsed. Some analysis and optimizations happen at this stage. The required procedures are recursed as well.
+
+### JavaScript generation
+
+Source: src/compiler/jsgen.js
+
+The AST is passed into the JavaScript generator which descends the AST and generates optimized JavaScript. This JavaScript has some idiosyncrasies. I'll try to explain some of them using a simple project with a bouncing cat (https://scratch.mit.edu/projects/437419376) as an example.
+
+This is an example result of compiling a project.
+
+```js
+function factory0 (target) {
+  // Note: manually formatted to be more readable. The actual code has no indentation or other formatting.
+  const runtime = target.runtime;
+  const stage = runtime.getTargetForStage();
+
+  const b0 = stage.variables["`jEk@4|i[#Fk?(8x)AV.-my variable"];
+
+  return function* gen0 () {
+    b0.value = 0;
+
+    for (var a0 = 100; a0 >= 0.5; a0--) {
+      b0.value = ((+b0.value || 0) + 1);
+      runtime.ext_scratch3_motion._moveSteps(b0.value, target);
+      runtime.ext_scratch3_motion._ifOnEdgeBounce(target);
+
+      if (thread.warp === 0) yield;
+    }
+
+    retire();
+  };
+}
+```
+
+There's a lot to unpack here, so let's start from the top.
+
+#### Factory function
+
+The factory function is the function that the JavaScript generator returns. This is run once when a thread is started. This function takes the current target as an argument, sets up any required variables, and returns another function. We'll discuss that function later. There is also an implied `thread` variable within scope that represents the current thread.
+
+The factory function is given a name like `factory0`, `factory1`, etc. for debugging purposes.
+
+#### Factory variables
+
+The factory function sets up various pieces of data that the script needs to run. For example, every script gets access to the `runtime` and `stage` objects. Every invocation of the function shares the same factory variables, which is important in the case of procedures.
+
+Each variable that the script needs to access is set up in a factory variable. By referencing variables using their ID one time at thread start, major performance improvements have been measured. Each of these automatically generated variables gets a name like `b0`, `b1`, etc. In this case, `b0` is referencing a global variable (ie. on the stage) called `my variable`.
+
+#### Generator function
+
+The factory function returns a generator function. When a script is run, this is the code that is run. If a procedure runs 20 times, this script runs 20 times. If a procedure never runs, this function is never run. All the script logic is here. Of course, it uses the factory variables set up previously.
+
+Usually, this function is a generator function (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*), but it isn't always. The interesting thing about generator functions is that they can yield at arbitrary points and resume later, which is something that Scratch projects do all the time.
+
+The generator function is given a name like `gen0`, `gen1`, `fun2`, `gen3_procedure_name`, or `fun4_procedure_name` depending on the context for debugging. The `gen` or `fun` denotes the type of function.
+
+#### The actual script
+
+Let's break this down line-by-line.
+
+`b0.value = 0;`
+
+Sets `b0.value` (a factory variable setup earlier that references ```stage.variables["`jEk@4|i[#Fk?(8x)AV.-my variable"]```, a variable) to 0. Note that this is the number 0, not the string "0". The compiler tries to convert strings to numbers when it is safe to do so (more complicated than it sounds).
+
+`for (var a0 = 100; a0 >= 0.5; a0--) {`
+
+This begins a "repeat 100" loop. `a0` is called a local variable. Each local variable gets a name like `a0`, `a1`, etc. These are variables that are local to each invocation of the generator function. In this case, it's being used as a loop index to iterate 100 times. The for loop is written in a weird way that ensures compatibility with Scratch.
+
+`b0.value = ((+b0.value || 0) + 1);`
+
+Changes `b0.value` by 1. The strange `(+b0.value || 0)` converts the value of `b0.value` to a number using the same rules as Scratch where NaN becomes 0. This is necessary because the compiler can't statically determine that `b0.value` will always evaluate to a number. Why can't it, even when `b0.value` was *just* set to the *number* 0 earlier? Because the script may have yielded control and another script may have changed the type of the variable, as you'll see later. If the variable changes to the string "10" and the script does not perform this conversion, then you would get `"10" + 1` which evaluates to the string "101", not the number 11.
+
+`runtime.ext_scratch3_motion._moveSteps(b0.value, target);`
+
+Accesses the scratch3_motion extension (even the builtin Scratch blocks are implemented as "extensions") and calls _moveSteps with `b0.value` (distance to move) and `target` (the target to operate on).
+
+`runtime.ext_scratch3_motion._ifOnEdgeBounce(target);`
+
+Similar to the above, it runs the "if on edge, bounce" block on the current target.
+
+`if (thread.warp === 0) yield;`
+
+This is the cool thing about generator functions: they can yield control and resume later. "Warp" is the internal name given to "Run without screen refresh." This particular expression says "if not running in warp mode (run without screen refresh), then yield". This will allow another script to run. If scripts were not generator functions, then this script, which should result in a smooth animation, would instead result in an instantaneous movement. `thread.warp` is a number where 0 indicates that the current thread is not in warp mode.
+
+`}`
+
+Go back to the for loop.
+
+`retire();`
+
+This runs the runtime function `retire`. This function marks the current thread as finished so that it will not run again. There are many other runtime functions for lots of operations such as list replacements, insertions, gets, etc. These are defined in src/compiler/execute.js
+
+#### Procedures
+
+One factory function exists for each procedure used by a thread. These work the same as described above: factory function runs once, factory variables are set up, generator functions run as needed. The only difference is that the generator function accepts arguments given names like `p0`, `p1`, etc. Procedures are called with `yield* thread.procedures["procedureCode"]()` or `thread.procedures["procedureCode"]()`, depending on what optimizations can be made.
+
+#### Compatibility layer
+
+Not every block can or needs to be compiled. For example, will people *really* notice if the "play sound until done" block runs slightly slower than it could? Probably not. Would people notice if the block was broken half of the time? Definitely. This is why the compiler also has a "compatibility layer" that allows it to run blocks directly from Scratch without "compiling" them.
+
+For example, an addition in TurboWarp is compiled down to the JavaScript `+` operator: `firstThing + secondThing`. If the `+` operator instead ran in the compatibility layer, it would look like: `yield* executeInCompatibilityLayer({"OPERAND1":firstThing,"OPERAND2":secondThing}, runtime.getOpcodeFunction("operator_add"))`
+
+This is slower, of course, but for complex blocks (eg. motion_glidesecstoxy), extension blocks (eg. videoSensing_videoToggle), and non-critical blocks (eg. sound_play), this is significantly easier and less prone to bugs.
+
+The opcodes that this is used for are in src/engine/compat-blocks.js
+
+#### Errors
+
+When scripts can't be compiled, they run in the standard (slow) scratch-vm interpreter. This is used for some edge cases: monitor threads, unknown opcodes, edge-activated hats, other errors.
 
 <!--
 
