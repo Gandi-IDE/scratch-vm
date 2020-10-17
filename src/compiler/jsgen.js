@@ -113,7 +113,9 @@ class ConstantInput {
         // Compute at compilation time
         const numberValue = +this.constantValue;
         if (numberValue) {
-            return this.constantValue;
+            // It's important that we use the number's stringified value and not the constant value
+            // Using the constant value allows numbers such as "010" to be interpreted as 8 (or SyntaxError in strict mode) instead of 10.
+            return numberValue.toString();
         }
         return '0';
     }
