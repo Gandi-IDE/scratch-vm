@@ -274,6 +274,16 @@ const getNamesOfCostumesAndSounds = runtime => {
     return result;
 };
 
+const isSafeConstantForEqualsOptimization = input => {
+    const numberValue = +input.constantValue;
+    // Do not optimize 0
+    if (!numberValue) {
+        return false;
+    }
+    // Do not optimize numbers when the original form does not match
+    return numberValue.toString() === input.constantValue.toString();
+};
+
 class JSGenerator {
     constructor (script, ast, target) {
         this.script = script;
@@ -397,6 +407,13 @@ class JSGenerator {
             const rightAlwaysNumber = right.isAlwaysNumber();
             // When both operands are known to be numbers, we can use ===
             if (leftAlwaysNumber && rightAlwaysNumber) {
+                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            // In certain conditions, we can use === when one of the operands is known to be a safe number.
+            if (leftAlwaysNumber && left instanceof ConstantInput && isSafeConstantForEqualsOptimization(left)) {
+                return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
+            }
+            if (rightAlwaysNumber && right instanceof ConstantInput && isSafeConstantForEqualsOptimization(right)) {
                 return new TypedInput(`(${left.asNumber()} === ${right.asNumber()})`, TYPE_BOOLEAN);
             }
             // No compile-time optimizations possible - use fallback method.
