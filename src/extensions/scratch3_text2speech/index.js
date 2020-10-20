@@ -8,6 +8,11 @@ const Cast = require('../../util/cast');
 const MathUtil = require('../../util/math-util');
 const Clone = require('../../util/clone');
 const log = require('../../util/log');
+// powered by xigua start
+const {getCookies} = require('../../util/cookies');
+const Base64Util = require('../../util/base64-util');
+// powered by xigua end
+
 
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
@@ -27,8 +32,11 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
  * The url of the synthesis server.
  * @type {string}
  */
-const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
-
+// const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
+// powered by xigua start
+// eslint-disable-next-line no-undef
+const SERVER_HOST = `${process.env.STUDY_WEB_HOST || STUDY_WEB_HOST || ''}/bfs-external/v1/speech/tts`;
+// powered by xigua end
 /**
  * How long to wait in ms before timing out requests to synthesis server.
  * @type {int}
@@ -81,28 +89,45 @@ const FEMALE_GIANT_RATE = 0.79; // -4 semitones
  */
 const ARABIC_ID = 'ar';
 const CHINESE_ID = 'zh-cn';
-const DANISH_ID = 'da';
-const DUTCH_ID = 'nl';
+const RUSSIAN_ID = 'ru';
+const SPANISH_ID = 'es';
 const ENGLISH_ID = 'en';
 const FRENCH_ID = 'fr';
 const GERMAN_ID = 'de';
-const HINDI_ID = 'hi';
-const ICELANDIC_ID = 'is';
-const ITALIAN_ID = 'it';
 const JAPANESE_ID = 'ja';
 const KOREAN_ID = 'ko';
-const NORWEGIAN_ID = 'nb';
-const POLISH_ID = 'pl';
-const PORTUGUESE_BR_ID = 'pt-br';
 const PORTUGUESE_ID = 'pt';
-const ROMANIAN_ID = 'ro';
-const RUSSIAN_ID = 'ru';
-const SPANISH_ID = 'es';
-const SPANISH_419_ID = 'es-419';
-const SWEDISH_ID = 'sv';
-const TURKISH_ID = 'tr';
-const WELSH_ID = 'cy';
+// const DANISH_ID = 'da';
+// const DUTCH_ID = 'nl';
+// const HINDI_ID = 'hi';
+// const ICELANDIC_ID = 'is';
+// const ITALIAN_ID = 'it';
+// const NORWEGIAN_ID = 'nb';
+// const POLISH_ID = 'pl';
+// const PORTUGUESE_BR_ID = 'pt-br';
+// const ROMANIAN_ID = 'ro';
+// const SPANISH_419_ID = 'es-419';
+// const SWEDISH_ID = 'sv';
+// const TURKISH_ID = 'tr';
+// const WELSH_ID = 'cy';
 
+// powered by xigua start
+const LANGUAGE_MAP = {
+    'ar': 'AR_BH',
+    'zh-cn': 'ZH_CN',
+    'zh-tw': 'ZH_CN',
+    'ja': 'JA',
+    'ja-Hira': 'JA',
+    'en': 'EN_US',
+    'en-US': 'EN_US',
+    'ko': 'KO_KR',
+    'fr': 'FR_FR',
+    'es': 'ES_ES',
+    'ru': 'RU_RU',
+    'pt': 'PT_BR',
+    'de': 'DE_DE'
+};
+// powered by xigua end
 /**
  * Class for the text2speech blocks.
  * @constructor
@@ -136,6 +161,9 @@ class Scratch3Text2SpeechBlocks {
          * @type {Array}
          */
         this._supportedLocales = this._getSupportedLocales();
+        // powered by xigua start
+        this._cookies = getCookies();
+        // powered by xigua end
     }
 
     /**
@@ -214,129 +242,159 @@ class Scratch3Text2SpeechBlocks {
     get LANGUAGE_INFO () {
         return {
             [ARABIC_ID]: {
-                name: 'Arabic',
+                name: formatMessage({
+                    id: 'text2speech.Arabic',
+                    default: 'Arabic'
+                }),
                 locales: ['ar'],
                 speechSynthLocale: 'arb',
                 singleGender: true
             },
             [CHINESE_ID]: {
-                name: 'Chinese (Mandarin)',
+                name: formatMessage({
+                    id: 'text2speech.Chinese',
+                    default: 'Chinese'
+                }),
                 locales: ['zh-cn', 'zh-tw'],
                 speechSynthLocale: 'cmn-CN',
                 singleGender: true
             },
-            [DANISH_ID]: {
-                name: 'Danish',
-                locales: ['da'],
-                speechSynthLocale: 'da-DK'
-            },
-            [DUTCH_ID]: {
-                name: 'Dutch',
-                locales: ['nl'],
-                speechSynthLocale: 'nl-NL'
-            },
+            // [DANISH_ID]: {
+            //     name: 'Danish',
+            //     locales: ['da'],
+            //     speechSynthLocale: 'da-DK'
+            // },
+            // [DUTCH_ID]: {
+            //     name: 'Dutch',
+            //     locales: ['nl'],
+            //     speechSynthLocale: 'nl-NL'
+            // },
             [ENGLISH_ID]: {
-                name: 'English',
+                name: formatMessage({
+                    id: 'text2speech.English',
+                    default: 'English'
+                }),
                 locales: ['en'],
                 speechSynthLocale: 'en-US'
             },
             [FRENCH_ID]: {
-                name: 'French',
+                name: formatMessage({
+                    id: 'text2speech.French',
+                    default: 'French'
+                }),
                 locales: ['fr'],
                 speechSynthLocale: 'fr-FR'
             },
             [GERMAN_ID]: {
-                name: 'German',
+                name: formatMessage({
+                    id: 'text2speech.German',
+                    default: 'German'
+                }),
                 locales: ['de'],
                 speechSynthLocale: 'de-DE'
             },
-            [HINDI_ID]: {
-                name: 'Hindi',
-                locales: ['hi'],
-                speechSynthLocale: 'hi-IN',
-                singleGender: true
-            },
-            [ICELANDIC_ID]: {
-                name: 'Icelandic',
-                locales: ['is'],
-                speechSynthLocale: 'is-IS'
-            },
-            [ITALIAN_ID]: {
-                name: 'Italian',
-                locales: ['it'],
-                speechSynthLocale: 'it-IT'
-            },
+            // [HINDI_ID]: {
+            //     name: 'Hindi',
+            //     locales: ['hi'],
+            //     speechSynthLocale: 'hi-IN',
+            //     singleGender: true
+            // },
+            // [ICELANDIC_ID]: {
+            //     name: 'Icelandic',
+            //     locales: ['is'],
+            //     speechSynthLocale: 'is-IS'
+            // },
+            // [ITALIAN_ID]: {
+            //     name: 'Italian',
+            //     locales: ['it'],
+            //     speechSynthLocale: 'it-IT'
+            // },
             [JAPANESE_ID]: {
-                name: 'Japanese',
-                locales: ['ja', 'ja-hira'],
+                name: formatMessage({
+                    id: 'text2speech.Japanese',
+                    default: 'Japanese'
+                }),
+                locales: ['ja', 'ja-Hira'],
                 speechSynthLocale: 'ja-JP'
             },
             [KOREAN_ID]: {
-                name: 'Korean',
+                name: formatMessage({
+                    id: 'text2speech.Korean',
+                    default: 'Korean'
+                }),
                 locales: ['ko'],
                 speechSynthLocale: 'ko-KR',
                 singleGender: true
             },
-            [NORWEGIAN_ID]: {
-                name: 'Norwegian',
-                locales: ['nb', 'nn'],
-                speechSynthLocale: 'nb-NO',
-                singleGender: true
-            },
-            [POLISH_ID]: {
-                name: 'Polish',
-                locales: ['pl'],
-                speechSynthLocale: 'pl-PL'
-            },
-            [PORTUGUESE_BR_ID]: {
-                name: 'Portuguese (Brazilian)',
-                locales: ['pt-br'],
-                speechSynthLocale: 'pt-BR'
-            },
+            // [NORWEGIAN_ID]: {
+            //     name: 'Norwegian',
+            //     locales: ['nb', 'nn'],
+            //     speechSynthLocale: 'nb-NO',
+            //     singleGender: true
+            // },
+            // [POLISH_ID]: {
+            //     name: 'Polish',
+            //     locales: ['pl'],
+            //     speechSynthLocale: 'pl-PL'
+            // },
+            // [PORTUGUESE_BR_ID]: {
+            //     name: 'Portuguese (Brazilian)',
+            //     locales: ['pt-br'],
+            //     speechSynthLocale: 'pt-BR'
+            // },
             [PORTUGUESE_ID]: {
-                name: 'Portuguese (European)',
+                name: formatMessage({
+                    id: 'text2speech.Portuguese',
+                    default: 'Portuguese'
+                }),
                 locales: ['pt'],
                 speechSynthLocale: 'pt-PT'
             },
-            [ROMANIAN_ID]: {
-                name: 'Romanian',
-                locales: ['ro'],
-                speechSynthLocale: 'ro-RO',
-                singleGender: true
-            },
+            // [ROMANIAN_ID]: {
+            //     name: 'Romanian',
+            //     locales: ['ro'],
+            //     speechSynthLocale: 'ro-RO',
+            //     singleGender: true
+            // },
             [RUSSIAN_ID]: {
-                name: 'Russian',
+                name: formatMessage({
+                    id: 'text2speech.Russian',
+                    default: 'Russian'
+                }),
                 locales: ['ru'],
                 speechSynthLocale: 'ru-RU'
             },
             [SPANISH_ID]: {
-                name: 'Spanish (European)',
+                name: formatMessage({
+                    id: 'text2speech.Spanish',
+                    default: 'Spanish'
+                }),
                 locales: ['es'],
                 speechSynthLocale: 'es-ES'
-            },
-            [SPANISH_419_ID]: {
-                name: 'Spanish (Latin American)',
-                locales: ['es-419'],
-                speechSynthLocale: 'es-US'
-            },
-            [SWEDISH_ID]: {
-                name: 'Swedish',
-                locales: ['sv'],
-                speechSynthLocale: 'sv-SE',
-                singleGender: true
-            },
-            [TURKISH_ID]: {
-                name: 'Turkish',
-                locales: ['tr'],
-                speechSynthLocale: 'tr-TR',
-                singleGender: true
-            },
-            [WELSH_ID]: {
-                name: 'Welsh',
-                locales: ['cy'],
-                speechSynthLocale: 'cy-GB',
-                singleGender: true
             }
+            // [SPANISH_419_ID]: {
+            //     name: 'Spanish (Latin American)',
+            //     locales: ['es-419'],
+            //     speechSynthLocale: 'es-US'
+            // },
+            // [SWEDISH_ID]: {
+            //     name: 'Swedish',
+            //     locales: ['sv'],
+            //     speechSynthLocale: 'sv-SE',
+            //     singleGender: true
+            // },
+            // [TURKISH_ID]: {
+            //     name: 'Turkish',
+            //     locales: ['tr'],
+            //     speechSynthLocale: 'tr-TR',
+            //     singleGender: true
+            // },
+            // [WELSH_ID]: {
+            //     name: 'Welsh',
+            //     locales: ['cy'],
+            //     speechSynthLocale: 'cy-GB',
+            //     singleGender: true
+            // }
         };
     }
 
@@ -690,8 +748,10 @@ class Scratch3Text2SpeechBlocks {
     speakAndWait (args, util) {
         // Cast input to string
         let words = Cast.toString(args.WORDS);
-        let locale = this._getSpeechSynthLocale();
-
+        // let locale = this._getSpeechSynthLocale();
+        // powered by xigua start
+        let locale = LANGUAGE_MAP[this.getCurrentLanguage()];
+        // powered by xigua end
         const state = this._getState(util.target);
 
         let gender = this.VOICE_INFO[state.voiceId].gender;
@@ -712,21 +772,34 @@ class Scratch3Text2SpeechBlocks {
 
         if (state.voiceId === KITTEN_ID) {
             words = words.replace(/\S+/g, 'meow');
-            locale = this.LANGUAGE_INFO[this.DEFAULT_LANGUAGE].speechSynthLocale;
+            locale = LANGUAGE_MAP[this.LANGUAGE_INFO[this.DEFAULT_LANGUAGE].speechSynthLocale];
         }
 
         // Build up URL
-        let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${locale}`;
-        path += `&gender=${gender}`;
-        path += `&text=${encodeURIComponent(words.substring(0, 128))}`;
+        // let path = `${SERVER_HOST}/synth`;
+        // path += `?locale=${locale}`;
+        // path += `&gender=${gender}`;
+        // path += `&text=${encodeURIComponent(words.substring(0, 128))}`;
 
         // Perform HTTP request to get audio file
         return new Promise(resolve => {
             nets({
-                url: path,
+                // powered by xigua start
+                method: 'post',
+                url: SERVER_HOST,
+                body: JSON.stringify({
+                    language: locale,
+                    gender: gender,
+                    text: words
+                }),
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json;charset=UTF-8',
+                    'token': this._cookies.token
+                },
+                // powered by xigua end
                 timeout: SERVER_TIMEOUT
-            }, (err, res, body) => {
+            }, (err, res, data) => {
                 if (err) {
                     log.warn(err);
                     return resolve();
@@ -737,10 +810,15 @@ class Scratch3Text2SpeechBlocks {
                     return resolve();
                 }
 
+                // powered by xigua start
+                const {body} = JSON.parse(data);
+                const array = Base64Util.base64ToUint8Array(body.speechBytes);
+                // powered by xigua end
+
                 // Play the sound
                 const sound = {
                     data: {
-                        buffer: body.buffer
+                        buffer: array.buffer
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
