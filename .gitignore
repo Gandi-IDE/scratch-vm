@@ -19,3 +19,5 @@ npm-*
 
 # Localization
 /translations
+
+yarn.lock
