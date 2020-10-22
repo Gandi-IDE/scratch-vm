@@ -28,6 +28,10 @@ class Mouse {
             null, target);
         this.runtime.startHats('event_whenstageclicked',
             null, target);
+
+        // powered by xigua start
+        this.runtime.emit('SCRATCH3_SPRITE_CLICKED', target);
+        // powered by xigua end
     }
 
     /**

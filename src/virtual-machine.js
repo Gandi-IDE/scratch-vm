@@ -44,6 +44,11 @@ const CORE_EXTENSIONS = [
  * @constructor
  */
 class VirtualMachine extends EventEmitter {
+
+    static get FIND_PYTHON_CODE () {
+        return 'FIND_PYTHON_CODE';
+    }
+
     constructor () {
         super();
 
@@ -350,13 +355,27 @@ class VirtualMachine extends EventEmitter {
         return validationPromise
             // powered by xigua 西瓜特色sb3，只包含了project.json文件，这里为了处理无法从zip中找到资源的问题，假装这个sb3是一个json而已
             .then(validatedInput => {
+                // 清理之前的python代码
+                this.emit(VirtualMachine.FIND_PYTHON_CODE, '');
                 let [json, zip] = validatedInput;
                 if (
                     zip &&
                     zip.files &&
-                    Object.keys(zip.files).length === 1 &&
-                    zip.files.hasOwnProperty('project.json')
+                    // 这里存在两种情况，scratch-python课程sb3里会多包含一个main.py文件
+                    (
+                        (Object.keys(zip.files).length === 1 &&
+                                zip.files.hasOwnProperty('project.json')) ||
+                        (Object.keys(zip.files).length === 2 &&
+                                zip.files.hasOwnProperty('project.json') &&
+                                zip.files.hasOwnProperty('main.py'))
+                    )
                 ) {
+                    if (zip.files.hasOwnProperty('main.py')) {
+                        zip.files['main.py'].async('string').then(pythonCode => {
+                            this.emit(VirtualMachine.FIND_PYTHON_CODE, pythonCode);
+                        });
+                    }
+
                     zip = null;
                 }
                 return this.deserializeProject(json, zip);
