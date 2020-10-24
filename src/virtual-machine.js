@@ -216,6 +216,10 @@ class VirtualMachine extends EventEmitter {
         this.runtime.setCompilerOptions(compilerOptions);
     }
 
+    precompille () {
+        this.runtime.precompile();
+    }
+
     /**
      * Stop all threads and running activities.
      */
@@ -355,6 +359,7 @@ class VirtualMachine extends EventEmitter {
         return validationPromise
             .then(validatedInput => this.deserializeProject(validatedInput[0], validatedInput[1]))
             .then(() => this.runtime.emitProjectLoaded())
+            .then(() => this.precompille())
             .catch(error => {
                 // Intentionally rejecting here (want errors to be handled by caller)
                 if (error.hasOwnProperty('validationError')) {
