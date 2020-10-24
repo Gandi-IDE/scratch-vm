@@ -393,6 +393,10 @@ class Runtime extends EventEmitter {
         // scratch-gui will set this to 30
         this.framerate = 60;
 
+        this.runtimeOptions = {
+
+        };
+
         this.compilerOptions = {
             enabled: true,
             warpTimer: false
@@ -470,6 +474,14 @@ class Runtime extends EventEmitter {
      */
     static get TURBO_MODE_OFF () {
         return 'TURBO_MODE_OFF';
+    }
+
+    /**
+     * Event name for compiler options changing.
+     * @const {string}
+     */
+    static get RUNTIME_OPTIONS_CHANGED () {
+        return 'RUNTIME_OPTIONS_CHANGED';
     }
 
     /**
@@ -2200,6 +2212,15 @@ class Runtime extends EventEmitter {
             this.start();
         }
         this.emit(Runtime.FRAMERATE_CHANGED, framerate);
+    }
+
+    /**
+     * tw: Update runtime options
+     * @param {*} runtimeOptions New options
+     */
+    setRuntimeOptions (runtimeOptions) {
+        this.runtimeOptions = Object.assign({}, this.runtimeOptions, runtimeOptions);
+        this.emit(Runtime.RUNTIME_OPTIONS_CHANGED, this.runtimeOptions);
     }
 
     /**

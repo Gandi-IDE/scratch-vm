@@ -151,6 +151,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData => {
             this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData);
         });
+        this.runtime.on(Runtime.RUNTIME_OPTIONS_CHANGED, runtimeOptions => {
+            this.emit(Runtime.RUNTIME_OPTIONS_CHANGED, runtimeOptions);
+        });
         this.runtime.on(Runtime.COMPILER_OPTIONS_CHANGED, compilerOptions => {
             this.emit(Runtime.COMPILER_OPTIONS_CHANGED, compilerOptions);
         });
@@ -210,6 +213,10 @@ class VirtualMachine extends EventEmitter {
 
     setFramerate (framerate) {
         this.runtime.setFramerate(framerate);
+    }
+
+    setRuntimeOptions (runtimeOptions) {
+        this.runtime.setRuntimeOptions(runtimeOptions);
     }
 
     setCompilerOptions (compilerOptions) {
