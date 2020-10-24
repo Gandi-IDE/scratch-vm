@@ -394,7 +394,7 @@ class Runtime extends EventEmitter {
         this.framerate = 60;
 
         this.runtimeOptions = {
-
+            maxClones: Runtime.MAX_CLONES
         };
 
         this.compilerOptions = {
@@ -741,6 +741,7 @@ class Runtime extends EventEmitter {
      * @const {number}
      */
     static get MAX_CLONES () {
+        // tw: clone limit is set per-runtime in runtimeOptions, this is only the initial value
         return 300;
     }
 
@@ -2529,10 +2530,10 @@ class Runtime extends EventEmitter {
 
     /**
      * Return whether there are clones available.
-     * @return {boolean} True until the number of clones hits Runtime.MAX_CLONES.
+     * @return {boolean} True until the number of clones hits runtimeOptions.maxClones
      */
     clonesAvailable () {
-        return this._cloneCounter < Runtime.MAX_CLONES;
+        return this._cloneCounter < this.runtimeOptions.maxClones;
     }
 
     /**
