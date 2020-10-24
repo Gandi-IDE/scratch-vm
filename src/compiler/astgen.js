@@ -878,7 +878,7 @@ class ScriptTreeGenerator {
         case 'data_showlist':
             return {
                 kind: 'list.show',
-                list: this.descendVariable(block, 'LIST')
+                list: this.descendVariable(block, 'LIST', LIST_TYPE)
             };
         case 'data_showvariable':
             return {
