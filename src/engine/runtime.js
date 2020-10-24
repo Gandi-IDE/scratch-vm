@@ -2115,7 +2115,6 @@ class Runtime extends EventEmitter {
             }
             // tw: do not draw if document is hidden
             if (!document.hidden) {
-                console.log(Date.now());
                 this.renderer.draw();
             }
             if (this.profiler !== null) {
