@@ -90,7 +90,7 @@ class Blocks {
             compiledScripts: {},
             
             /**
-             * tw: A cache of procedure code opcodes to a parsed AST
+             * tw: A cache of procedure code opcodes to a parsed intermediate representation
              * @type {object.<string, object>}
              */
             compiledProcedures: {},

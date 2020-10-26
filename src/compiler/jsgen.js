@@ -5,6 +5,11 @@ const execute = require('./execute');
 const {disableToString} = require('./util');
 const environment = require('./environment');
 
+/**
+ * @fileoverview
+ * jsgen.js converts intermediate representations to plain JavaScript.
+ */
+
 /* eslint-disable max-len */
 
 const sanitize = string => {
@@ -285,9 +290,9 @@ const isSafeConstantForEqualsOptimization = input => {
 };
 
 class JSGenerator {
-    constructor (script, ast, target) {
+    constructor (script, ir, target) {
         this.script = script;
-        this.ast = ast;
+        this.ir = ir;
         this.target = target;
         this.source = '';
 
@@ -662,7 +667,7 @@ class JSGenerator {
                     this.source += `${list}._monitorUpToDate = false;\n`;
                     break;
                 }
-                // do not need optimization for all: that is done at the AST level
+                // do not need a special case for all as that is handled in IR generation (list.deleteAll)
             }
             this.source += `listDelete(${list}, ${index.asUnknown()});\n`;
             break;
@@ -788,7 +793,7 @@ class JSGenerator {
         case 'procedures.call': {
             const procedureCode = node.code;
             // Do not generate any code for empty procedures.
-            const procedureData = this.ast.procedures[procedureCode];
+            const procedureData = this.ir.procedures[procedureCode];
             if (procedureData.stack === null) {
                 break;
             }
@@ -935,7 +940,7 @@ class JSGenerator {
 
     yielded () {
         if (!this.script.yields) {
-            throw new Error('Script yielded but AST is not marked as yielding.');
+            throw new Error('Script yielded but is not marked as yielding.');
         }
         // Control may have been yielded to another script -- all bets are off.
         this.resetVariableInputs();

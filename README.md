@@ -20,19 +20,19 @@ The source code for the compiler is in src/compiler. Script compilation happens 
 
 I'm going to try to explain some of the high-level details of the compiler below. If you have any questions, just ask. Open an issue or something, I'm very easy to get ahold of.
 
-### Abstract syntax tree
+### Intermediate representation
 
-Source: src/compiler/astgen.js
+Source: src/compiler/irgen.js
 
-The first stage of the compiler is to generate an AST. This is not the same as the AST that the Scratch VM maintains internally. The goal of this stage is to abstract the exact details of the project into something that can be more easily parsed. Some analysis and optimizations happen at this stage. The required procedures are recursed as well.
+The first stage of the compiler is to generate an intermediate representation (IR). This is really just a more abstract version of Scratch's AST. Some analysis and optimizations happen at this stage.
 
-In the future there may also be multiple different code generators, and having a useful abstraction will be even more useful then.
+In the future there may also be multiple different code generators, and having this abstraction will be even more useful then.
 
 ### JavaScript generation
 
 Source: src/compiler/jsgen.js
 
-The AST is passed into the JavaScript generator which descends the AST and generates optimized JavaScript. This JavaScript has some idiosyncrasies. I'll try to explain some of them using a simple project with a bouncing cat (https://scratch.mit.edu/projects/437419376) as an example.
+The IR is passed into the JavaScript generator which descends the IR and generates optimized JavaScript. This JavaScript has some idiosyncrasies. I'll try to explain some of them using a simple project with a bouncing cat (https://scratch.mit.edu/projects/437419376) as an example.
 
 This is an example result of compiling a project.
 

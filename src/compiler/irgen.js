@@ -2,15 +2,26 @@ const Cast = require('../util/cast');
 const Variable = require('../engine/variable');
 const log = require('../util/log');
 
+/**
+ * @fileoverview
+ * irgen.js generates intermediate representations for scripts.
+ */
+
 const SCALAR_TYPE = '';
 const LIST_TYPE = 'list';
 
 const compatBlocks = require('./compat-blocks');
 
 /**
- * @typedef Tree
- * @property {null|Array} stack The nodes that comprise this script. `null` is an empty stack.
- * @property {string} procedureCode
+ * @typedef IntermediateRepresentation
+ * @property {IntermediateScript} entry
+ * @property {Object.<string, IntermediateScript>} procedures
+ */
+
+/**
+ * @typedef IntermediateScript
+ * @property {null|Array} stack The nodes that comprise this script, or null if the script is empty.
+ * @property {string} procedureCode The name of this procedure, or null if the script is not a procedure.
  * @property {boolean} isProcedure
  * @property {string[]} arguments
  * @property {boolean} isWarp
@@ -18,12 +29,6 @@ const compatBlocks = require('./compat-blocks');
  * @property {boolean} warpTimer
  * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on. Does not include dependencies of dependencies, etc.
  * @property {*} cachedCompileResult
- */
-
-/**
- * @typedef AST
- * @property {Tree} entry
- * @property {Object.<String, Tree>} procedures
  */
 
 // I would like to make a JSDoc type for "needs to have a string `kind` but can have any other properties" but that doesn't seem to be possible...
@@ -96,7 +101,7 @@ class ScriptTreeGenerator {
 
         const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
         if (paramNamesIdsAndDefaults === null) {
-            throw new Error(`AST: cannot find procedure: ${procedureCode}`);
+            throw new Error(`IR: cannot find procedure: ${procedureCode}`);
         }
 
         const [paramNames, _paramIds, _paramDefaults] = paramNamesIdsAndDefaults;
@@ -117,7 +122,7 @@ class ScriptTreeGenerator {
     descendInput (parentBlock, inputName) {
         const input = parentBlock.inputs[inputName];
         if (!input) {
-            log.warn(`AST: ${parentBlock.opcode}: missing input ${inputName}`, parentBlock);
+            log.warn(`IR: ${parentBlock.opcode}: missing input ${inputName}`, parentBlock);
             return {
                 kind: 'constant',
                 value: 0
@@ -126,7 +131,7 @@ class ScriptTreeGenerator {
         const inputId = input.block;
         const block = this.blocks.getBlock(inputId);
         if (!block) {
-            log.warn(`AST: ${parentBlock.opcode}: could not find input ${inputName} with ID ${inputId}`);
+            log.warn(`IR: ${parentBlock.opcode}: could not find input ${inputName} with ID ${inputId}`);
             return {
                 kind: 'constant',
                 value: 0
@@ -693,8 +698,8 @@ class ScriptTreeGenerator {
             if (compatBlocks.inputs.includes(block.opcode)) {
                 return this.descendCompatLayer(block);
             }
-            log.warn(`AST: Unknown input: ${block.opcode}`, block);
-            throw new Error(`AST: Unknown input: ${block.opcode}`);
+            log.warn(`IR: Unknown input: ${block.opcode}`, block);
+            throw new Error(`IR: Unknown input: ${block.opcode}`);
         }
     }
 
@@ -1174,8 +1179,8 @@ class ScriptTreeGenerator {
             if (compatBlocks.stacked.includes(block.opcode)) {
                 return this.descendCompatLayer(block);
             }
-            log.warn(`AST: Unknown stacked block: ${block.opcode}`, block);
-            throw new Error(`AST: Unknown stacked block: ${block.opcode}`);
+            log.warn(`IR: Unknown stacked block: ${block.opcode}`, block);
+            throw new Error(`IR: Unknown stacked block: ${block.opcode}`);
         }
     }
 
@@ -1366,10 +1371,10 @@ class ScriptTreeGenerator {
 
     /**
      * @param {string} topBlockId The ID of the top block of the script.
-     * @returns {Tree} A compiled tree.
+     * @returns {IntermediateScript} A compiled tree.
      */
     generate (topBlockId) {
-        /** @type {Tree} */
+        /** @type {IntermediateScript} */
         const result = {
             stack: null,
             procedureCode: this.procedureCode,
@@ -1422,14 +1427,14 @@ class ScriptTreeGenerator {
     }
 }
 
-class ASTGenerator {
+class IRGenerator {
     constructor (thread) {
         this.thread = thread;
         this.blocks = thread.blockContainer;
 
         this.proceduresToCompile = new Map();
         this.compilingProcedures = new Map();
-        /** @type {Object.<string, Tree>} */
+        /** @type {Object.<string, IntermediateScript>} */
         this.procedures = {};
 
         this.analyzedProcedures = [];
@@ -1454,7 +1459,7 @@ class ASTGenerator {
     /**
      * @param {ScriptTreeGenerator} generator The generator to run.
      * @param {string} topBlockId The ID of the top block in the stack.
-     * @returns {Tree} Tree for this script.
+     * @returns {IntermediateScript} Tree for this script.
      */
     generateScriptTree (generator, topBlockId) {
         const result = generator.generate(topBlockId);
@@ -1464,7 +1469,7 @@ class ASTGenerator {
 
     /**
      * Recursively analyze a script tree and its dependencies.
-     * @param {Tree} tree Root script tree.
+     * @param {IntermediateScript} tree Root script tree.
      */
     analyzeScript (tree) {
         for (const procedureCode of tree.dependedProcedures) {
@@ -1487,7 +1492,7 @@ class ASTGenerator {
     }
 
     /**
-     * @returns {AST} Syntax tree.
+     * @returns {IntermediateRepresentation} Syntax tree.
      */
     generate () {
         const entry = this.generateScriptTree(new ScriptTreeGenerator(this.thread), this.thread.topBlock);
@@ -1539,4 +1544,4 @@ class ASTGenerator {
     }
 }
 
-module.exports = ASTGenerator;
+module.exports = IRGenerator;
