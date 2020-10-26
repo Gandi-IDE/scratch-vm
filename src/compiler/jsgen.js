@@ -934,6 +934,9 @@ class JSGenerator {
     }
 
     yielded () {
+        if (!this.script.yields) {
+            throw new Error('Script yielded but AST is not marked as yielding.');
+        }
         // Control may have been yielded to another script -- all bets are off.
         this.resetVariableInputs();
     }
