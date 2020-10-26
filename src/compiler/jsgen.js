@@ -807,7 +807,7 @@ class JSGenerator {
             if (procedureData.arguments.length) {
                 const args = [];
                 for (const input of node.arguments) {
-                    args.push(this.descendInput(input).asUnknown());
+                    args.push(this.descendInput(input).asSafe());
                 }
                 this.source += args.join(',');
             }
