@@ -385,6 +385,10 @@ class RenderedTarget extends Target {
                 this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
+        } else {
+            // tw: setSize should update size even without a renderer
+            // needed by tw-change-size-does-not-use-rounded-size.sb3 test
+            this.size = size;
         }
         this.runtime.requestTargetsUpdate(this);
     }
