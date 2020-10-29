@@ -904,14 +904,8 @@ class ScriptTreeGenerator {
 
         case 'looks_changesizeby':
             return {
-                kind: 'looks.setSize',
-                size: {
-                    kind: 'op.add',
-                    left: {
-                        kind: 'looks.size'
-                    },
-                    right: this.descendInput(block, 'CHANGE')
-                }
+                kind: 'looks.changeSize',
+                size: this.descendInput(block, 'CHANGE')
             };
         case 'looks_cleargraphiceffects':
             return {

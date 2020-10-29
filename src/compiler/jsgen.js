@@ -703,6 +703,9 @@ class JSGenerator {
         case 'looks.clearEffects':
             this.source += 'target.clearEffects();\n';
             break;
+        case 'looks.changeSize':
+            this.source += `target.setSize(target.size + ${this.descendInput(node.size).asNumber()});\n`;
+            break;
         case 'looks.forwardLayers':
             this.source += `target.goForwardLayers(${this.descendInput(node.layers).asNumber()});\n`;
             break;
