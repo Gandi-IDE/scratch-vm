@@ -120,7 +120,7 @@ fs.readdirSync(executeDir)
                         const error = target.blocks.getCachedCompileResult(id);
                         // Errors about "edge-activated hats" are expected and should be ignored.
                         if (!`${error.value}`.includes('edge-activated hat')) {
-                            throw new Error(`Script compilation unexpectedly failed for script ${id} in ${target.getName()} (${error})`);
+                            throw new Error(`Script compile failed for ${id} in ${target.getName()} (${error})`);
                         }
                     }
                     return thread;

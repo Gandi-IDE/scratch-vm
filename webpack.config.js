@@ -1,7 +1,6 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const defaultsDeep = require('lodash.defaultsdeep');
 const path = require('path');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const base = {
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
@@ -28,7 +27,7 @@ const base = {
             test: /\.mp3$/,
             loader: 'file-loader',
             options: {
-                outputPath: 'media/music/',
+                outputPath: 'media/music/'
             }
         }]
     },

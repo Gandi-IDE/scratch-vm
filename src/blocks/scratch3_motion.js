@@ -65,7 +65,7 @@ class Scratch3MotionBlocks {
         const steps = Cast.toNumber(args.STEPS);
         this._moveSteps(steps, util.target);
     }
-    _moveSteps(steps, target) { // used by compiler
+    _moveSteps (steps, target) { // used by compiler
         const radians = MathUtil.degToRad(90 - target.direction);
         const dx = steps * Math.cos(radians);
         const dy = steps * Math.sin(radians);

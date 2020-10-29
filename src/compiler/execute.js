@@ -15,7 +15,8 @@ let thread;
 
 // All the functions defined here will be available to compiled scripts.
 // The JSDoc annotations define the function's contract.
-// Most of these functions are only used at runtime by generated scripts. Despite what your editor may say, they are not unused.
+// Most of these functions are only used at runtime by generated scripts.
+// Despite what your editor may say, they are not unused.
 
 let stuckCounter = 0;
 /**
@@ -40,7 +41,7 @@ const isStuck = () => {
  * @returns {Array} A list of threads that were started.
  */
 const startHats = (requestedHat, optMatchFields) => {
-    const threads = thread.target.runtime.startHats(requestedHat, optMatchFields, undefined);
+    const threads = thread.target.runtime.startHats(requestedHat, optMatchFields);
     return threads;
 };
 
@@ -53,8 +54,8 @@ const waitThreads = function*(threads) {
 
     while (true) {
         // determine whether any threads are running
-        var anyRunning = false;
-        for (var i = 0; i < threads.length; i++) {
+        let anyRunning = false;
+        for (let i = 0; i < threads.length; i++) {
             if (runtime.threads.indexOf(threads[i]) !== -1) {
                 anyRunning = true;
                 break;
@@ -65,8 +66,8 @@ const waitThreads = function*(threads) {
             return;
         }
 
-        var allWaiting = true;
-        for (var i = 0; i < threads.length; i++) {
+        let allWaiting = true;
+        for (let i = 0; i < threads.length; i++) {
             if (!runtime.isWaitingThread(threads[i])) {
                 allWaiting = false;
                 break;
@@ -86,10 +87,9 @@ const waitThreads = function*(threads) {
  * @returns {*} the value that the promise resolves to, otherwise undefined if the promise rejects
  */
 const waitPromise = function*(promise) {
-    // TODO: there's quite a lot going on in engine/execute.js's handlePromise. We should see how much of that matters to us
-
-    const _thread = thread; // need to store reference to current thread, as promise handlers won't be called from the tick loop
-    let returnValue = undefined;
+    // need to store reference to current thread, as promise handlers won't be called from the tick loop
+    const _thread = thread;
+    let returnValue;
 
     promise
         .then(value => {
@@ -101,7 +101,8 @@ const waitPromise = function*(promise) {
             log.warn('Promise rejected in compiled script:', error);
         });
 
-    // enter STATUS_PROMISE_WAIT and yield, this will stop script execution until the promise handlers reset the thread status
+    // enter STATUS_PROMISE_WAIT and yield
+    // this will stop script execution until the promise handlers reset the thread status
     thread.status = Thread.STATUS_PROMISE_WAIT;
     yield;
 
@@ -125,14 +126,12 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction) {
         return blockFunction(inputs, compatibilityLayerBlockUtility);
     };
 
-    const isPromise = (value) => {
+    const isPromise = value => (
         // see engine/execute.js
-        return (
-            value !== null &&
-            typeof value === 'object' &&
-            typeof value.then === 'function'
-        );
-    };
+        value !== null &&
+        typeof value === 'object' &&
+        typeof value.then === 'function'
+    );
 
     let returnValue = executeBlock();
 
@@ -197,14 +196,14 @@ const toBoolean = value => {
  * @param {*} val Value to check
  * @returns {boolean} true if the value is whitespace
  */
-const isWhiteSpace = val => {
-    return val === null || (typeof val === 'string' && val.trim().length === 0);
-};
+const isWhiteSpace = val => (
+    val === null || (typeof val === 'string' && val.trim().length === 0)
+);
 
 /**
  * Determine if two values are equal.
- * @param {*} v1
- * @param {*} v2
+ * @param {*} v1 First value
+ * @param {*} v2 Second value
  * @returns {boolean} true if v1 is equal to v2
  */
 const compareEqual = (v1, v2) => {
@@ -225,8 +224,8 @@ const compareEqual = (v1, v2) => {
 
 /**
  * Determine if one value is greater than another.
- * @param {*} v1
- * @param {*} v2
+ * @param {*} v1 First value
+ * @param {*} v2 Second value
  * @returns {boolean} true if v1 is greater than v2
  */
 const compareGreaterThan = (v1, v2) => {
@@ -247,8 +246,8 @@ const compareGreaterThan = (v1, v2) => {
 
 /**
  * Determine if one value is less than another.
- * @param {*} v1
- * @param {*} v2
+ * @param {*} v1 First value
+ * @param {*} v2 Second value
  * @returns {boolean} true if v1 is less than v2
  */
 const compareLessThan = (v1, v2) => {
@@ -273,9 +272,7 @@ const compareLessThan = (v1, v2) => {
  * @param {number} high Upper bound
  * @returns {number} A random integer between low and high, inclusive.
  */
-const randomInt = (low, high) => {
-    return low + Math.floor(Math.random() * ((high + 1) - low));
-};
+const randomInt = (low, high) => low + Math.floor(Math.random() * ((high + 1) - low));
 
 /**
  * Generate a random float.
@@ -283,9 +280,7 @@ const randomInt = (low, high) => {
  * @param {number} high Upper bound
  * @returns {number} A random floating point number between low and high.
  */
-const randomFloat = (low, high) => {
-    return (Math.random() * (high - low)) + low;
-};
+const randomFloat = (low, high) => (Math.random() * (high - low)) + low;
 
 // nowObj used for timers.
 const timerNowObj = {
@@ -377,7 +372,7 @@ const listIndex = (index, length) => {
  * Get a value from a list.
  * @param {Array} list The list
  * @param {*} idx The 1-indexed index in the list.
- * @returns The list item, otherwise empty string if it does not exist.
+ * @returns {*} The list item, otherwise empty string if it does not exist.
  */
 const listGet = (list, idx) => {
     const index = listIndex(idx, list.length);
@@ -461,7 +456,7 @@ const listContains = (list, item) => {
  * @returns {number} The 1-indexed index of the item in the list, otherwise 0
  */
 const listIndexOf = (list, item) => {
-    for (var i = 0; i < list.value.length; i++) {
+    for (let i = 0; i < list.value.length; i++) {
         if (compareEqual(list.value[i], item)) {
             return i + 1;
         }
@@ -491,16 +486,13 @@ const listContents = list => {
  * @param {*} color The color value to convert
  * @return {Array.<number>} [r,g,b], values between 0-255.
  */
-const colorToList = color => {
-    // TODO: remove Cast dependency
-    return Cast.toRgbColorList(color);
-};
+const colorToList = color => Cast.toRgbColorList(color);
 
 /**
  * Implements Scratch modulo (floored division instead of truncated division)
- * @param {number} n
- * @param {number} modulus
- * @returns {number}
+ * @param {number} n Number
+ * @param {number} modulus Base
+ * @returns {number} n % modulus (floored division)
  */
 const mod = (n, modulus) => {
     let result = n % modulus;
@@ -510,9 +502,9 @@ const mod = (n, modulus) => {
 
 /**
  * Step a compiled thread.
- * @param {Thread} _thread
+ * @param {Thread} _thread The thread to step.
  */
-const execute = (_thread) => {
+const execute = _thread => {
     thread = _thread;
     _thread.generator.next();
 };

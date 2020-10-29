@@ -129,8 +129,8 @@ class Scratch3MusicBlocks {
         const soundFile = assetData[fullPath];
 
         return fetch(soundFile)
-            .then((r) => r.arrayBuffer())
-            .then((soundBuffer) => this._decodeSound(soundBuffer))
+            .then(r => r.arrayBuffer())
+            .then(soundBuffer => this._decodeSound(soundBuffer))
             .then(player => {
                 playerArray[index] = player;
             });

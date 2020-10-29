@@ -27,11 +27,10 @@ const compatBlocks = require('./compat-blocks');
  * @property {boolean} isWarp
  * @property {boolean} yields
  * @property {boolean} warpTimer
- * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on. Does not include dependencies of dependencies, etc.
+ * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on.
  * @property {*} cachedCompileResult
  */
 
-// I would like to make a JSDoc type for "needs to have a string `kind` but can have any other properties" but that doesn't seem to be possible...
 /**
  * @typedef {Object.<string, *>} Node
  * @property {string} kind
@@ -1134,7 +1133,7 @@ class ScriptTreeGenerator {
                 };
             }
 
-            const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
+            const [_paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
 
             if (!this.dependedProcedures.includes(procedureCode)) {
                 this.dependedProcedures.push(procedureCode);
@@ -1296,7 +1295,7 @@ class ScriptTreeGenerator {
         target.variables[id] = newVariable;
 
         // If the sprite being compiled right now is a clone, we should also create the variable in the original sprite.
-        // This is necessary because the script cache is shared between clones, and new clones would not have this variable created.
+        // This is necessary because the script cache is shared between clones, and clones won't inherit this variable.
         if (!target.isOriginal) {
             // The original sprite will usually be the first item of `clones`, but it's possible that it might not be.
             const original = this.target.sprite.clones.find(t => t.isOriginal);
@@ -1479,8 +1478,6 @@ class IRGenerator {
             if (!this.analyzedProcedures.includes(procedureCode)) {
                 this.analyzedProcedures.push(procedureCode);
                 this.analyzeScript(procedureData);
-                // There seems to be some problems with recursive functions being analyzed incorrectly.
-                // I need to look into it more, but for now it seems that less aggressively skipping unnecessary analysis fixes it.
                 this.analyzedProcedures.pop();
             }
 

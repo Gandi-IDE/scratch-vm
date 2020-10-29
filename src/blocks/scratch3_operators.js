@@ -80,7 +80,7 @@ class Scratch3OperatorsBlocks {
     random (args) {
         return this._random(args.FROM, args.TO);
     }
-    _random(from, to) { // used by compiler
+    _random (from, to) { // used by compiler
         const nFrom = Cast.toNumber(from);
         const nTo = Cast.toNumber(to);
         const low = nFrom <= nTo ? nFrom : nTo;

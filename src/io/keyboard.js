@@ -134,7 +134,7 @@ class Keyboard {
             return KEY_NAME.SPACE;
         }
         // tw: support Scratch 2 hacked blocks
-        // There are more hacked blocks but most of them get mangled by Scratch 2 -> Scratch 3 conversion or we choose not to support them.
+        // There are more hacked blocks but most of them get mangled by Scratch 2 -> Scratch 3 conversion
         if (keyArg === '\r') {
             // this probably belongs upstream
             return KEY_NAME.ENTER;

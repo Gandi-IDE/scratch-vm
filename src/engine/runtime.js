@@ -2193,7 +2193,8 @@ class Runtime extends EventEmitter {
      * @param {boolean} compatibilityModeOn True iff in compatibility mode.
      */
     setCompatibilityMode (compatibilityModeOn) {
-        // tw: "compatibility mode" is replaced with a generic framerate setter, but this method is kept for compatibility
+        // tw: "compatibility mode" is replaced with a generic framerate setter,
+        // but this method is kept for compatibility
         if (compatibilityModeOn) {
             this.setFramerate(30);
         } else {
