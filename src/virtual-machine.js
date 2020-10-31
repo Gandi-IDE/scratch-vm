@@ -148,6 +148,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.RUNTIME_STARTED, () => {
             this.emit(Runtime.RUNTIME_STARTED);
         });
+        this.runtime.on(Runtime.RUNTIME_STOPPED, () => {
+            this.emit(Runtime.RUNTIME_STOPPED);
+        });
         this.runtime.on(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData => {
             this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData);
         });
@@ -179,6 +182,13 @@ class VirtualMachine extends EventEmitter {
      */
     start () {
         this.runtime.start();
+    }
+
+    /**
+     * tw: Stop running the VM
+     */
+    stop () {
+        this.runtime.stop();
     }
 
     /**
