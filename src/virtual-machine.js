@@ -186,6 +186,7 @@ class VirtualMachine extends EventEmitter {
 
     /**
      * tw: Stop running the VM
+     * Note: This only stops the loop. It will not stop any threads the next time the VM starts
      */
     stop () {
         this.runtime.stop();

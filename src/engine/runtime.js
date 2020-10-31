@@ -2710,6 +2710,7 @@ class Runtime extends EventEmitter {
 
     /**
      * tw: Stop the tick loop
+     * Note: This only stops the loop. It will not stop any threads the next time the VM starts
      */
     stop () {
         if (!this._steppingInterval) {
