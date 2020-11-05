@@ -826,6 +826,8 @@ class JSGenerator {
             if (callingFromNonWarpToWarp) {
                 this.source += 'thread.warp--;\n';
             }
+            // Variable input types may have changes after a procedure call.
+            this.resetVariableInputs();
             break;
         }
 
