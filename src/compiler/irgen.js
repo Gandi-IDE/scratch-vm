@@ -578,9 +578,39 @@ class ScriptTreeGenerator {
                 mask: this.descendInput(block, 'COLOR')
             };
         case 'sensing_current':
+            switch (block.fields.CURRENTMENU.value.toLowerCase()) {
+            case 'year':
+                return {
+                    kind: 'sensing.year'
+                };
+            case 'month':
+                return {
+                    kind: 'sensing.month'
+                };
+            case 'date':
+                return {
+                    kind: 'sensing.date'
+                };
+            case 'dayofweek':
+                return {
+                    kind: 'sensing.dayofweek'
+                };
+            case 'hour':
+                return {
+                    kind: 'sensing.hour'
+                };
+            case 'minute':
+                return {
+                    kind: 'sensing.minute'
+                };
+            case 'second':
+                return {
+                    kind: 'sensing.second'
+                };
+            }
             return {
-                kind: 'sensing.current',
-                property: block.fields.CURRENTMENU.value.toLowerCase()
+                kind: 'constant',
+                value: 0
             };
         case 'sensing_dayssince2000':
             return {

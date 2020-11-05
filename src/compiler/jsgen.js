@@ -504,37 +504,33 @@ class JSGenerator {
             return new TypedInput(`runtime.ext_scratch3_sensing._answer`, TYPE_STRING);
         case 'sensing.colorTouchingColor':
             return new TypedInput(`target.colorIsTouchingColor(colorToList(${this.descendInput(node.target).asUnknown()}), colorToList(${this.descendInput(node.mask).asUnknown()}))`, TYPE_BOOLEAN);
-        case 'sensing.current':
-            switch (node.property) {
-            case 'year':
-                return new TypedInput(`(new Date().getFullYear())`, TYPE_NUMBER);
-            case 'month':
-                return new TypedInput(`(new Date().getMonth() + 1)`, TYPE_NUMBER);
-            case 'date':
-                return new TypedInput(`(new Date().getDate())`, TYPE_NUMBER);
-            case 'dayofweek':
-                return new TypedInput(`(new Date().getDay() + 1)`, TYPE_NUMBER);
-            case 'hour':
-                return new TypedInput(`(new Date().getHours())`, TYPE_NUMBER);
-            case 'minute':
-                return new TypedInput(`(new Date().getMinutes())`, TYPE_NUMBER);
-            case 'second':
-                return new TypedInput(`(new Date().getSeconds())`, TYPE_NUMBER);
-            }
-            return new ConstantInput(0);
+        case 'sensing.date':
+            return new TypedInput(`(new Date().getDate())`, TYPE_NUMBER);
+        case 'sensing.dayofweek':
+            return new TypedInput(`(new Date().getDay() + 1)`, TYPE_NUMBER);
         case 'sensing.daysSince2000':
             return new TypedInput('daysSince2000()', TYPE_NUMBER);
         case 'sensing.distance':
             // TODO: on stages, this can be computed at compile time
             return new TypedInput(`distance(${this.descendInput(node.target).asString()})`, TYPE_NUMBER);
+        case 'sensing.hour':
+            return new TypedInput(`(new Date().getHours())`, TYPE_NUMBER);
+        case 'sensing.minute':
+            return new TypedInput(`(new Date().getMinutes())`, TYPE_NUMBER);
+        case 'sensing.month':
+            return new TypedInput(`(new Date().getMonth() + 1)`, TYPE_NUMBER);
         case 'sensing.of':
             return new TypedInput(`runtime.ext_scratch3_sensing.getAttributeOf({OBJECT: ${this.descendInput(node.object).asString()}, PROPERTY: "${sanitize(node.property)}" })`, TYPE_UNKNOWN);
+        case 'sensing.second':
+            return new TypedInput(`(new Date().getSeconds())`, TYPE_NUMBER);
         case 'sensing.touching':
             return new TypedInput(`target.isTouchingObject(${this.descendInput(node.object).asUnknown()})`, TYPE_BOOLEAN);
         case 'sensing.touchingColor':
             return new TypedInput(`target.isTouchingColor(colorToList(${this.descendInput(node.color).asUnknown()}))`, TYPE_BOOLEAN);
         case 'sensing.username':
             return new TypedInput('runtime.ioDevices.userData.getUsername()', TYPE_STRING);
+        case 'sensing.year':
+            return new TypedInput(`(new Date().getFullYear())`, TYPE_NUMBER);
 
         case 'timer.get':
             return new TypedInput('runtime.ioDevices.clock.preciseProjectTimer()', TYPE_NUMBER);
