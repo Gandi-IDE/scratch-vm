@@ -353,10 +353,12 @@ class Blocks {
 
             if (block.opcode === 'procedures_prototype') {
                 const name = block.mutation.proccode;
-                const names = JSON.parse(block.mutation.argumentnames);
-                const ids = JSON.parse(block.mutation.argumentids);
-                const defaults = JSON.parse(block.mutation.argumentdefaults);
-                this._cache.procedureParamNames[name] = [names, ids, defaults];
+                if (!this._cache.procedureParamNames[name]) {
+                    const names = JSON.parse(block.mutation.argumentnames);
+                    const ids = JSON.parse(block.mutation.argumentids);
+                    const defaults = JSON.parse(block.mutation.argumentdefaults);
+                    this._cache.procedureParamNames[name] = [names, ids, defaults];
+                }
                 continue;
             }
 
@@ -364,7 +366,9 @@ class Blocks {
                 const internal = this._getCustomBlockInternal(block);
                 if (internal) {
                     const name = internal.mutation.proccode;
-                    this._cache.procedureDefinitions[name] = id;
+                    if (!this._cache.procedureDefinitions[name]) {
+                        this._cache.procedureDefinitions[name] = id;
+                    }
                     continue;
                 }
             }
