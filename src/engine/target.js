@@ -9,7 +9,7 @@ const log = require('../util/log');
 const StringUtil = require('../util/string-util');
 const VariableUtil = require('../util/variable-util');
 
-require('../emit-fast');
+require('../tw-emit-fast');
 
 /**
  * @fileoverview
