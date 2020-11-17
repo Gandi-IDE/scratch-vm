@@ -354,7 +354,7 @@ class VirtualMachine extends EventEmitter {
                         return reject(error);
                     }
                     if (typeof input !== 'string') input = new TextDecoder().decode(input);
-                    input = require('./tw-loose-json')(input);
+                    input = require('./tw-extended-json')(input);
                     input = JSON.stringify(input);
                     return validate(input, false, (error2, res2) => {
                         if (error2) return reject(error);
