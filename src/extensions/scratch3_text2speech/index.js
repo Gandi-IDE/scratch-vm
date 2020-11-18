@@ -158,7 +158,7 @@ class Scratch3Text2SpeechBlocks {
          */
         this._supportedLocales = this._getSupportedLocales();
         // powered by xigua start
-        this._cookies = getCookies();
+        this.thirdPartApiKey = localStorage.getItem('xg-access-code');
         // powered by xigua end
     }
 
@@ -791,7 +791,7 @@ class Scratch3Text2SpeechBlocks {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json;charset=UTF-8',
-                    'token': this._cookies.token
+                    'xg-access-code': this.thirdPartApiKey
                 },
                 // powered by xigua end
                 timeout: SERVER_TIMEOUT

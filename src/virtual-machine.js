@@ -163,6 +163,15 @@ class VirtualMachine extends EventEmitter {
         this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
         this.monitorBlockListener = this.monitorBlockListener.bind(this);
         this.variableListener = this.variableListener.bind(this);
+
+        // powered by xigua start
+        const thirdPartApiKey = 'xg-access-code';
+        const accessCode = localStorage.getItem(thirdPartApiKey);
+        if (!accessCode || !accessCode.length === 16) {
+            const code = (Math.random() * (10 ** 16)).toFixed();
+            localStorage.setItem(thirdPartApiKey, code);
+        }
+        // powered by xigua end
     }
 
     /**

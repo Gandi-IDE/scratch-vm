@@ -5,9 +5,6 @@ const log = require('../../util/log');
 const nets = require('nets');
 const languageNames = require('scratch-translate-extension-languages');
 const formatMessage = require('format-message');
-// powered by xigua start
-const {getCookies} = require('../../util/cookies');
-// powered by xigua end
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
  * @type {string}
@@ -98,7 +95,7 @@ class Scratch3TranslateBlocks {
          */
         this._lastTextTranslated = '';
         // powered by xigua start
-        this._cookies = getCookies();
+        this.thirdPartApiKey = localStorage.getItem('xg-access-code');
         // powered by xigua end
     }
 
@@ -298,7 +295,7 @@ class Scratch3TranslateBlocks {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json;charset=UTF-8',
-                    'token': this._cookies.token
+                    'xg-access-code': this.thirdPartApiKey
                 },
                 body: JSON.stringify({
                     sourceLanguage: 'auto',
