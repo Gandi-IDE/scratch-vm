@@ -166,6 +166,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.FRAMERATE_CHANGED, framerate => {
             this.emit(Runtime.FRAMERATE_CHANGED, framerate);
         });
+        this.runtime.on(Runtime.COMPILE_ERROR, error => {
+            this.emit(Runtime.COMPILE_ERROR, error);
+        });
 
         this.extensionManager = new ExtensionManager(this.runtime);
 
