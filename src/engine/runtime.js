@@ -1719,8 +1719,8 @@ class Runtime extends EventEmitter {
         return thread;
     }
 
-    emitCompileError (error) {
-        this.emit(Runtime.COMPILE_ERROR, error);
+    emitCompileError (target, error) {
+        this.emit(Runtime.COMPILE_ERROR, target, error);
     }
 
     /**

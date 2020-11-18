@@ -454,7 +454,7 @@ class Thread {
             } catch (error) {
                 log.error('cannot compile script', this.target.getName(), error);
                 blocks.cacheCompileError(topBlock, error);
-                this.target.runtime.emitCompileError(error);
+                this.target.runtime.emitCompileError(this.target, error);
                 return;
             }
         }
