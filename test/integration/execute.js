@@ -111,20 +111,13 @@ fs.readdirSync(executeDir)
             vm.setTurboMode(false);
             vm.setCompilerOptions({enabled: enableCompiler});
 
+            // tw: fail test when certain errors happen
             if (enableCompiler) {
-                const originalPushThread = vm.runtime._pushThread;
-                // Detect when threads were unable to be compiled, which is a serious error.
-                vm.runtime._pushThread = function (id, target, opts) {
-                    const thread = originalPushThread.call(this, id, target, opts);
-                    if (thread.triedToCompile && !thread.isCompiled) {
-                        const error = target.blocks.getCachedCompileResult(id);
-                        // Errors about "edge-activated hats" are expected and should be ignored.
-                        if (!`${error.value}`.includes('edge-activated hat')) {
-                            throw new Error(`Script compile failed for ${id} in ${target.getName()} (${error})`);
-                        }
+                vm.on('COMPILE_ERROR', (target, error) => {
+                    if (!`${error}`.includes('edge-activated hat')) {
+                        throw new Error(`Could not compile script in ${target.getName()}: ${error}`);
                     }
-                    return thread;
-                };
+                });
             }
 
             // Stop the runtime interval once the test is complete so the test
