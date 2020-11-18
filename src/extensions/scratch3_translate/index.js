@@ -35,7 +35,7 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
 
 // powered by xigua start
 // eslint-disable-next-line no-undef
-const xiguaServerURL = `${process.env.STUDY_WEB_HOST || STUDY_WEB_HOST || ''}/bfs-external/v1/mt/translate/`;
+const xiguaServerURL = `${process.env.STUDY_WEB_HOST || STUDY_WEB_HOST || ''}/study-main/external/mt/translate/`;
 // powered by xigua end
 
 const translateSupportLanguage = ['en', 'zh', 'yue', 'ja', 'ko', 'fr', 'es', 'th', 'ar', 'ru', 'pt', 'de'];
