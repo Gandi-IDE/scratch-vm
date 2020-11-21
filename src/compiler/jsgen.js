@@ -13,10 +13,11 @@ const environment = require('./environment');
 /* eslint-disable max-len */
 
 const sanitize = string => {
-    if (typeof string === 'string') {
-        return JSON.stringify(string).slice(1, -1);
+    if (typeof string !== 'string') {
+        log.warn(`sanitize got unexpected type: ${typeof string}`);
+        string = '' + string;
     }
-    throw new Error(`sanitize got unexpected type: ${typeof string}`);
+    return JSON.stringify(string).slice(1, -1);
 };
 
 const TYPE_NUMBER = 1;
