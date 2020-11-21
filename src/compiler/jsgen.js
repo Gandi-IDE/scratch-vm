@@ -11,6 +11,7 @@ const environment = require('./environment');
  */
 
 /* eslint-disable max-len */
+/* eslint-disable prefer-template */
 
 const sanitize = string => {
     if (typeof string !== 'string') {

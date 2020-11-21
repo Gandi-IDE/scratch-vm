@@ -4,6 +4,8 @@ const Cast = require('../util/cast');
 const log = require('../util/log');
 
 /* eslint-disable no-unused-vars */
+/* eslint-disable prefer-template */
+/* eslint-disable valid-jsdoc */
 
 const compatibilityLayerBlockUtility = require('./compat-block-utility');
 
