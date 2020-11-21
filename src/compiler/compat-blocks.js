@@ -44,6 +44,7 @@ const stacked = [
 ];
 
 const inputs = [
+    'control_get_counter',
     'music_getTempo',
     'sensing_loud',
     'sensing_loudness',
