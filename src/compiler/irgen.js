@@ -1201,13 +1201,27 @@ class ScriptTreeGenerator {
                 kind: 'timer.reset'
             };
 
-        default:
+        default: {
             // It might be a block that uses the compatibility layer
             if (compatBlocks.stacked.includes(block.opcode)) {
                 return this.descendCompatLayer(block);
             }
             log.warn(`IR: Unknown stacked block: ${block.opcode}`, block);
+
+            // Try to compile as an input.
+            let isValidInput;
+            try {
+                this.descendInput(block);
+                isValidInput = true;
+            } catch (e) {
+                isValidInput = false;
+            }
+
+            if (isValidInput) {
+                throw new Error(`IR: This block is an input, not a stacked block: ${block.opcode}`);
+            }
             throw new Error(`IR: Unknown stacked block: ${block.opcode}`);
+        }
         }
     }
 
