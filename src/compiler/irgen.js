@@ -491,6 +491,7 @@ class ScriptTreeGenerator {
             const from = this.descendInputOfBlock(block, 'FROM');
             const to = this.descendInputOfBlock(block, 'TO');
             // If both values are known at compile time, we can do some optimizations.
+            // TODO: move optimizations to jsgen?
             if (from.kind === 'constant' && to.kind === 'constant') {
                 const sFrom = from.value;
                 const sTo = to.value;
@@ -750,7 +751,7 @@ class ScriptTreeGenerator {
                 target: this.descendInputOfBlock(block, 'CLONE_OPTION')
             };
         case 'control_delete_this_clone':
-            this.yields = true; // todo: remove
+            this.yields = true;
             return {
                 kind: 'control.deleteClone'
             };
@@ -806,7 +807,7 @@ class ScriptTreeGenerator {
         case 'control_stop': {
             const level = block.fields.STOP_OPTION.value;
             if (level === 'all') {
-                this.yields = true; // todo: remove
+                this.yields = true;
                 return {
                     kind: 'control.stopAll'
                 };
@@ -1177,7 +1178,6 @@ class ScriptTreeGenerator {
             const args = [];
             for (let i = 0; i < paramIds.length; i++) {
                 let value;
-                // todo: move this sort of existance checking somewhere else
                 if (block.inputs[paramIds[i]] && block.inputs[paramIds[i]].block) {
                     value = this.descendInputOfBlock(block, paramIds[i]);
                 } else {
