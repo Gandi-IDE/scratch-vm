@@ -3,6 +3,7 @@ const Cast = require('../util/cast');
 const VariablePool = require('./variable-pool');
 const execute = require('./execute');
 const {disableToString} = require('./util');
+const {IntermediateScript, IntermediateRepresentation} = require('./intermediate');
 const environment = require('./environment');
 
 /**
@@ -292,6 +293,11 @@ const isSafeConstantForEqualsOptimization = input => {
 };
 
 class JSGenerator {
+    /**
+     * @param {IntermediateScript} script 
+     * @param {IntermediateRepresentation} ir 
+     * @param {Target} target 
+     */
     constructor (script, ir, target) {
         this.script = script;
         this.ir = ir;
