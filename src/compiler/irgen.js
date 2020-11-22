@@ -1,6 +1,8 @@
 const Cast = require('../util/cast');
 const Variable = require('../engine/variable');
 const log = require('../util/log');
+const {IntermediateScript, IntermediateRepresentation} = require('./intermediate');
+const compatBlocks = require('./compat-blocks');
 
 /**
  * @fileoverview
@@ -9,27 +11,6 @@ const log = require('../util/log');
 
 const SCALAR_TYPE = '';
 const LIST_TYPE = 'list';
-
-const compatBlocks = require('./compat-blocks');
-
-/**
- * @typedef IntermediateRepresentation
- * @property {IntermediateScript} entry
- * @property {Object.<string, IntermediateScript>} procedures
- */
-
-/**
- * @typedef IntermediateScript
- * @property {null|Array} stack The nodes that comprise this script, or null if the script is empty.
- * @property {string} procedureCode The name of this procedure, or null if the script is not a procedure.
- * @property {boolean} isProcedure
- * @property {string[]} arguments
- * @property {boolean} isWarp
- * @property {boolean} yields
- * @property {boolean} warpTimer
- * @property {Array<string>} dependedProcedures The list of procedure codes that this tree directly depends on.
- * @property {*} cachedCompileResult
- */
 
 /**
  * @typedef {Object.<string, *>} Node
@@ -1412,21 +1393,17 @@ class ScriptTreeGenerator {
 
     /**
      * @param {string} topBlockId The ID of the top block of the script.
-     * @returns {IntermediateScript} A compiled tree.
+     * @returns {IntermediateScript}
      */
     generate (topBlockId) {
-        /** @type {IntermediateScript} */
-        const result = {
-            stack: null,
-            procedureCode: this.procedureCode,
-            isProcedure: this.isProcedure,
-            arguments: this.procedureArguments,
-            isWarp: this.isWarp,
-            dependedProcedures: this.dependedProcedures,
-            yields: this.yields, // will be updated later
-            warpTimer: this.warpTimer, // will be updated later
-            cachedCompileResult: null
-        };
+        const script = new IntermediateScript();
+        script.procedureCode = this.procedureCode;
+        script.isProcedure = this.isProcedure;
+        script.arguments = this.procedureArguments;
+        script.isWarp = this.isWarp;
+        script.dependedProcedures = this.dependedProcedures;
+        script.yields = this.yields; // updated later
+        script.warpTimer = this.warpTimer; // updated later
 
         this.blocks.populateProcedureCache();
 
@@ -1434,7 +1411,7 @@ class ScriptTreeGenerator {
         if (!topBlock) {
             if (this.isProcedure) {
                 // Empty procedure
-                return result;
+                return script;
             }
             // Probably running from toolbox. This is not currently supported.
             throw new Error('Cannot find top block (running from toolbox?)');
@@ -1457,14 +1434,14 @@ class ScriptTreeGenerator {
 
         if (!entryBlock) {
             // This is an empty script.
-            return result;
+            return script;
         }
 
-        result.stack = this.walkStack(entryBlock);
-        result.yields = this.yields;
-        result.warpTimer = this.warpTimer;
+        script.stack = this.walkStack(entryBlock);
+        script.yields = this.yields;
+        script.warpTimer = this.warpTimer;
 
-        return result;
+        return script;
     }
 }
 
@@ -1531,7 +1508,7 @@ class IRGenerator {
     }
 
     /**
-     * @returns {IntermediateRepresentation} Syntax tree.
+     * @returns {IntermediateRepresentation} Intermediate representation.
      */
     generate () {
         const entry = this.generateScriptTree(new ScriptTreeGenerator(this.thread), this.thread.topBlock);
@@ -1576,10 +1553,10 @@ class IRGenerator {
         // This will recursively analyze procedures as well.
         this.analyzeScript(entry);
 
-        return {
-            entry: entry,
-            procedures: this.procedures
-        };
+        const ir = new IntermediateRepresentation();
+        ir.entry = entry;
+        ir.procedures = this.procedures;
+        return ir;
     }
 }
 
