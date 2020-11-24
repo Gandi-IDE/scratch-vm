@@ -465,6 +465,12 @@ class Thread {
         }
 
         this.generator = result.startingFunction(this.target)();
+
+        if (!blocks.forceNoGlow) {
+            this.blockGlowInFrame = this.topBlock;
+            this.requestScriptGlowInFrame = true;
+        }
+
         this.isCompiled = true;
     }
 }
