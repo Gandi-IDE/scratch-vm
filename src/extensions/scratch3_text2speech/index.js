@@ -8,10 +8,6 @@ const Cast = require('../../util/cast');
 const MathUtil = require('../../util/math-util');
 const Clone = require('../../util/clone');
 const log = require('../../util/log');
-// powered by xigua start
-const {getCookies} = require('../../util/cookies');
-const Base64Util = require('../../util/base64-util');
-// powered by xigua end
 
 
 /**
@@ -35,7 +31,7 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
 // const SERVER_HOST = 'https://synthesis-service.scratch.mit.edu';
 // powered by xigua start
 // eslint-disable-next-line no-undef
-const SERVER_HOST = `${process.env.STUDY_WEB_HOST || STUDY_WEB_HOST || ''}/bfs-external/v1/speech/tts`;
+const SERVER_HOST = `${process.env.STUDY_WEB_HOST || STUDY_WEB_HOST || ''}/study-main/external/speech/tts`;
 // powered by xigua end
 /**
  * How long to wait in ms before timing out requests to synthesis server.
@@ -162,7 +158,7 @@ class Scratch3Text2SpeechBlocks {
          */
         this._supportedLocales = this._getSupportedLocales();
         // powered by xigua start
-        this._cookies = getCookies();
+        this.thirdPartApiKey = localStorage.getItem('xg-access-code');
         // powered by xigua end
     }
 
@@ -795,11 +791,11 @@ class Scratch3Text2SpeechBlocks {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json;charset=UTF-8',
-                    'token': this._cookies.token
+                    'xg-access-code': this.thirdPartApiKey
                 },
                 // powered by xigua end
                 timeout: SERVER_TIMEOUT
-            }, (err, res, data) => {
+            }, (err, res, body) => {
                 if (err) {
                     log.warn(err);
                     return resolve();
@@ -810,15 +806,10 @@ class Scratch3Text2SpeechBlocks {
                     return resolve();
                 }
 
-                // powered by xigua start
-                const {body} = JSON.parse(data);
-                const array = Base64Util.base64ToUint8Array(body.speechBytes);
-                // powered by xigua end
-
                 // Play the sound
                 const sound = {
                     data: {
-                        buffer: array.buffer
+                        buffer: body.buffer
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
