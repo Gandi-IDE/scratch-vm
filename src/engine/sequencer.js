@@ -70,8 +70,7 @@ class Sequencer {
      */
     stepThreads () {
         // Work time is 75% of the thread stepping interval.
-        // tw: WORK_TIME is always at least 1 millisecond, even at unreasonably high framerates
-        const WORK_TIME = Math.max(0.001, 0.75 * this.runtime.currentStepTime);
+        const WORK_TIME = 0.75 * this.runtime.currentStepTime;
         // For compatibility with Scatch 2, update the millisecond clock
         // on the Runtime once per step (see Interpreter.as in Scratch 2
         // for original use of `currentMSecs`)
