@@ -172,7 +172,7 @@ class VirtualMachine extends EventEmitter {
         // powered by xigua start
         const thirdPartApiKey = 'xg-access-code';
         const accessCode = localStorage.getItem(thirdPartApiKey);
-        if (!accessCode || !accessCode.length === 16) {
+        if (!accessCode || accessCode.length !== 16) {
             const code = `${Math.random()}${Math.random()}`.replace(/\./g, '').substr(1, 16);
             localStorage.setItem(thirdPartApiKey, code);
         }
