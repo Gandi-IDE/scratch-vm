@@ -2241,6 +2241,9 @@ class Runtime extends EventEmitter {
      * @param {number} framerate Target frames per second
      */
     setFramerate (framerate) {
+        // Setting framerate to anything greater than this is
+        // unnecessary and tricks the sequencer into thinking it has almost no work time.
+        if (framerate > 1000) framerate = 1000;
         this.framerate = framerate;
         if (this._steppingInterval) {
             clearInterval(this._steppingInterval);
