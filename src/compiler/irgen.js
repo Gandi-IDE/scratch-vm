@@ -112,7 +112,7 @@ class ScriptTreeGenerator {
     }
 
     /**
-     * Descend into an input. (eg. "length of ( )")
+     * Descend into a child input of a block. (eg. the input STRING of "length of ( )")
      * @param {*} parentBlock The parent Scratch block that contains the input.
      * @param {string} inputName The name of the input to descend into.
      * @private
@@ -140,6 +140,12 @@ class ScriptTreeGenerator {
         return this.descendInput(block);
     }
 
+    /**
+     * Descend into an input. (eg. "length of ( )")
+     * @param {*} block The parent Scratch block input.
+     * @private
+     * @returns {Node} Compiled input node for this input.
+     */
     descendInput (block) {
         switch (block.opcode) {
         case 'colour_picker': {
