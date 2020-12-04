@@ -7,6 +7,7 @@ class Clock {
         // tw: add a "precise" timer that uses real time instead of runtime.currentMSecs
         this._preciseProjectTimer = new Timer();
         this._preciseProjectTimer.start();
+        this._preciseProjectTimer.startTime = this._projectTimer.startTime;
         this._pausedTime = null;
         this._paused = false;
         /**
@@ -41,13 +42,14 @@ class Clock {
         const dt = this._projectTimer.timeElapsed() - this._pausedTime;
         this._projectTimer.startTime += dt;
         // tw: also resume precise timer
-        this._preciseProjectTimer.startTime += dt;
+        this._preciseProjectTimer.startTime = this._projectTimer.startTime;
     }
 
     resetProjectTimer () {
         this._projectTimer.start();
         // tw: also reset precise timer
         this._preciseProjectTimer.start();
+        this._preciseProjectTimer.startTime = this._projectTimer.startTime;
     }
 }
 
