@@ -1,7 +1,7 @@
 const log = require('../util/log');
 const Cast = require('../util/cast');
 const VariablePool = require('./variable-pool');
-const execute = require('./execute');
+const jsexecute = require('./jsexecute');
 const {disableToString} = require('./util');
 const {IntermediateScript, IntermediateRepresentation} = require('./intermediate');
 const environment = require('./environment');
@@ -1065,7 +1065,7 @@ class JSGenerator {
         }
 
         const factory = this.createScriptFactory();
-        const fn = execute.scopedEval(factory);
+        const fn = jsexecute.scopedEval(factory);
 
         log.info(`JS: ${this.target.getName()}: compiled ${this.script.procedureCode || 'script'}`, factory);
 
