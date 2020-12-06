@@ -8,22 +8,22 @@ const compile = thread => {
     const procedures = {};
     const target = thread.target;
 
-    const compileTree = tree => {
-        if (tree.cachedCompileResult) {
-            return tree.cachedCompileResult;
+    const compileScript = script => {
+        if (script.cachedCompileResult) {
+            return script.cachedCompileResult;
         }
 
-        const compiler = new JSGenerator(tree, ir, target);
+        const compiler = new JSGenerator(script, ir, target);
         const result = compiler.compile();
-        tree.cachedCompileResult = result;
+        script.cachedCompileResult = result;
         return result;
     };
 
-    const entry = compileTree(ir.entry);
+    const entry = compileScript(ir.entry);
 
     for (const procedureCode of Object.keys(ir.procedures)) {
         const procedureData = ir.procedures[procedureCode];
-        const procedureTree = compileTree(procedureData);
+        const procedureTree = compileScript(procedureData);
         procedures[procedureCode] = procedureTree;
     }
 

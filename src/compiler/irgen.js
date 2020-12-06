@@ -1454,7 +1454,7 @@ class IRGenerator {
     /**
      * @param {ScriptTreeGenerator} generator The generator to run.
      * @param {string} topBlockId The ID of the top block in the stack.
-     * @returns {IntermediateScript} Tree for this script.
+     * @returns {IntermediateScript} Intermediate script.
      */
     generateScriptTree (generator, topBlockId) {
         const result = generator.generate(topBlockId);
@@ -1463,11 +1463,11 @@ class IRGenerator {
     }
 
     /**
-     * Recursively analyze a script tree and its dependencies.
-     * @param {IntermediateScript} tree Root script tree.
+     * Recursively analyze a script and its dependencies.
+     * @param {IntermediateScript} script Intermediate script.
      */
-    analyzeScript (tree) {
-        for (const procedureCode of tree.dependedProcedures) {
+    analyzeScript (script) {
+        for (const procedureCode of script.dependedProcedures) {
             const procedureData = this.procedures[procedureCode];
 
             // Analyze newly found procedures.
@@ -1479,7 +1479,7 @@ class IRGenerator {
 
             // If a procedure used by a script may yield, the script itself may yield.
             if (procedureData.yields) {
-                tree.yields = true;
+                script.yields = true;
             }
         }
     }

@@ -1057,7 +1057,7 @@ class JSGenerator {
 
     /**
      * Compile this script.
-     * @returns {Function} The factory function for the tree.
+     * @returns {Function} The factory function for the script.
      */
     compile () {
         if (this.script.stack) {
