@@ -5,8 +5,7 @@ const {IntermediateScript, IntermediateRepresentation} = require('./intermediate
 const compatBlocks = require('./compat-blocks');
 
 /**
- * @fileoverview
- * irgen.js generates intermediate representations for scripts.
+ * @fileoverview Generate intermediate representations from Scratch blocks.
  */
 
 const SCALAR_TYPE = '';
@@ -44,27 +43,10 @@ class ScriptTreeGenerator {
         this.stage = this.runtime.getTargetForStage();
 
         /**
-         * List of procedures that this script depends on.
+         * This script's intermediate representation.
          */
-        this.dependedProcedures = [];
-
-        /** @private */
-        this.isProcedure = false;
-        /** @private */
-        this.procedureCode = '';
-        /** @private */
-        this.isWarp = false;
-        /** @private */
-        this.yields = true;
-        /** @private */
-        this.warpTimer = this.target.runtime.compilerOptions.warpTimer;
-
-        /**
-         * The names of the arguments accepted by this script, in order.
-         * @type {string[]}
-         * @private
-         */
-        this.procedureArguments = [];
+        this.intermediate = new IntermediateScript();
+        this.intermediate.warpTimer = this.target.runtime.compilerOptions.warpTimer;
 
         /**
          * Cache of variable ID to variable data object.
@@ -75,9 +57,9 @@ class ScriptTreeGenerator {
     }
 
     setProcedureCode (procedureCode) {
-        this.procedureCode = procedureCode;
-        this.isProcedure = true;
-        this.yields = false;
+        this.intermediate.procedureCode = procedureCode;
+        this.intermediate.isProcedure = true;
+        this.intermediate.yields = false;
 
         const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
         if (paramNamesIdsAndDefaults === null) {
@@ -85,11 +67,11 @@ class ScriptTreeGenerator {
         }
 
         const [paramNames, _paramIds, _paramDefaults] = paramNamesIdsAndDefaults;
-        this.procedureArguments = paramNames;
+        this.intermediate.arguments = paramNames;
     }
 
     enableWarp () {
-        this.isWarp = true;
+        this.intermediate.isWarp = true;
     }
 
     /**
@@ -161,7 +143,7 @@ class ScriptTreeGenerator {
         case 'argument_reporter_string_number': {
             const name = block.fields.VALUE.value;
             // lastIndexOf because multiple parameters with the same name will use the value of the last definition
-            const index = this.procedureArguments.lastIndexOf(name);
+            const index = this.intermediate.arguments.lastIndexOf(name);
             if (index === -1) {
                 if (name.toLowerCase() === 'last key pressed') {
                     return {
@@ -183,7 +165,7 @@ class ScriptTreeGenerator {
         case 'argument_reporter_boolean': {
             // see argument_reporter_string_number above
             const name = block.fields.VALUE.value;
-            const index = this.procedureArguments.lastIndexOf(name);
+            const index = this.intermediate.arguments.lastIndexOf(name);
             if (index === -1) {
                 if (name.toLowerCase() === 'is compiled?' || name.toLowerCase() === 'is turbowarp?') {
                     return {
@@ -738,7 +720,7 @@ class ScriptTreeGenerator {
                 target: this.descendInputOfBlock(block, 'CLONE_OPTION')
             };
         case 'control_delete_this_clone':
-            this.yields = true;
+            this.intermediate.yields = true;
             return {
                 kind: 'control.deleteClone'
             };
@@ -794,7 +776,7 @@ class ScriptTreeGenerator {
         case 'control_stop': {
             const level = block.fields.STOP_OPTION.value;
             if (level === 'all') {
-                this.yields = true;
+                this.intermediate.yields = true;
                 return {
                     kind: 'control.stopAll'
                 };
@@ -812,13 +794,13 @@ class ScriptTreeGenerator {
             };
         }
         case 'control_wait':
-            this.yields = true;
+            this.intermediate.yields = true;
             return {
                 kind: 'control.wait',
                 seconds: this.descendInputOfBlock(block, 'DURATION')
             };
         case 'control_wait_until':
-            this.yields = true;
+            this.intermediate.yields = true;
             return {
                 kind: 'control.waitUntil',
                 condition: this.descendInputOfBlock(block, 'CONDITION')
@@ -918,7 +900,7 @@ class ScriptTreeGenerator {
                 broadcast: this.descendInputOfBlock(block, 'BROADCAST_INPUT')
             };
         case 'event_broadcastandwait':
-            this.yields = true;
+            this.intermediate.yields = true;
             return {
                 kind: 'event.broadcastAndWait',
                 broadcast: this.descendInputOfBlock(block, 'BROADCAST_INPUT')
@@ -1151,14 +1133,14 @@ class ScriptTreeGenerator {
 
             const [_paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
 
-            if (!this.dependedProcedures.includes(procedureCode)) {
-                this.dependedProcedures.push(procedureCode);
+            if (!this.intermediate.dependedProcedures.includes(procedureCode)) {
+                this.intermediate.dependedProcedures.push(procedureCode);
             }
 
-            // Non-warp recursion yields.
-            if (!this.isWarp) {
-                if (procedureCode === this.procedureCode) {
-                    this.yields = true;
+            // Non-warp direct recursion yields.
+            if (!this.intermediate.isWarp) {
+                if (procedureCode === this.intermediate.procedureCode) {
+                    this.intermediate.yields = true;
                 }
             }
 
@@ -1343,7 +1325,7 @@ class ScriptTreeGenerator {
      * @returns {Node} The parsed node.
      */
     descendCompatLayer (block) {
-        this.yields = true;
+        this.intermediate.yields = true;
         const inputs = {};
         const fields = {};
         for (const name of Object.keys(block.inputs)) {
@@ -1361,8 +1343,8 @@ class ScriptTreeGenerator {
     }
 
     analyzeLoop () {
-        if (!this.isWarp || this.warpTimer) {
-            this.yields = true;
+        if (!this.intermediate.isWarp || this.intermediate.warpTimer) {
+            this.intermediate.yields = true;
         }
     }
 
@@ -1387,7 +1369,7 @@ class ScriptTreeGenerator {
                 case 'nocompile':
                     throw new Error('Script explicitly disables compilation');
                 case 'stuck':
-                    this.warpTimer = true;
+                    this.intermediate.warpTimer = true;
                     break;
                 }
             }
@@ -1402,22 +1384,13 @@ class ScriptTreeGenerator {
      * @returns {IntermediateScript}
      */
     generate (topBlockId) {
-        const script = new IntermediateScript();
-        script.procedureCode = this.procedureCode;
-        script.isProcedure = this.isProcedure;
-        script.arguments = this.procedureArguments;
-        script.isWarp = this.isWarp;
-        script.dependedProcedures = this.dependedProcedures;
-        script.yields = this.yields; // updated later
-        script.warpTimer = this.warpTimer; // updated later
-
         this.blocks.populateProcedureCache();
 
         const topBlock = this.blocks.getBlock(topBlockId);
         if (!topBlock) {
-            if (this.isProcedure) {
+            if (this.intermediate.isProcedure) {
                 // Empty procedure
-                return script;
+                return this.intermediate;
             }
             // Probably running from toolbox. This is not currently supported.
             throw new Error('Cannot find top block (running from toolbox?)');
@@ -1440,14 +1413,12 @@ class ScriptTreeGenerator {
 
         if (!entryBlock) {
             // This is an empty script.
-            return script;
+            return this.intermediate;
         }
 
-        script.stack = this.walkStack(entryBlock);
-        script.yields = this.yields;
-        script.warpTimer = this.warpTimer;
+        this.intermediate.stack = this.walkStack(entryBlock);
 
-        return script;
+        return this.intermediate;
     }
 }
 

@@ -27,7 +27,7 @@ class IntermediateScript {
         this.procedureCode = '';
 
         /**
-         * List of arguments accepted by this function, if it is a procedure.
+         * List of names of arguments accepted by this function, if it is a procedure.
          * @type {string[]}
          */
         this.arguments = [];
@@ -44,7 +44,7 @@ class IntermediateScript {
          * If true, this script will be compiled as a generator function (function*)
          * @type {boolean}
          */
-        this.yields = false;
+        this.yields = true;
 
         /**
          * Whether this script should use the "warp timer"

@@ -7,8 +7,7 @@ const {IntermediateScript, IntermediateRepresentation} = require('./intermediate
 const environment = require('./environment');
 
 /**
- * @fileoverview
- * jsgen.js converts intermediate representations to plain JavaScript.
+ * @fileoverview Convert intermediate representations to JavaScript functions.
  */
 
 /* eslint-disable max-len */
