@@ -45,8 +45,8 @@ class ScriptTreeGenerator {
         /**
          * This script's intermediate representation.
          */
-        this.intermediate = new IntermediateScript();
-        this.intermediate.warpTimer = this.target.runtime.compilerOptions.warpTimer;
+        this.script = new IntermediateScript();
+        this.script.warpTimer = this.target.runtime.compilerOptions.warpTimer;
 
         /**
          * Cache of variable ID to variable data object.
@@ -57,9 +57,9 @@ class ScriptTreeGenerator {
     }
 
     setProcedureCode (procedureCode) {
-        this.intermediate.procedureCode = procedureCode;
-        this.intermediate.isProcedure = true;
-        this.intermediate.yields = false;
+        this.script.procedureCode = procedureCode;
+        this.script.isProcedure = true;
+        this.script.yields = false;
 
         const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
         if (paramNamesIdsAndDefaults === null) {
@@ -67,11 +67,11 @@ class ScriptTreeGenerator {
         }
 
         const [paramNames, _paramIds, _paramDefaults] = paramNamesIdsAndDefaults;
-        this.intermediate.arguments = paramNames;
+        this.script.arguments = paramNames;
     }
 
     enableWarp () {
-        this.intermediate.isWarp = true;
+        this.script.isWarp = true;
     }
 
     /**
@@ -143,7 +143,7 @@ class ScriptTreeGenerator {
         case 'argument_reporter_string_number': {
             const name = block.fields.VALUE.value;
             // lastIndexOf because multiple parameters with the same name will use the value of the last definition
-            const index = this.intermediate.arguments.lastIndexOf(name);
+            const index = this.script.arguments.lastIndexOf(name);
             if (index === -1) {
                 if (name.toLowerCase() === 'last key pressed') {
                     return {
@@ -165,7 +165,7 @@ class ScriptTreeGenerator {
         case 'argument_reporter_boolean': {
             // see argument_reporter_string_number above
             const name = block.fields.VALUE.value;
-            const index = this.intermediate.arguments.lastIndexOf(name);
+            const index = this.script.arguments.lastIndexOf(name);
             if (index === -1) {
                 if (name.toLowerCase() === 'is compiled?' || name.toLowerCase() === 'is turbowarp?') {
                     return {
@@ -720,7 +720,7 @@ class ScriptTreeGenerator {
                 target: this.descendInputOfBlock(block, 'CLONE_OPTION')
             };
         case 'control_delete_this_clone':
-            this.intermediate.yields = true;
+            this.script.yields = true;
             return {
                 kind: 'control.deleteClone'
             };
@@ -776,7 +776,7 @@ class ScriptTreeGenerator {
         case 'control_stop': {
             const level = block.fields.STOP_OPTION.value;
             if (level === 'all') {
-                this.intermediate.yields = true;
+                this.script.yields = true;
                 return {
                     kind: 'control.stopAll'
                 };
@@ -794,13 +794,13 @@ class ScriptTreeGenerator {
             };
         }
         case 'control_wait':
-            this.intermediate.yields = true;
+            this.script.yields = true;
             return {
                 kind: 'control.wait',
                 seconds: this.descendInputOfBlock(block, 'DURATION')
             };
         case 'control_wait_until':
-            this.intermediate.yields = true;
+            this.script.yields = true;
             return {
                 kind: 'control.waitUntil',
                 condition: this.descendInputOfBlock(block, 'CONDITION')
@@ -900,7 +900,7 @@ class ScriptTreeGenerator {
                 broadcast: this.descendInputOfBlock(block, 'BROADCAST_INPUT')
             };
         case 'event_broadcastandwait':
-            this.intermediate.yields = true;
+            this.script.yields = true;
             return {
                 kind: 'event.broadcastAndWait',
                 broadcast: this.descendInputOfBlock(block, 'BROADCAST_INPUT')
@@ -1133,14 +1133,14 @@ class ScriptTreeGenerator {
 
             const [_paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
 
-            if (!this.intermediate.dependedProcedures.includes(procedureCode)) {
-                this.intermediate.dependedProcedures.push(procedureCode);
+            if (!this.script.dependedProcedures.includes(procedureCode)) {
+                this.script.dependedProcedures.push(procedureCode);
             }
 
             // Non-warp direct recursion yields.
-            if (!this.intermediate.isWarp) {
-                if (procedureCode === this.intermediate.procedureCode) {
-                    this.intermediate.yields = true;
+            if (!this.script.isWarp) {
+                if (procedureCode === this.script.procedureCode) {
+                    this.script.yields = true;
                 }
             }
 
@@ -1325,7 +1325,7 @@ class ScriptTreeGenerator {
      * @returns {Node} The parsed node.
      */
     descendCompatLayer (block) {
-        this.intermediate.yields = true;
+        this.script.yields = true;
         const inputs = {};
         const fields = {};
         for (const name of Object.keys(block.inputs)) {
@@ -1343,8 +1343,8 @@ class ScriptTreeGenerator {
     }
 
     analyzeLoop () {
-        if (!this.intermediate.isWarp || this.intermediate.warpTimer) {
-            this.intermediate.yields = true;
+        if (!this.script.isWarp || this.script.warpTimer) {
+            this.script.yields = true;
         }
     }
 
@@ -1369,7 +1369,7 @@ class ScriptTreeGenerator {
                 case 'nocompile':
                     throw new Error('Script explicitly disables compilation');
                 case 'stuck':
-                    this.intermediate.warpTimer = true;
+                    this.script.warpTimer = true;
                     break;
                 }
             }
@@ -1388,9 +1388,9 @@ class ScriptTreeGenerator {
 
         const topBlock = this.blocks.getBlock(topBlockId);
         if (!topBlock) {
-            if (this.intermediate.isProcedure) {
+            if (this.script.isProcedure) {
                 // Empty procedure
-                return this.intermediate;
+                return this.script;
             }
             // Probably running from toolbox. This is not currently supported.
             throw new Error('Cannot find top block (running from toolbox?)');
@@ -1413,12 +1413,12 @@ class ScriptTreeGenerator {
 
         if (!entryBlock) {
             // This is an empty script.
-            return this.intermediate;
+            return this.script;
         }
 
-        this.intermediate.stack = this.walkStack(entryBlock);
+        this.script.stack = this.walkStack(entryBlock);
 
-        return this.intermediate;
+        return this.script;
     }
 }
 
