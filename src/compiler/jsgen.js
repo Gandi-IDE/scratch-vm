@@ -328,7 +328,7 @@ class JSGenerator {
         case 'args.boolean':
             return new TypedInput(`toBoolean(p${node.index})`, TYPE_BOOLEAN);
         case 'args.stringNumber':
-            return new TypedInput(`p${node.index}`, TYPE_BOOLEAN);
+            return new TypedInput(`p${node.index}`, TYPE_UNKNOWN);
 
         case 'compat':
             return new TypedInput(`(${this.generateCompatibilityLayerCall(node)})`, TYPE_UNKNOWN);
