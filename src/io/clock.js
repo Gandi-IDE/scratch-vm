@@ -48,7 +48,6 @@ class Clock {
     resetProjectTimer () {
         this._projectTimer.start();
         // tw: also reset precise timer
-        this._preciseProjectTimer.start();
         this._preciseProjectTimer.startTime = this._projectTimer.startTime;
     }
 }
