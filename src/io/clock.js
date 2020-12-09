@@ -6,7 +6,6 @@ class Clock {
         this._projectTimer.start();
         // tw: add a "precise" timer that uses real time instead of runtime.currentMSecs
         this._preciseProjectTimer = new Timer();
-        this._preciseProjectTimer.start();
         this._preciseProjectTimer.startTime = this._projectTimer.startTime;
         this._pausedTime = null;
         this._paused = false;
