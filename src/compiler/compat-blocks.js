@@ -22,6 +22,7 @@ const stacked = [
     'motion_goto',
     'motion_pointtowards',
     'music_changeTempo',
+    'music_midiSetInstrument',
     'music_playDrumForBeats',
     'music_playNoteForBeats',
     'music_restForBeats',
