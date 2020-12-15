@@ -9,8 +9,6 @@ const stacked = [
     'control_get_counter',
     'control_incr_counter',
     'looks_changeeffectby',
-    'looks_nextbackdrop',
-    'looks_nextcostume',
     'looks_say',
     'looks_sayforsecs',
     'looks_seteffectto',

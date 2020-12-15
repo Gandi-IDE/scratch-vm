@@ -725,6 +725,12 @@ class JSGenerator {
             this.source += 'target.setVisible(false);\n';
             this.source += 'runtime.ext_scratch3_looks._renderBubble(target);\n';
             break;
+        case 'looks.nextBackdrop':
+            this.source += 'stage.setCostume(stage.currentCostume + 1);\n';
+            break;
+        case 'looks.nextCostume':
+            this.source += 'target.setCostume(target.currentCostume + 1);\n';
+            break;
         case 'looks.setSize':
             this.source += `target.setSize(${this.descendInput(node.size).asNumber()});\n`;
             break;

@@ -939,6 +939,14 @@ class ScriptTreeGenerator {
             return {
                 kind: 'looks.hide'
             };
+        case 'looks_nextbackdrop':
+            return {
+                kind: 'looks.nextBackdrop'
+            };
+        case 'looks_nextcostume':
+            return {
+                kind: 'looks.nextCostume'
+            };
         case 'looks_setsizeto':
             return {
                 kind: 'looks.setSize',
