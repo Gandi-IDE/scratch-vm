@@ -31,9 +31,9 @@ let stuckCounter = 0;
  * @returns {boolean} true if the current tick is likely stuck.
  */
 const isStuck = () => {
-    // The real time is not checked on every call for performance, as can be a very hot function.
+    // The real time is not checked on every call for performance.
     stuckCounter++;
-    if (stuckCounter === 10) {
+    if (stuckCounter === 100) {
         stuckCounter = 0;
         return thread.target.runtime.sequencer.timer.timeElapsed() > 500;
     }
