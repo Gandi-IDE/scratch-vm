@@ -19,7 +19,7 @@ class TurboWarpBlocks {
      */
     getInfo () {
         return {
-            id: 'turbowarp',
+            id: 'tw',
             name: 'TurboWarp',
             color1: '#ff4c4c',
             color2: '#cc3333',
