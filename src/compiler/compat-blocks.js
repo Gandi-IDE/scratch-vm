@@ -51,6 +51,7 @@ const inputs = [
     'sound_volume',
     'translate_getTranslate',
     'translate_getViewerLanguage',
+    'tw_getButtonIsDown', // TODO: should compile this
     'videoSensing_videoOn'
 ];
 
