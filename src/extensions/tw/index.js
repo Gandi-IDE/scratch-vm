@@ -3,33 +3,6 @@ const BlockType = require('../../extension-support/block-type');
 const ArgumentType = require('../../extension-support/argument-type');
 const Cast = require('../../util/cast');
 
-const MOUSE_BUTTONS = [
-    {
-        text: formatMessage({
-            id: 'tw.blocks.mouseButtons.left',
-            default: '(0) left',
-            description: 'left mouse button'
-        }),
-        value: 0
-    },
-    {
-        text: formatMessage({
-            id: 'tw.blocks.mouseButtons.middle',
-            default: '(1) middle',
-            description: 'middle mouse button'
-        }),
-        value: 1
-    },
-    {
-        text: formatMessage({
-            id: 'tw.blocks.mouseButtons.right',
-            default: '(2) right',
-            description: 'right mouse button'
-        }),
-        value: 2
-    }
-];
-
 /**
  * Class for TurboWarp blocks
  * @constructor
@@ -51,7 +24,7 @@ class TurboWarpBlocks {
             id: 'tw',
             name: 'TurboWarp',
             color1: '#ff4c4c',
-            color2: '#dd3737',
+            color2: '#e64444',
             blocks: [
                 {
                     opcode: 'getLastKeyPressed',
@@ -80,7 +53,32 @@ class TurboWarpBlocks {
             ],
             menus: {
                 mouseButton: {
-                    items: MOUSE_BUTTONS,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'tw.blocks.mouseButtons.left',
+                                default: '(0) left',
+                                description: 'left mouse button'
+                            }),
+                            value: 0
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'tw.blocks.mouseButtons.middle',
+                                default: '(1) middle',
+                                description: 'middle mouse button'
+                            }),
+                            value: 1
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'tw.blocks.mouseButtons.right',
+                                default: '(2) right',
+                                description: 'right mouse button'
+                            }),
+                            value: 2
+                        }
+                    ],
                     acceptReporters: true
                 }
             }
