@@ -444,6 +444,10 @@ class VirtualMachine extends EventEmitter {
             compressionOptions: {
                 level: 6 // Tradeoff between best speed (1) and best compression (9)
             }
+        }).then(result => {
+            // tw: We want to let the GUI know whether this project uses block that won't work in Scratch.
+            result.usesExtendedExtensions = JSON.parse(projectJson).extensions.includes('tw');
+            return result;
         });
     }
 
