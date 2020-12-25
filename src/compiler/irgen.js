@@ -685,6 +685,11 @@ class ScriptTreeGenerator {
             return {
                 kind: 'tw.lastKeyPressed'
             };
+        case 'tw_menu_mouseButton':
+            return {
+                kind: 'constant',
+                value: block.fields.mouseButton.value
+            };
 
         case 'videoSensing_menu_ATTRIBUTE':
             return {
