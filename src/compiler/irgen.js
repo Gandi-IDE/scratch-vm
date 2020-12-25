@@ -680,6 +680,11 @@ class ScriptTreeGenerator {
                 value: block.fields.languages.value
             };
 
+        case 'tw_getLastKeyPressed':
+            return {
+                kind: 'tw.lastKeyPressed'
+            };
+
         case 'videoSensing_menu_ATTRIBUTE':
             return {
                 kind: 'constant',
