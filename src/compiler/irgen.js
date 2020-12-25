@@ -145,6 +145,7 @@ class ScriptTreeGenerator {
             // lastIndexOf because multiple parameters with the same name will use the value of the last definition
             const index = this.script.arguments.lastIndexOf(name);
             if (index === -1) {
+                // Legacy support
                 if (name.toLowerCase() === 'last key pressed') {
                     return {
                         kind: 'tw.lastKeyPressed'

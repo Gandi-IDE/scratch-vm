@@ -58,7 +58,7 @@ class Scratch3ProcedureBlocks {
     argumentReporterStringNumber (args, util) {
         const value = util.getParam(args.VALUE);
         if (value === null) {
-            // tw: support some more blocks
+            // tw: support legacy block
             if (`${args.VALUE}`.toLowerCase() === 'last key pressed') {
                 return util.ioQuery('keyboard', 'getLastKeyPressed');
             }
