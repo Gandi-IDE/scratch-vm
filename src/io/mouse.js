@@ -4,6 +4,7 @@ class Mouse {
     constructor (runtime) {
         this._x = 0;
         this._y = 0;
+        this._buttons = new Map();
         this._isDown = false;
         /**
          * Reference to the owning Runtime.
@@ -74,6 +75,10 @@ class Mouse {
             ));
         }
         if (typeof data.isDown !== 'undefined') {
+            // If no button specified, default to left button for compatibility
+            const button = typeof data.button === 'undefined' ? 0 : data.button;
+            this._buttons.set(button, data.isDown);
+
             const previousDownState = this._isDown;
             this._isDown = data.isDown;
 
@@ -139,6 +144,16 @@ class Mouse {
      */
     getIsDown () {
         return this._isDown;
+    }
+
+    /**
+     * tw: Get the down state of a specific button of the mouse.
+     * @param {number} button The ID of the button. 0 = left, 1 = middle, 2 = right
+     * @return {boolean} Is the mouse button down?
+     */
+    getButtonIsDown (button) {
+        // convert undefined to false
+        return !!this._buttons.get(button);
     }
 }
 

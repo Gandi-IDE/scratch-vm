@@ -54,6 +54,76 @@ test('mouseDown', t => {
     t.end();
 });
 
+test('mouseButtonDown', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    t.strictEquals(m.getButtonIsDown(0), false);
+    t.strictEquals(m.getButtonIsDown(1), false);
+    t.strictEquals(m.getButtonIsDown(2), false);
+    m.postData({
+        isDown: true,
+        button: 0
+    });
+    t.strictEquals(m.getButtonIsDown(0), true);
+    t.strictEquals(m.getButtonIsDown(1), false);
+    t.strictEquals(m.getButtonIsDown(2), false);
+    m.postData({
+        isDown: true,
+        button: 2
+    });
+    t.strictEquals(m.getButtonIsDown(0), true);
+    t.strictEquals(m.getButtonIsDown(1), false);
+    t.strictEquals(m.getButtonIsDown(2), true);
+    m.postData({
+        isDown: false,
+        button: 2
+    });
+    t.strictEquals(m.getButtonIsDown(0), true);
+    t.strictEquals(m.getButtonIsDown(1), false);
+    t.strictEquals(m.getButtonIsDown(2), false);
+    t.end();
+});
+
+test('mouseDown with buttons', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    t.strictEquals(m.getIsDown(), false);
+    m.postData({
+        isDown: true,
+        button: 0
+    });
+    t.strictEquals(m.getIsDown(), true);
+    m.postData({
+        isDown: true,
+        button: 2
+    });
+    t.strictEquals(m.getIsDown(), true);
+    m.postData({
+        isDown: false,
+        button: 2
+    });
+    t.strictEquals(m.getIsDown(), false);
+    t.end();
+});
+
+test('no button is treated as left', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    t.strictEquals(m.getButtonIsDown(0), false);
+    m.postData({
+        isDown: true
+    });
+    t.strictEquals(m.getButtonIsDown(0), true);
+    m.postData({
+        isDown: false
+    });
+    t.strictEquals(m.getButtonIsDown(0), false);
+    t.end();
+});
+
 test('at zoomed scale', t => {
     const rt = new Runtime();
     const m = new Mouse(rt);
