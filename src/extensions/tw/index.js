@@ -25,6 +25,7 @@ class TurboWarpBlocks {
             name: 'TurboWarp',
             color1: '#ff4c4c',
             color2: '#e64444',
+            docsURI: 'https://github.com/TurboWarp/scratch-gui/wiki/TurboWarp-blocks',
             blocks: [
                 {
                     opcode: 'getLastKeyPressed',
