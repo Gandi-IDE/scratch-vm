@@ -46,7 +46,7 @@ class TurboWarpBlocks {
                         MOUSE_BUTTON: {
                             type: ArgumentType.NUMBER,
                             menu: 'mouseButton',
-                            defaultValue: 0
+                            defaultValue: '0'
                         }
                     }
                 }
@@ -60,7 +60,7 @@ class TurboWarpBlocks {
                                 default: '(0) left',
                                 description: 'left mouse button'
                             }),
-                            value: 0
+                            value: '0'
                         },
                         {
                             text: formatMessage({
@@ -68,7 +68,7 @@ class TurboWarpBlocks {
                                 default: '(1) middle',
                                 description: 'middle mouse button'
                             }),
-                            value: 1
+                            value: '1'
                         },
                         {
                             text: formatMessage({
@@ -76,7 +76,7 @@ class TurboWarpBlocks {
                                 default: '(2) right',
                                 description: 'right mouse button'
                             }),
-                            value: 2
+                            value: '2'
                         }
                     ],
                     acceptReporters: true
