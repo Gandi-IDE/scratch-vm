@@ -32,7 +32,7 @@ class TurboWarpBlocks {
                     text: formatMessage({
                         id: 'tw.blocks.lastKeyPressed',
                         default: 'last key pressed',
-                        description: 'get the last key that was pressed'
+                        description: 'Block that returns the last key that was pressed'
                     }),
                     blockType: BlockType.REPORTER
                 },
@@ -40,7 +40,8 @@ class TurboWarpBlocks {
                     opcode: 'getButtonIsDown',
                     text: formatMessage({
                         id: 'tw.blocks.buttonIsDown',
-                        default: '[MOUSE_BUTTON] mouse button down?'
+                        default: '[MOUSE_BUTTON] mouse button down?',
+                        description: 'Block that returns whether a specific mouse button is down'
                     }),
                     blockType: BlockType.BOOLEAN,
                     arguments: {
@@ -59,7 +60,7 @@ class TurboWarpBlocks {
                             text: formatMessage({
                                 id: 'tw.blocks.mouseButton.left',
                                 default: '(0) left',
-                                description: 'left mouse button'
+                                description: 'Dropdown item to select left mouse button'
                             }),
                             value: '0'
                         },
@@ -67,7 +68,7 @@ class TurboWarpBlocks {
                             text: formatMessage({
                                 id: 'tw.blocks.mouseButton.middle',
                                 default: '(1) middle',
-                                description: 'middle mouse button'
+                                description: 'Dropdown item to select middle mouse button'
                             }),
                             value: '1'
                         },
@@ -75,7 +76,7 @@ class TurboWarpBlocks {
                             text: formatMessage({
                                 id: 'tw.blocks.mouseButton.right',
                                 default: '(2) right',
-                                description: 'right mouse button'
+                                description: 'Dropdown item to select right mouse button'
                             }),
                             value: '2'
                         }
