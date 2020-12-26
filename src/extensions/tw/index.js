@@ -57,7 +57,7 @@ class TurboWarpBlocks {
                     items: [
                         {
                             text: formatMessage({
-                                id: 'tw.blocks.mouseButtons.left',
+                                id: 'tw.blocks.mouseButton.left',
                                 default: '(0) left',
                                 description: 'left mouse button'
                             }),
@@ -65,7 +65,7 @@ class TurboWarpBlocks {
                         },
                         {
                             text: formatMessage({
-                                id: 'tw.blocks.mouseButtons.middle',
+                                id: 'tw.blocks.mouseButton.middle',
                                 default: '(1) middle',
                                 description: 'middle mouse button'
                             }),
@@ -73,7 +73,7 @@ class TurboWarpBlocks {
                         },
                         {
                             text: formatMessage({
-                                id: 'tw.blocks.mouseButtons.right',
+                                id: 'tw.blocks.mouseButton.right',
                                 default: '(2) right',
                                 description: 'right mouse button'
                             }),
