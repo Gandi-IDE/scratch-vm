@@ -1324,13 +1324,14 @@ class ScriptTreeGenerator {
         const newVariable = new Variable(id, name, type, false);
         target.variables[id] = newVariable;
 
-        // If the sprite being compiled right now is a clone, we should also create the variable in the original sprite.
-        // This is necessary because the script cache is shared between clones, and clones won't inherit this variable.
-        if (!target.isOriginal) {
-            // The original sprite will usually be the first item of `clones`, but it's possible that it might not be.
-            const original = this.target.sprite.clones.find(t => t.isOriginal);
-            if (original && !original.variables.hasOwnProperty(id)) {
-                original.variables[id] = new Variable(id, name, type, false);
+        if (target.sprite) {
+            // Create the variable in all instances of this sprite.
+            // This is necessary because the script cache is shared between clones.
+            // sprite.clones has all instances of this sprite including the original and all clones
+            for (const clone of target.sprite.clones) {
+                if (clone.variables.hasOwnProperty(id)) {
+                    clone.variables[id] = new Variable(id, name, type, false);
+                }
             }
         }
 
