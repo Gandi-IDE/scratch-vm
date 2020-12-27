@@ -111,7 +111,7 @@ This is what makes JavaScript generator functions powerful: they can yield and r
 
 `retire();`
 
-This runs the runtime function `retire`. This function marks the current thread as finished so that it will not run again. There are many other runtime functions for lots of operations such as list replacements, insertions, gets, etc. These are defined in src/compiler/execute.js
+This runs the runtime function `retire`. This function marks the current thread as finished so that it will not run again. There are many other runtime functions for lots of operations such as list replacements, insertions, gets, etc. These are defined in src/compiler/jsexecute.js
 
 #### Procedures
 
