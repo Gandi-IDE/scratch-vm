@@ -58,9 +58,9 @@ class TurboWarpBlocks {
                     items: [
                         {
                             text: formatMessage({
-                                id: 'tw.blocks.mouseButton.left',
-                                default: '(0) left',
-                                description: 'Dropdown item to select left mouse button'
+                                id: 'tw.blocks.mouseButton.primary',
+                                default: '(0) primary',
+                                description: 'Dropdown item to select primary (usually left) mouse button'
                             }),
                             value: '0'
                         },
@@ -74,9 +74,9 @@ class TurboWarpBlocks {
                         },
                         {
                             text: formatMessage({
-                                id: 'tw.blocks.mouseButton.right',
-                                default: '(2) right',
-                                description: 'Dropdown item to select right mouse button'
+                                id: 'tw.blocks.mouseButton.secondary',
+                                default: '(2) secondary',
+                                description: 'Dropdown item to select secondary (usually right) mouse button'
                             }),
                             value: '2'
                         }
