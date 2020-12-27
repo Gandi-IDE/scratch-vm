@@ -1329,7 +1329,7 @@ class ScriptTreeGenerator {
             // This is necessary because the script cache is shared between clones.
             // sprite.clones has all instances of this sprite including the original and all clones
             for (const clone of target.sprite.clones) {
-                if (clone.variables.hasOwnProperty(id)) {
+                if (!clone.variables.hasOwnProperty(id)) {
                     clone.variables[id] = new Variable(id, name, type, false);
                 }
             }
