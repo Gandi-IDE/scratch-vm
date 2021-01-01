@@ -5,6 +5,7 @@ class Mouse {
         this._x = 0;
         this._y = 0;
         this._buttons = new Set();
+        this.usesRightClickDown = false;
         this._isDown = false;
         /**
          * Reference to the owning Runtime.
@@ -156,6 +157,9 @@ class Mouse {
      * @return {boolean} Is the mouse button down?
      */
     getButtonIsDown (button) {
+        if (button === 2) {
+            this.usesRightClickDown = true;
+        }
         return this._buttons.has(button);
     }
 }

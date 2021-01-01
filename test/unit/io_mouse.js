@@ -108,7 +108,7 @@ test('mouseDown with buttons', t => {
     t.end();
 });
 
-test('no button is treated as left', t => {
+test('missing button is treated as left', t => {
     const rt = new Runtime();
     const m = new Mouse(rt);
 
@@ -121,6 +121,16 @@ test('no button is treated as left', t => {
         isDown: false
     });
     t.strictEquals(m.getButtonIsDown(0), false);
+    t.end();
+});
+
+test('usesRightClickDown', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    t.strictEquals(m.usesRightClickDown, false);
+    t.strictEquals(m.getButtonIsDown(2), false);
+    t.strictEquals(m.usesRightClickDown, true);
     t.end();
 });
 
