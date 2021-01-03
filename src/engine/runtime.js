@@ -2113,6 +2113,8 @@ class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step () {
+        this.beforeStep();
+
         if (this.profiler !== null) {
             if (stepProfilerId === -1) {
                 stepProfilerId = this.profiler.idByName('Runtime._step');
@@ -2183,6 +2185,16 @@ class Runtime extends EventEmitter {
             this.profiler.stop();
             this.profiler.reportFrames();
         }
+
+        this.afterStep();
+    }
+
+    beforeStep () {
+
+    }
+
+    afterStep () {
+
     }
 
     /**
