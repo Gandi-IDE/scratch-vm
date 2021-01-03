@@ -535,7 +535,10 @@ class Blocks {
                     currTarget.comments[e.commentId].y = e.xy.y;
                 }
             }
-            this.emitProjectChanged();
+            // tw: Ignore creation of default project comment
+            if (e.commentId !== 'UgZfouDT0`j;EW7Y3N2]') {
+                this.emitProjectChanged();
+            }
             break;
         case 'comment_change':
             this.resetCache(); // tw: comments can affect compilation
@@ -652,7 +655,10 @@ class Blocks {
 
         // A new block was actually added to the block container,
         // emit a project changed event
-        this.emitProjectChanged();
+        // tw: Ignore creation of default project blocks
+        if (block.id !== 'Fj5[gB=S0qJiUu$/!nym' && block.id !== 'Z2l`f?]oj|=Nq/GH@G_u') {
+            this.emitProjectChanged();
+        }
     }
 
     /**
