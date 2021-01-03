@@ -452,8 +452,8 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * Serailize the project into a map of files without actually zipping the project.
-     * @returns {Record<string | Uint8Array>} Files of the project.
+     * tw: Serailize the project into a map of files without actually zipping the project.
+     * @returns {Record<Uint8Array>} Files of the project.
      */
     saveProjectSb3DontZip () {
         const soundDescs = serializeSounds(this.runtime);
@@ -461,7 +461,7 @@ class VirtualMachine extends EventEmitter {
         const projectJson = this.toJSON();
 
         const files = {
-            'project.json': projectJson
+            'project.json': new TextEncoder().encode(projectJson)
         };
         for (const fileDesc of soundDescs.concat(costumeDescs)) {
             files[fileDesc.fileName] = fileDesc.fileContent;
