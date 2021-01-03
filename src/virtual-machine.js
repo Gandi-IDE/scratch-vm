@@ -451,6 +451,25 @@ class VirtualMachine extends EventEmitter {
         });
     }
 
+    /**
+     * Serailize the project into a map of files without actually zipping the project.
+     * @returns {Record<string | Uint8Array>} Files of the project.
+     */
+    saveProjectSb3DontZip () {
+        const soundDescs = serializeSounds(this.runtime);
+        const costumeDescs = serializeCostumes(this.runtime);
+        const projectJson = this.toJSON();
+
+        const files = {
+            'project.json': projectJson
+        };
+        for (const fileDesc of soundDescs.concat(costumeDescs)) {
+            files[fileDesc.fileName] = fileDesc.fileContent;
+        }
+
+        return files;
+    }
+
     /*
      * @type {Array<object>} Array of all costumes and sounds currently in the runtime
      */
