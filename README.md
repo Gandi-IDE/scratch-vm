@@ -2,7 +2,7 @@
 
 JIT compiler for Scratch projects.
 
-The public API of TurboWarp/scratch-vm should be fully compatible with LLK/scratch-vm. See https://github.com/TurboWarp/scratch-vm/wiki/Public-API for more information.
+The public API of TurboWarp/scratch-vm should be fully compatible with LLK/scratch-vm. See "Public API" section below for more information.
 
 ## Setup
 
@@ -10,9 +10,57 @@ See https://github.com/TurboWarp/scratch-gui/wiki/Getting-Started to setup the c
 
 If you just want to play with the VM then it's the same process as upstream scratch-vm.
 
+## Public API
+
+Any public-facing API in LLK/scratch-vm *should* work just fine in TurboWarp/scratch-vm. Anything that doesn't is a bug. TurboWarp adds some new methods to the public API.
+
+### Runtime.setFramerate / VirtualMachine.setFramerate
+
+setCompatibilityMode is deprecated (but still works) in favor of a generic setFramerate method.
+
+```js
+runtime.setFramerate(60);
+```
+
+There is an event for framerate changes on Runtime and VirtualMachine: FRAMERATE_CHANGED (emitted with new framerate as only argument)
+
+### Runtime.setCompilerOptions / VirtualMachine.setCompilerOptions
+
+This lets you change the behavior of the compiler. This method takes an object with the following arguments:
+
+ - enabled (boolean; default true) - controls whether the JIT compiler is enabled
+ - warpTimer (boolean; default false) - controls whether to use a warp timer to limit how long warp scripts can run. Can have significant performance impact
+
+```js
+runtime.setCompilerOptions({
+  enabled: true,
+  warpTimer: true
+});
+// Partial updates are also supported -- this will only change `enabled` and not any other properties
+runtime.setCompilerOptions({ enabled: false });
+```
+
+There is an event for compiler option changes on Runtime and VirtualMachine: COMPILER_OPTIONS_CHANGED (called with current options)
+
+### Runtime.setRuntimeOptions / VirtualMachine.setRuntimeOptions
+
+Similar to setCompilerOption. This lets you control some behavior of the runtime.
+
+ - maxClones (number; default 300) - controls the clone limit; Infinity to disable
+
+There is an event for runtime option changes on Runtime and VirtualMachine: RUNTIME_OPTIONS_CHANGED (called with current options)
+
+### Runtime.stop / VirtualMachine.stop
+
+Stops the tick loop. This does not touch the active thread list. Anything currently active will be resumed when start is called again.
+
+### COMPILE_ERROR event
+
+A COMPILE_ERROR is fired on Runtime and VirtualMachine when a script couldn't be compiled.
+
 ## Extension authors
 
-The easiest way to make your extension compatible with TurboWarp is to use the same process as standard Scratch (https://github.com/LLK/scratch-vm/blob/develop/docs/extensions.md) to add your extension, and then add your opcodes to src/compiler/compat-blocks.js to make them run in the compatibility layer. Blocks that don't return values (eg. "move 10 steps") go in the `stacked` list and blocks that do return a value (eg. "3 * 3") go in the `inputs` list. Your opcodes are probably in the format `extensionId_methodName`.
+The easiest way to make your extension compatible with the TurboWarp compiler is to use the same process as standard Scratch (https://github.com/LLK/scratch-vm/blob/develop/docs/extensions.md) to add your extension, and then add your opcodes to src/compiler/compat-blocks.js to make them run in the compatibility layer. Blocks that don't return values (eg. "move 10 steps") go in the `stacked` list and blocks that do return a value (eg. "3 * 3") go in the `inputs` list. Your opcodes are probably in the format `extensionId_methodName`.
 
 ## Compiler Overview
 
