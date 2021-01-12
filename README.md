@@ -54,6 +54,8 @@ There is an event for runtime option changes on Runtime and VirtualMachine: RUNT
 
 Stops the tick loop. This does not touch the active thread list. Anything currently active will be resumed when start is called again.
 
+There is an event for stop on Runtime and VirtualMachine: RUNTIME_STOPPED (similar to RUNTIME_STARTED)
+
 ### COMPILE_ERROR event
 
 A COMPILE_ERROR is fired on Runtime and VirtualMachine when a script couldn't be compiled.
