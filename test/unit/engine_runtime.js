@@ -240,6 +240,54 @@ test('setCompatibilityMode does not restart if it was not running', t => {
     t.end();
 });
 
+test('setFramerate restarts if it was already running', t => {
+    const rt = new Runtime();
+    rt.start(); // Start the first time
+
+    // Set up a flag/listener to check if it gets started again
+    let started = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+
+    rt.setFramerate(30);
+    t.equal(started, true);
+    t.end();
+});
+
+test('setFramerate does not restart if it was not running', t => {
+    const rt = new Runtime();
+    let started = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+    rt.setFramerate(30);
+    t.equal(started, false);
+    t.end();
+});
+
+test('setFramrate emits an event', t => {
+    t.plan(1);
+    const rt = new Runtime();
+    rt.addListener('FRAMERATE_CHANGED', framerate => {
+        if (framerate === 13) {
+            t.pass();
+        }
+    });
+    rt.setFramerate(13);
+    t.end();
+});
+
+test('setFramrate and setCompatibilityMode do not emit a stop event', t => {
+    const rt = new Runtime();
+    rt.addListener('RUNTIME_STOPPED', () => {
+        t.fail();
+    });
+    rt.setFramerate(13);
+    rt.setCompatibilityMode(true);
+    t.end();
+});
+
 test('Disposing the runtime emits an event', t => {
     let disposed = false;
     const rt = new Runtime();
@@ -269,5 +317,90 @@ test('Clock is reset on runtime dispose', t => {
     rt.dispose();
     // When the runtime is disposed, the clock should be reset
     t.ok(c.projectTimer() === 0);
+    t.end();
+});
+
+test('Stopping the runtime emits an event', t => {
+    const rt = new Runtime();
+    rt.start();
+    let stopped = false;
+    rt.addListener('RUNTIME_STOPPED', () => {
+        stopped = true;
+    });
+    rt.stop();
+    t.equal(stopped, true);
+    t.end();
+});
+
+test('Stop does not emit an event if already stopped', t => {
+    const rt = new Runtime();
+    let stopped = false;
+    rt.addListener('RUNTIME_STOPPED', () => {
+        stopped = true;
+    });
+    rt.stop();
+    t.equal(stopped, false);
+    t.end();
+});
+
+test('setRuntimeOptions emits an event', t => {
+    t.plan(1);
+    const rt = new Runtime();
+    rt.addListener('RUNTIME_OPTIONS_CHANGED', options => {
+        if (options.option === 17) {
+            t.pass();
+        }
+    });
+    rt.setRuntimeOptions({option: 17});
+    t.end();
+});
+
+test('setRuntimeOptions supports partial updates', t => {
+    t.plan(1);
+    const rt = new Runtime();
+    rt.setRuntimeOptions({option: 17});
+    rt.addListener('RUNTIME_OPTIONS_CHANGED', options => {
+        if (options.option === 17) {
+            t.pass();
+        }
+    });
+    rt.setRuntimeOptions({otherOption: 1});
+    t.end();
+});
+
+test('setCompilerOptions emits an event', t => {
+    t.plan(1);
+    const rt = new Runtime();
+    rt.addListener('COMPILER_OPTIONS_CHANGED', options => {
+        if (options.option === 17) {
+            t.pass();
+        }
+    });
+    rt.setCompilerOptions({option: 17});
+    t.end();
+});
+
+test('setCompilerOptions supports partial updates', t => {
+    t.plan(1);
+    const rt = new Runtime();
+    rt.setCompilerOptions({option: 17});
+    rt.addListener('COMPILER_OPTIONS_CHANGED', options => {
+        if (options.option === 17) {
+            t.pass();
+        }
+    });
+    rt.setCompilerOptions({otherOption: 1});
+    t.end();
+});
+
+test('maxClones runtime option', t => {
+    const rt = new Runtime();
+    rt.setRuntimeOptions({maxClones: 10});
+    for (let i = 0; i < 10; i++) {
+        t.equal(rt.clonesAvailable(), true);
+        rt.changeCloneCounter(1);
+    }
+    rt.changeCloneCounter(1);
+    t.equal(rt.clonesAvailable(), false);
     t.end();
 });
