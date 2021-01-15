@@ -185,12 +185,6 @@ class ScriptTreeGenerator {
             };
         }
 
-        case 'control_create_clone_of_menu':
-            return {
-                kind: 'constant',
-                value: block.fields.CLONE_OPTION.value
-            };
-
         case 'data_variable':
             return {
                 kind: 'var.get',
@@ -225,12 +219,6 @@ class ScriptTreeGenerator {
                 list: this.descendVariable(block, 'LIST', LIST_TYPE)
             };
 
-        case 'event_broadcast_menu':
-            return {
-                kind: 'constant',
-                value: block.fields.BROADCAST_OPTION.value
-            };
-
         case 'looks_backdropnumbername':
             if (block.fields.NUMBER_NAME.value === 'number') {
                 return {
@@ -239,16 +227,6 @@ class ScriptTreeGenerator {
             }
             return {
                 kind: 'looks.backdropName'
-            };
-        case 'looks_backdrops':
-            return {
-                kind: 'constant',
-                value: block.fields.BACKDROP.value
-            };
-        case 'looks_costume':
-            return {
-                kind: 'constant',
-                value: block.fields.COSTUME.value
             };
         case 'looks_costumenumbername':
             if (block.fields.NUMBER_NAME.value === 'number') {
@@ -268,21 +246,6 @@ class ScriptTreeGenerator {
             return {
                 kind: 'motion.direction'
             };
-        case 'motion_glideto_menu':
-            return {
-                kind: 'constant',
-                value: block.fields.TO.value
-            };
-        case 'motion_goto_menu':
-            return {
-                kind: 'constant',
-                value: block.fields.TO.value
-            };
-        case 'motion_pointtowards_menu':
-            return {
-                kind: 'constant',
-                value: block.fields.TOWARDS.value
-            };
         case 'motion_xposition':
             return {
                 kind: 'motion.x'
@@ -290,23 +253,6 @@ class ScriptTreeGenerator {
         case 'motion_yposition':
             return {
                 kind: 'motion.y'
-            };
-
-        case 'music_menu_DRUM':
-            return {
-                kind: 'constant',
-                value: block.fields.DRUM.value
-            };
-        case 'music_menu_INSTRUMENT':
-            return {
-                kind: 'constant',
-                value: block.fields.INSTRUMENT.value
-            };
-
-        case 'note':
-            return {
-                kind: 'constant',
-                value: block.fields.NOTE.value
             };
 
         case 'operator_add':
@@ -536,12 +482,6 @@ class ScriptTreeGenerator {
                 right: this.descendInputOfBlock(block, 'NUM2')
             };
 
-        case 'pen_menu_colorParam':
-            return {
-                kind: 'constant',
-                value: block.fields.colorParam.value
-            };
-
         case 'sensing_answer':
             return {
                 kind: 'sensing.answer'
@@ -591,20 +531,10 @@ class ScriptTreeGenerator {
             return {
                 kind: 'sensing.daysSince2000'
             };
-        case 'sensing_distancetomenu':
-            return {
-                kind: 'constant',
-                value: block.fields.DISTANCETOMENU.value
-            };
         case 'sensing_distanceto':
             return {
                 kind: 'sensing.distance',
                 target: this.descendInputOfBlock(block, 'DISTANCETOMENU')
-            };
-        case 'sensing_keyoptions':
-            return {
-                kind: 'constant',
-                value: block.fields.KEY_OPTION.value
             };
         case 'sensing_keypressed':
             return {
@@ -622,11 +552,6 @@ class ScriptTreeGenerator {
         case 'sensing_mousey':
             return {
                 kind: 'mouse.y'
-            };
-        case 'sensing_of_object_menu':
-            return {
-                kind: 'constant',
-                value: block.fields.OBJECT.value
             };
         case 'sensing_of':
             return {
@@ -648,72 +573,37 @@ class ScriptTreeGenerator {
                 kind: 'sensing.touching',
                 object: this.descendInputOfBlock(block, 'TOUCHINGOBJECTMENU')
             };
-        case 'sensing_touchingobjectmenu':
-            return {
-                kind: 'constant',
-                value: block.fields.TOUCHINGOBJECTMENU.value
-            };
         case 'sensing_username':
             return {
                 kind: 'sensing.username'
-            };
-
-        case 'sound_sounds_menu':
-            return {
-                kind: 'constant',
-                value: block.fields.SOUND_MENU.value
-            };
-
-        case 'text2speech_menu_languages':
-            return {
-                kind: 'constant',
-                value: block.fields.languages.value
-            };
-        case 'text2speech_menu_voices':
-            return {
-                kind: 'constant',
-                value: block.fields.voices.value
-            };
-
-        case 'translate_menu_languages':
-            return {
-                kind: 'constant',
-                value: block.fields.languages.value
             };
 
         case 'tw_getLastKeyPressed':
             return {
                 kind: 'tw.lastKeyPressed'
             };
-        case 'tw_menu_mouseButton':
-            return {
-                kind: 'constant',
-                value: block.fields.mouseButton.value
-            };
 
-        case 'videoSensing_menu_ATTRIBUTE':
-            return {
-                kind: 'constant',
-                value: block.fields.ATTRIBUTE.value
-            };
-        case 'videoSensing_menu_SUBJECT':
-            return {
-                kind: 'constant',
-                value: block.fields.SUBJECT.value
-            };
-        case 'videoSensing_menu_VIDEO_STATE':
-            return {
-                kind: 'constant',
-                value: block.fields.VIDEO_STATE.value
-            };
-
-        default:
-            // It might be a block that uses the compatibility layer
-            if (compatBlocks.inputs.includes(block.opcode)) {
-                return this.descendCompatLayer(block);
+        default: {
+            const opcodeFunction = this.runtime.getOpcodeFunction(block.opcode);
+            if (opcodeFunction) {
+                // It might be a block that uses the compatibility layer
+                if (compatBlocks.inputs.includes(block.opcode)) {
+                    return this.descendCompatLayer(block);
+                }
+            } else {
+                // It might be a menu
+                const inputs = Object.keys(block.inputs);
+                const fields = Object.keys(block.fields);
+                if (inputs.length === 0 && fields.length === 1) {
+                    return {
+                        kind: 'constant',
+                        value: block.fields[fields[0]].value
+                    };
+                }
             }
             log.warn(`IR: Unknown input: ${block.opcode}`, block);
             throw new Error(`IR: Unknown input: ${block.opcode}`);
+        }
         }
     }
 
