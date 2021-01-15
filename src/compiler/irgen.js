@@ -578,6 +578,13 @@ class ScriptTreeGenerator {
                 kind: 'sensing.username'
             };
 
+        case 'sound_sounds_menu':
+            // This menu is special compared to other menus -- it actually has an opcode function.
+            return {
+                kind: 'constant',
+                value: block.fields.SOUND_MENU.value
+            };
+
         case 'tw_getLastKeyPressed':
             return {
                 kind: 'tw.lastKeyPressed'
