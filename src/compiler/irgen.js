@@ -1299,14 +1299,20 @@ class ScriptTreeGenerator {
     generate (topBlockId) {
         this.blocks.populateProcedureCache();
 
-        const topBlock = this.blocks.getBlock(topBlockId);
+        let topBlock = this.blocks.getBlock(topBlockId);
         if (!topBlock) {
             if (this.script.isProcedure) {
                 // Empty procedure
                 return this.script;
             }
-            // Probably running from toolbox. This is not currently supported.
-            throw new Error('Cannot find top block (running from toolbox?)');
+            // Flyout blocks are stored in a special block container.
+            const flyoutBlock = this.blocks.runtime.flyoutBlocks.getBlock(topBlockId);
+            if (flyoutBlock) {
+                this.blocks = this.blocks.runtime.flyoutBlocks;
+                topBlock = flyoutBlock;
+            } else {
+                throw new Error('Cannot find top block');
+            }
         }
 
         if (topBlock.comment) {
