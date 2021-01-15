@@ -1084,20 +1084,23 @@ class ScriptTreeGenerator {
             if (compatBlocks.stacked.includes(block.opcode)) {
                 return this.descendCompatLayer(block);
             }
+
+            // When this thread was triggered by a stack click, attempt to compile as an input.
+            // TODO: perhaps this should be moved to generate()?
+            if (this.thread.stackClick) {
+                try {
+                    const inputNode = this.descendInput(block);
+                    return {
+                        kind: 'visualReport',
+                        id: this.thread.topBlock,
+                        input: inputNode
+                    };
+                } catch (e) {
+                    // Ignore
+                }
+            }
+
             log.warn(`IR: Unknown stacked block: ${block.opcode}`, block);
-
-            // Try to compile as an input.
-            let isValidInput;
-            try {
-                this.descendInput(block);
-                isValidInput = true;
-            } catch (e) {
-                isValidInput = false;
-            }
-
-            if (isValidInput) {
-                throw new Error(`IR: This block is an input, not a stacked block: ${block.opcode}`);
-            }
             throw new Error(`IR: Unknown stacked block: ${block.opcode}`);
         }
         }

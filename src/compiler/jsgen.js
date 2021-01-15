@@ -865,6 +865,10 @@ class JSGenerator {
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.variable.id)}", element: "checkbox", value: true }, runtime);\n`;
             break;
 
+        case 'visualReport':
+            this.source += `runtime.visualReport("${sanitize(node.id)}", ${this.descendInput(node.input).asUnknown()});\n`;
+            break;
+
         default:
             log.warn(`JS: Unknown stacked block: ${node.kind}`, node);
             throw new Error(`JS: Unknown stacked block: ${node.kind}`);
