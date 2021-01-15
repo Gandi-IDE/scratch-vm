@@ -866,7 +866,7 @@ class JSGenerator {
             break;
 
         case 'visualReport':
-            this.source += `runtime.visualReport("${sanitize(node.id)}", ${this.descendInput(node.input).asUnknown()});\n`;
+            this.source += `runtime.visualReport("${sanitize(this.script.topBlockId)}", ${this.descendInput(node.input).asUnknown()});\n`;
             break;
 
         default:

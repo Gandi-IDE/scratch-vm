@@ -4,10 +4,16 @@
 
 /**
  * An IntermediateScript describes a single script.
- * A script is anything with a hat -- "when green flag starts", a procedure definition, etc.
+ * Scripts do not necessarily have hats.
  */
 class IntermediateScript {
     constructor () {
+        /**
+         * The ID of the top block of this script.
+         * @type {string}
+         */
+        this.topBlockId = null;
+
         /**
          * List of nodes that make up this script.
          * @type {Array|null}

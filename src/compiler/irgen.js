@@ -1099,7 +1099,6 @@ class ScriptTreeGenerator {
                     const inputNode = this.descendInput(block);
                     return {
                         kind: 'visualReport',
-                        id: this.thread.topBlock,
                         input: inputNode
                     };
                 } catch (e) {
@@ -1305,6 +1304,8 @@ class ScriptTreeGenerator {
      */
     generate (topBlockId) {
         this.blocks.populateProcedureCache();
+
+        this.script.topBlockId = topBlockId;
 
         let topBlock = this.blocks.getBlock(topBlockId);
         if (!topBlock) {
