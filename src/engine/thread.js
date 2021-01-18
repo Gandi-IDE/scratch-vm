@@ -437,9 +437,11 @@ class Thread {
 
         this.triedToCompile = true;
 
+        // Do not cache flyout blocks
+        const useCache = !!blocks.getBlock(this.topBlock);
         const topBlock = this.topBlock;
-        const cachedResult = blocks.getCachedCompileResult(topBlock);
-        // If there is a cached result that indicates, error, do not attempt to compile.
+        const cachedResult = useCache ? blocks.getCachedCompileResult(topBlock) : null;
+        // If there is a cached error, do not attempt to recompile.
         if (cachedResult && !cachedResult.success) {
             return;
         }
@@ -450,10 +452,14 @@ class Thread {
         } else {
             try {
                 result = compile(this);
-                blocks.cacheCompileResult(topBlock, result);
+                if (useCache) {
+                    blocks.cacheCompileResult(topBlock, result);
+                }
             } catch (error) {
                 log.error('cannot compile script', this.target.getName(), error);
-                blocks.cacheCompileError(topBlock, error);
+                if (useCache) {
+                    blocks.cacheCompileError(topBlock, error);
+                }
                 this.target.runtime.emitCompileError(this.target, error);
                 return;
             }
