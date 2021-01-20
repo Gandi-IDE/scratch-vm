@@ -1139,7 +1139,7 @@ class ScriptTreeGenerator {
         let blockId = startingBlockId;
 
         while (blockId !== null) {
-            const block = this.blocks.getBlock(blockId);
+            const block = this.getBlockById(blockId);
             if (!block) {
                 throw new Error('no block');
             }
@@ -1298,6 +1298,11 @@ class ScriptTreeGenerator {
         }
     }
 
+    getBlockById (blockId) {
+        // Flyout blocks are stored in a special container.
+        return this.blocks.getBlock(blockId) || this.blocks.runtime.flyoutBlocks.getBlock(blockId);
+    }
+
     /**
      * @param {string} topBlockId The ID of the top block of the script.
      * @returns {IntermediateScript}
@@ -1307,20 +1312,13 @@ class ScriptTreeGenerator {
 
         this.script.topBlockId = topBlockId;
 
-        let topBlock = this.blocks.getBlock(topBlockId);
+        const topBlock = this.getBlockById(topBlockId);
         if (!topBlock) {
             if (this.script.isProcedure) {
                 // Empty procedure
                 return this.script;
             }
-            // Flyout blocks are stored in a special block container.
-            const flyoutBlock = this.blocks.runtime.flyoutBlocks.getBlock(topBlockId);
-            if (flyoutBlock) {
-                this.blocks = this.blocks.runtime.flyoutBlocks;
-                topBlock = flyoutBlock;
-            } else {
-                throw new Error('Cannot find top block');
-            }
+            throw new Error('Cannot find top block');
         }
 
         if (topBlock.comment) {
