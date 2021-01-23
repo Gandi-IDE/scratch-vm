@@ -91,7 +91,7 @@ class ScriptTreeGenerator {
             };
         }
         const inputId = input.block;
-        const block = this.blocks.getBlock(inputId);
+        const block = this.getBlockById(inputId);
         if (!block) {
             log.warn(`IR: ${parentBlock.opcode}: could not find input ${inputName} with ID ${inputId}`);
             return {
