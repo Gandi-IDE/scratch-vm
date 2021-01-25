@@ -62,7 +62,7 @@ A COMPILE_ERROR is fired on Runtime and VirtualMachine when a script couldn't be
 
 ## Extension authors
 
-The easiest way to make your extension compatible with the TurboWarp compiler is to use the same process as standard Scratch (https://github.com/LLK/scratch-vm/blob/develop/docs/extensions.md) to add your extension, and then add your opcodes to src/compiler/compat-blocks.js to make them run in the compatibility layer. Blocks that don't return values (eg. "move 10 steps") go in the `stacked` list and blocks that do return a value (eg. "3 * 3") go in the `inputs` list. Your opcodes are probably in the format `extensionId_methodName`.
+If you only use the standard reporter, boolean, and command block types, everything should just work without any changes.
 
 ## Compiler Overview
 

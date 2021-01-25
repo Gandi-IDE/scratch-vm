@@ -1,4 +1,6 @@
 const Cast = require('../util/cast');
+const StringUtil = require('../util/string-util');
+const BlockType = require('../extension-support/block-type');
 const Variable = require('../engine/variable');
 const log = require('../util/log');
 const {IntermediateScript, IntermediateRepresentation} = require('./intermediate');
@@ -72,6 +74,27 @@ class ScriptTreeGenerator {
 
     enableWarp () {
         this.script.isWarp = true;
+    }
+
+    getBlockById (blockId) {
+        // Flyout blocks are stored in a special container.
+        return this.blocks.getBlock(blockId) || this.blocks.runtime.flyoutBlocks.getBlock(blockId);
+    }
+
+    getBlockInfo (fullOpcode) {
+        const [category, opcode] = StringUtil.splitFirst(fullOpcode, '_');
+        if (!category || !opcode) {
+            return null;
+        }
+        const categoryInfo = this.runtime._blockInfo.find(ci => ci.id === category);
+        if (!categoryInfo) {
+            return null;
+        }
+        const blockInfo = categoryInfo.blocks.find(b => b.info.opcode === opcode);
+        if (!blockInfo) {
+            return null;
+        }
+        return blockInfo;
     }
 
     /**
@@ -593,22 +616,29 @@ class ScriptTreeGenerator {
         default: {
             const opcodeFunction = this.runtime.getOpcodeFunction(block.opcode);
             if (opcodeFunction) {
-                // It might be a block that uses the compatibility layer
+                // It might be a non-compiled primitive from a standard category
                 if (compatBlocks.inputs.includes(block.opcode)) {
                     return this.descendCompatLayer(block);
                 }
-            } else {
-                // It might be a menu
-                const inputs = Object.keys(block.inputs);
-                const fields = Object.keys(block.fields);
-                if (inputs.length === 0 && fields.length === 1) {
-                    return {
-                        kind: 'constant',
-                        value: block.fields[fields[0]].value
-                    };
+                // It might be an extension block.
+                const blockInfo = this.getBlockInfo(block.opcode);
+                if (blockInfo) {
+                    const type = blockInfo.info.blockType;
+                    if (type === BlockType.REPORTER || type === BlockType.BOOLEAN) {
+                        return this.descendCompatLayer(block);
+                    }
                 }
             }
-            log.warn(`IR: Unknown input: ${block.opcode}`, block);
+
+            // It might be a menu.
+            const inputs = Object.keys(block.inputs);
+            const fields = Object.keys(block.fields);
+            if (inputs.length === 0 && fields.length === 1) {
+                return {
+                    kind: 'constant',
+                    value: block.fields[fields[0]].value
+                };
+            }
             throw new Error(`IR: Unknown input: ${block.opcode}`);
         }
         }
@@ -1087,9 +1117,20 @@ class ScriptTreeGenerator {
             };
 
         default: {
-            // It might be a block that uses the compatibility layer
-            if (compatBlocks.stacked.includes(block.opcode)) {
-                return this.descendCompatLayer(block);
+            const opcodeFunction = this.runtime.getOpcodeFunction(block.opcode);
+            if (opcodeFunction) {
+                // It might be a non-compiled primitive from a standard category
+                if (compatBlocks.stacked.includes(block.opcode)) {
+                    return this.descendCompatLayer(block);
+                }
+                // It might be an extension block.
+                const blockInfo = this.getBlockInfo(block.opcode);
+                if (blockInfo) {
+                    const type = blockInfo.info.blockType;
+                    if (type === BlockType.COMMAND) {
+                        return this.descendCompatLayer(block);
+                    }
+                }
             }
 
             // When this thread was triggered by a stack click, attempt to compile as an input.
@@ -1296,11 +1337,6 @@ class ScriptTreeGenerator {
             // Only the first 'tw' line is parsed.
             break;
         }
-    }
-
-    getBlockById (blockId) {
-        // Flyout blocks are stored in a special container.
-        return this.blocks.getBlock(blockId) || this.blocks.runtime.flyoutBlocks.getBlock(blockId);
     }
 
     /**

@@ -1,5 +1,6 @@
 /**
  * @fileoverview List of blocks to be supported in the compiler compatibility layer.
+ * This is only for native blocks. Extensions should not be listed here.
  */
 
 // Please keep these lists alphabetical.
@@ -21,13 +22,6 @@ const stacked = [
     'motion_glideto',
     'motion_goto',
     'motion_pointtowards',
-    'music_changeTempo',
-    'music_midiSetInstrument',
-    'music_playDrumForBeats',
-    'music_playNoteForBeats',
-    'music_restForBeats',
-    'music_setInstrument',
-    'music_setTempo',
     'sensing_askandwait',
     'sensing_setdragmode',
     'sound_changeeffectby',
@@ -37,24 +31,14 @@ const stacked = [
     'sound_playuntildone',
     'sound_seteffectto',
     'sound_setvolumeto',
-    'sound_stopallsounds',
-    'text2speech_setLanguage',
-    'text2speech_setVoice',
-    'text2speech_speakAndWait',
-    'videoSensing_setVideoTransparency',
-    'videoSensing_videoToggle'
+    'sound_stopallsounds'
 ];
 
 const inputs = [
     'control_get_counter',
-    'music_getTempo',
     'sensing_loud',
     'sensing_loudness',
-    'sound_volume',
-    'translate_getTranslate',
-    'translate_getViewerLanguage',
-    'tw_getButtonIsDown', // TODO: should compile this
-    'videoSensing_videoOn'
+    'sound_volume'
 ];
 
 module.exports = {
