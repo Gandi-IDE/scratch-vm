@@ -128,8 +128,8 @@ class SharedDispatch {
 
             /** @TODO: remove this hack! this is just here so we don't try to send `util` to a worker */
             // tw: upstream's logic is broken
-            // args is a 3 length list of [args, util, real block info]
-            // we only want to send args, the others will break thigns
+            // Args is actually a 3 length list of [args, util, real block info]
+            // We only want to send args. The others will throw errors when they try to be cloned
             if ((args.length > 0) && (typeof args[args.length - 1].func === 'function')) {
                 args.pop();
                 args.pop();
