@@ -467,7 +467,7 @@ class Thread {
 
         this.generator = result.startingFunction(this.target)();
 
-        if (!blocks.forceNoGlow) {
+        if (!this.blockContainer.forceNoGlow) {
             this.blockGlowInFrame = this.topBlock;
             this.requestScriptGlowInFrame = true;
         }
