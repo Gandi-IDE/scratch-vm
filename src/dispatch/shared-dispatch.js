@@ -127,7 +127,11 @@ class SharedDispatch {
             const responseId = this._storeCallbacks(resolve, reject);
 
             /** @TODO: remove this hack! this is just here so we don't try to send `util` to a worker */
-            if ((args.length > 0) && (typeof args[args.length - 1].yield === 'function')) {
+            // tw: upstream's logic is broken
+            // args is a 3 length list of [args, util, real block info]
+            // we only want to send args, the others will break thigns
+            if ((args.length > 0) && (typeof args[args.length - 1].func === 'function')) {
+                args.pop();
                 args.pop();
             }
 
