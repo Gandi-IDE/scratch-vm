@@ -291,6 +291,26 @@ const isSafeConstantForEqualsOptimization = input => {
     return numberValue.toString() === input.constantValue.toString();
 };
 
+/**
+ * A frame contains some information about the current substack being compiled.
+ */
+class Frame {
+    constructor (isLoop) {
+        /**
+         * Whether the current stack runs in a loop (while, for)
+         * @type {boolean}
+         * @readonly
+         */
+        this.isLoop = isLoop;
+
+        /**
+         * Whether the current block is the last block in the stack.
+         * @type {boolean}
+         */
+        this.isLastBlock = false;
+    }
+}
+
 class JSGenerator {
     /**
      * @param {IntermediateScript} script 
@@ -312,11 +332,56 @@ class JSGenerator {
         this.isProcedure = script.isProcedure;
         this.warpTimer = script.warpTimer;
 
+        /**
+         * Stack of frames, most recent is last item.
+         * @type {Frame[]}
+         */
+        this.frames = [];
+
+        /**
+         * The current Frame.
+         * @type {Frame}
+         */
+        this.currentFrame = null;
+
         this.namesOfCostumesAndSounds = getNamesOfCostumesAndSounds(target.runtime);
 
         this.localVariables = new VariablePool('a');
         this._setupVariablesPool = new VariablePool('b');
         this._setupVariables = {};
+    }
+
+    /**
+     * Enter a new frame
+     * @param {Frame} frame New frame.
+     */
+    pushFrame (frame) {
+        this.frames.push(frame);
+        this.frame = frame;
+    }
+
+    /**
+     * Exit the current frame
+     */
+    popFrame () {
+        this.frames.pop();
+        this.frame = this.frames[this.frames.length - 1];
+    }
+
+    /**
+     * @returns {boolean} true if the current block is the last command of a loop
+     */
+    isLastBlockInLoop () {
+        for (let i = this.frames.length - 1; i >= 0; i--) {
+            const frame = this.frames[i];
+            if (!frame.isLastBlock) {
+                return false;
+            }
+            if (frame.isLoop) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -331,7 +396,8 @@ class JSGenerator {
             return new TypedInput(`p${node.index}`, TYPE_UNKNOWN);
 
         case 'compat':
-            return new TypedInput(`(${this.generateCompatibilityLayerCall(node)})`, TYPE_UNKNOWN);
+            // Compatibility layer inputs never use flags.
+            return new TypedInput(`(${this.generateCompatibilityLayerCall(node, false)})`, TYPE_UNKNOWN);
 
         case 'constant':
             return this.safeConstantInput(node.value);
@@ -559,10 +625,16 @@ class JSGenerator {
      */
     descendStackedBlock (node) {
         switch (node.kind) {
-        case 'compat':
-            this.source += this.generateCompatibilityLayerCall(node);
-            this.source += ';\n';
+        case 'compat': {
+            // If the last command in a loop returns a promise, immediately continue to the next iteration.
+            // If you don't do this, you would the loop effectively yields twice per iteration and will run at half-speed.
+            const isLastInLoop = this.isLastBlockInLoop();
+            this.source += `${this.generateCompatibilityLayerCall(node, isLastInLoop)};\n`;
+            if (isLastInLoop) {
+                this.source += 'if (hasResumedFromPromise) {hasResumedFromPromise = false;continue;}';
+            }
             break;
+        }
 
         case 'control.createClone':
             this.source += `runtime.ext_scratch3_control._createClone(${this.descendInput(node.target).asString()}, target);\n`;
@@ -581,25 +653,25 @@ class JSGenerator {
             this.source += `while (${index} < ${this.descendInput(node.count).asNumber()}) { `;
             this.source += `${index}++; `;
             this.source += `${this.referenceVariable(node.variable)}.value = ${index};\n`;
-            this.descendStack(node.do);
+            this.descendStack(node.do, new Frame(true));
             this.source += '}\n';
             break;
         }
         case 'control.if':
             this.source += `if (${this.descendInput(node.condition).asBoolean()}) {\n`;
-            this.descendStack(node.whenTrue);
+            this.descendStack(node.whenTrue, new Frame(false));
             // only add the else branch if it won't be empty
             // this makes scripts have a bit less useless noise in them
             if (node.whenFalse.length) {
                 this.source += `} else {\n`;
-                this.descendStack(node.whenFalse);
+                this.descendStack(node.whenFalse, new Frame(false));
             }
             this.source += `}\n`;
             break;
         case 'control.repeat': {
             const i = this.localVariables.next();
             this.source += `for (var ${i} = ${this.descendInput(node.times).asNumber()}; ${i} >= 0.5; ${i}--) {\n`;
-            this.descendStack(node.do);
+            this.descendStack(node.do, new Frame(true));
             this.yieldLoop();
             this.source += `}\n`;
             break;
@@ -641,7 +713,7 @@ class JSGenerator {
         case 'control.while':
             this.resetVariableInputs();
             this.source += `while (${this.descendInput(node.condition).asBoolean()}) {\n`;
-            this.descendStack(node.do);
+            this.descendStack(node.do, new Frame(true));
             this.yieldLoop();
             this.source += `}\n`;
             break;
@@ -879,18 +951,21 @@ class JSGenerator {
         this.variableInputs = {};
     }
 
-    descendStack (nodes) {
+    descendStack (nodes, frame) {
         // Entering a stack -- all bets are off.
         // TODO: allow if/else to inherit values
         this.resetVariableInputs();
+        this.pushFrame(frame);
 
-        for (const node of nodes) {
-            this.descendStackedBlock(node);
+        for (let i = 0; i < nodes.length; i++) {
+            frame.isLastBlock = i === nodes.length - 1;
+            this.descendStackedBlock(nodes[i]);
         }
 
         // Leaving a stack -- any assumptions made in the current stack do not apply outside of it
         // TODO: in if/else this might create an extra unused object
         this.resetVariableInputs();
+        this.popFrame();
     }
 
     descendVariable (variable) {
@@ -982,9 +1057,10 @@ class JSGenerator {
     /**
      * Generate a call into the compatibility layer.
      * @param {*} node The "compat" kind node to generate from.
+     * @param {boolean} setFlags Whether flags should be set describing how this function was processed.
      * @returns {string} The JS of the call.
      */
-    generateCompatibilityLayerCall (node) {
+    generateCompatibilityLayerCall (node, setFlags) {
         const opcode = node.opcode;
 
         let result = 'yield* executeInCompatibilityLayer({';
@@ -999,7 +1075,7 @@ class JSGenerator {
             result += `"${sanitize(fieldName)}":"${sanitize(field)}",`;
         }
         const opcodeFunction = this.evaluateOnce(`runtime.getOpcodeFunction("${sanitize(opcode)}")`);
-        result += `}, ${opcodeFunction})`;
+        result += `}, ${opcodeFunction}, ${setFlags})`;
 
         return result;
     }
@@ -1071,7 +1147,7 @@ class JSGenerator {
      */
     compile () {
         if (this.script.stack) {
-            this.descendStack(this.script.stack);
+            this.descendStack(this.script.stack, new Frame(false));
         }
 
         const factory = this.createScriptFactory();

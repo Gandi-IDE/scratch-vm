@@ -115,13 +115,16 @@ const waitPromise = function*(promise) {
     return returnValue;
 };
 
+let hasResumedFromPromise = false;
+
 /**
  * Execute a scratch-vm primitive.
  * @param {*} inputs The inputs to pass to the block.
  * @param {function} blockFunction The primitive's function.
+ * @param {boolean} useFlags Whether to set flags (hasResumedFromPromise)
  * @returns {*} the value returned by the block, if any.
  */
-const executeInCompatibilityLayer = function*(inputs, blockFunction) {
+const executeInCompatibilityLayer = function*(inputs, blockFunction, useFlags) {
     // reset the stackframe
     // we only ever use one stackframe at a time, so this shouldn't cause issues
     thread.stackFrames[thread.stackFrames.length - 1].reuse(thread.warp > 0);
@@ -142,7 +145,11 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction) {
     let returnValue = executeBlock();
 
     if (isPromise(returnValue)) {
-        return yield* waitPromise(returnValue);
+        returnValue = yield* waitPromise(returnValue);
+        if (useFlags) {
+            hasResumedFromPromise = true;
+        }
+        return returnValue;
     }
 
     while (thread.status === Thread.STATUS_YIELD || thread.status === Thread.STATUS_YIELD_TICK) {
@@ -161,7 +168,11 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction) {
         returnValue = executeBlock();
 
         if (isPromise(returnValue)) {
-            return yield* waitPromise(returnValue);
+            returnValue = yield* waitPromise(returnValue);
+            if (useFlags) {
+                hasResumedFromPromise = true;
+            }
+            return returnValue;
         }
     }
 
