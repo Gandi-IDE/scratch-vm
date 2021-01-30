@@ -798,7 +798,7 @@ class JSGenerator {
             this.source += 'runtime.ext_scratch3_looks._renderBubble(target);\n';
             break;
         case 'looks.nextBackdrop':
-            this.source += 'stage.setCostume(stage.currentCostume + 1);\n';
+            this.source += 'runtime.ext_scratch3_looks._setBackdrop(stage, stage.currentCostume + 1, true);\n';
             break;
         case 'looks.nextCostume':
             this.source += 'target.setCostume(target.currentCostume + 1);\n';
