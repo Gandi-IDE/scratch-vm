@@ -1613,6 +1613,7 @@ class Runtime extends EventEmitter {
      */
     attachAudioEngine (audioEngine) {
         this.audioEngine = audioEngine;
+        require('./tw-experimental-audio-optimizations')(audioEngine);
     }
 
     /**
