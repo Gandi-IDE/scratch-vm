@@ -403,7 +403,7 @@ class JSGenerator {
             return this.safeConstantInput(node.value);
 
         case 'keyboard.pressed':
-            return new TypedInput(`runtime.ioDevices.keyboard.getKeyIsDown(${this.descendInput(node.key).asUnknown()})`, TYPE_BOOLEAN);
+            return new TypedInput(`runtime.ioDevices.keyboard.getKeyIsDown(${this.descendInput(node.key).asSafe()})`, TYPE_BOOLEAN);
 
         case 'list.contains':
             return new TypedInput(`listContains(${this.referenceVariable(node.list)}, ${this.descendInput(node.item).asUnknown()})`, TYPE_BOOLEAN);
