@@ -37,8 +37,6 @@ const CORE_EXTENSIONS = [
     // 'operators',
     // 'variables',
     // 'myBlocks'
-    // tw: core extension
-    'tw'
 ];
 
 /**
