@@ -631,7 +631,7 @@ class JSGenerator {
             const isLastInLoop = this.isLastBlockInLoop();
             this.source += `${this.generateCompatibilityLayerCall(node, isLastInLoop)};\n`;
             if (isLastInLoop) {
-                this.source += 'if (hasResumedFromPromise) {hasResumedFromPromise = false;continue;}';
+                this.source += 'if (hasResumedFromPromise) {hasResumedFromPromise = false;continue;}\n';
             }
             break;
         }
