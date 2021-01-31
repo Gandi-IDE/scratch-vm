@@ -54,6 +54,24 @@ test('mouseDown', t => {
     t.end();
 });
 
+test('position clamping', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    const BIG = 9999;
+    m.postData({
+        x: BIG,
+        y: BIG,
+        canvasWidth: 480,
+        canvasHeight: 360
+    });
+    t.strictEquals(m.getClientX(), BIG);
+    t.strictEquals(m.getClientY(), BIG);
+    t.strictEquals(m.getScratchX(), 240);
+    t.strictEquals(m.getScratchY(), -180);
+    t.end();
+});
+
 test('mouseButtonDown', t => {
     const rt = new Runtime();
     const m = new Mouse(rt);
