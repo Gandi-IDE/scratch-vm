@@ -56,6 +56,10 @@ Stops the tick loop. This does not touch the active thread list. Anything curren
 
 There is an event for stop on Runtime and VirtualMachine: RUNTIME_STOPPED (similar to RUNTIME_STARTED)
 
+### Runtime.stageWidth / Runtime.stageHeight
+
+These control the width and height of the stage. Set them to values other than 480 and 360 respectively to get custom stage sizes.
+
 ### COMPILE_ERROR event
 
 A COMPILE_ERROR is fired on Runtime and VirtualMachine when a script couldn't be compiled.
