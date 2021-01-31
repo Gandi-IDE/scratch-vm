@@ -71,8 +71,8 @@ class Mouse {
             this._clientY = data.y;
             this._scratchY = Math.round(MathUtil.clamp(
                 -this.runtime.stageHeight * ((data.y / data.canvasHeight) - 0.5),
-                -(this.runtime.stageWidth / 2),
-                (this.runtime.stageWidth / 2)
+                -(this.runtime.stageHeight / 2),
+                (this.runtime.stageHeight / 2)
             ));
         }
         if (typeof data.isDown !== 'undefined') {
