@@ -606,7 +606,7 @@ class JSGenerator {
             return new TypedInput(`(new Date().getFullYear())`, TYPE_NUMBER);
 
         case 'timer.get':
-            return new TypedInput('runtime.ioDevices.clock.preciseProjectTimer()', TYPE_NUMBER);
+            return new TypedInput('runtime.ioDevices.clock.projectTimer()', TYPE_NUMBER);
 
         case 'tw.lastKeyPressed':
             return new TypedInput('runtime.ioDevices.keyboard.getLastKeyPressed()', TYPE_STRING);

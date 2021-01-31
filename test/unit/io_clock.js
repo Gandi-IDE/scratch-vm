@@ -35,23 +35,3 @@ test('cycle', t => {
     rt._step();
     t.ok(c.projectTimer() > 0);
 });
-
-test('tw: extended spec', t => {
-    const rt = new Runtime();
-    const c = new Clock(rt);
-
-    t.type(c.preciseProjectTimer, 'function');
-    t.end();
-});
-
-test('tw: precise timer', t => {
-    const rt = new Runtime();
-    const c = new Clock(rt);
-
-    t.ok(c.preciseProjectTimer() <= 0.1);
-    setTimeout(() => {
-        // Precise timer should increase independent of thread stepping.
-        t.ok(c.preciseProjectTimer() > 0.1);
-        t.end();
-    }, 200);
-});
