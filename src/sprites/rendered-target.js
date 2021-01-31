@@ -375,8 +375,8 @@ class RenderedTarget extends Target {
             const origH = costumeSize[1];
             const minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
             const maxScale = Math.min(
-                (1.5 * this.runtime.constructor.STAGE_WIDTH) / origW,
-                (1.5 * this.runtime.constructor.STAGE_HEIGHT) / origH
+                (1.5 * this.runtime.stageWidth) / origW,
+                (1.5 * this.runtime.stageHeight) / origH
             );
             this.size = MathUtil.clamp(size / 100, minScale, maxScale) * 100;
             const {direction, scale} = this._getRenderedDirectionAndScale();
@@ -778,8 +778,8 @@ class RenderedTarget extends Target {
      */
     isTouchingEdge () {
         if (this.renderer) {
-            const stageWidth = this.runtime.constructor.STAGE_WIDTH;
-            const stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+            const stageWidth = this.runtime.stageWidth;
+            const stageHeight = this.runtime.stageHeight;
             const bounds = this.getBounds();
             if (bounds.left < -stageWidth / 2 ||
                 bounds.right > stageWidth / 2 ||
@@ -923,10 +923,10 @@ class RenderedTarget extends Target {
         let fence = optFence;
         if (!fence) {
             fence = {
-                left: -this.runtime.constructor.STAGE_WIDTH / 2,
-                right: this.runtime.constructor.STAGE_WIDTH / 2,
-                top: this.runtime.constructor.STAGE_HEIGHT / 2,
-                bottom: -this.runtime.constructor.STAGE_HEIGHT / 2
+                left: -this.runtime.stageWidth / 2,
+                right: this.runtime.stageWidth / 2,
+                top: this.runtime.stageHeight / 2,
+                bottom: -this.runtime.stageHeight / 2
             };
         }
         const bounds = this.getBounds();

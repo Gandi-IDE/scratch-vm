@@ -393,6 +393,9 @@ class Runtime extends EventEmitter {
         // scratch-gui will set this to 30
         this.framerate = 60;
 
+        this.stageWidth = Runtime.STAGE_WIDTH;
+        this.stageHeight = Runtime.STAGE_HEIGHT;
+
         this.runtimeOptions = {
             maxClones: Runtime.MAX_CLONES
         };
@@ -408,6 +411,7 @@ class Runtime extends EventEmitter {
      * @const {number}
      */
     static get STAGE_WIDTH () {
+        // tw: stage size is set per-runtime, this is only the initial value
         return 480;
     }
 
@@ -416,6 +420,7 @@ class Runtime extends EventEmitter {
      * @const {number}
      */
     static get STAGE_HEIGHT () {
+        // tw: stage size is set per-runtime, this is only the initial value
         return 360;
     }
 

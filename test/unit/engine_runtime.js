@@ -404,3 +404,10 @@ test('maxClones runtime option', t => {
     t.equal(rt.clonesAvailable(), false);
     t.end();
 });
+
+test('stageWidth and stageHeight', t => {
+    const rt = new Runtime();
+    t.equal(rt.stageWidth, 480);
+    t.equal(rt.stageHeight, 360);
+    t.end();
+});
