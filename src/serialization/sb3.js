@@ -492,7 +492,10 @@ const getSimplifiedLayerOrdering = function (targets) {
     return MathUtil.reducedSortOrdering(layerOrders);
 };
 
-const serializeMonitors = function (monitors) {
+const serializeMonitors = function (monitors, runtime) {
+    // Monitors position is always stored as position from top-left corner in 480x360 stage.
+    const xOffset = (runtime.stageWidth - 480) / 2;
+    const yOffset = (runtime.stageHeight - 360) / 2;
     return monitors.valueSeq().map(monitorData => {
         const serializedMonitor = {
             id: monitorData.id,
@@ -503,8 +506,8 @@ const serializeMonitors = function (monitors) {
             value: monitorData.value,
             width: monitorData.width,
             height: monitorData.height,
-            x: monitorData.x,
-            y: monitorData.y,
+            x: monitorData.x - xOffset,
+            y: monitorData.y - yOffset,
             visible: monitorData.visible
         };
         if (monitorData.mode !== 'list') {
@@ -552,7 +555,7 @@ const serialize = function (runtime, targetId) {
 
     obj.targets = serializedTargets;
 
-    obj.monitors = serializeMonitors(runtime.getMonitorState());
+    obj.monitors = serializeMonitors(runtime.getMonitorState(), runtime);
 
     // Assemble extension list
     obj.extensions = Array.from(extensions);
@@ -1085,6 +1088,12 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
 };
 
 const deserializeMonitor = function (monitorData, runtime, targets, extensions) {
+    // Monitors position is always stored as position from top-left corner in 480x360 stage.
+    const xOffset = (runtime.stageWidth - 480) / 2;
+    const yOffset = (runtime.stageHeight - 360) / 2;
+    monitorData.x += xOffset;
+    monitorData.y += yOffset;
+
     // If the serialized monitor has spriteName defined, look up the sprite
     // by name in the given list of targets and update the monitor's targetId
     // to match the sprite's id.
