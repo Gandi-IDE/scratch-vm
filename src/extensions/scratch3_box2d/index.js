@@ -386,7 +386,7 @@ class Scratch3Box2d {
      * @type {string}
      */
     static get STATE_KEY () {
-        return 'Scratch.Griffpatch';
+        return 'Scratch.box2d';
     }
 
     /**
@@ -394,7 +394,7 @@ class Scratch3Box2d {
      */
     getInfo () {
         return {
-            id: 'griffpatch',
+            id: 'box2d',
             name: formatMessage({
                 id: 'griffpatch.categoryName',
                 default: 'Physics',

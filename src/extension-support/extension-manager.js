@@ -13,7 +13,7 @@ const builtinExtensions = {
     // but serves as a reference for loading core blocks as extensions.
     coreExample: () => require('../blocks/scratch3_core_example'),
     // powered by xigua start
-    griffpatch: () => require('../extensions/scratch3_box2d'),
+    box2d: () => require('../extensions/scratch3_box2d'),
     // powered by xigua end
     // These are the non-core built-in extensions.
     pen: () => require('../extensions/scratch3_pen'),
