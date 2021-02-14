@@ -965,6 +965,26 @@ class Runtime extends EventEmitter {
             }
         }
 
+        if (extensionInfo.docsURI) {
+            try {
+                const url = new URL(extensionInfo.docsURI);
+                if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+                    throw new Error('invalid protocol');
+                }
+                const xml = '<button ' +
+                    'text="Open Docs" ' +
+                    'callbackKey="OPEN_DOCUMENTATION" ' +
+                    `web-class="docs-uri-${xmlEscape(extensionInfo.docsURI)}"></button>`;
+                const block = {
+                    info: {},
+                    xml
+                };
+                categoryInfo.blocks.push(block);
+            } catch (e) {
+                log.warn('cannot create docsURI button', e);
+            }
+        }
+
         for (const blockInfo of extensionInfo.blocks) {
             try {
                 const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
