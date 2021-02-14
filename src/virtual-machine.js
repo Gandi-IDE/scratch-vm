@@ -39,6 +39,11 @@ const CORE_EXTENSIONS = [
     // 'myBlocks'
 ];
 
+// Disable missing translation warnings in console
+formatMessage.setup({
+    missingTranslation: 'ignore'
+});
+
 /**
  * Handles connections between blocks, stage, and extensions.
  * @constructor
