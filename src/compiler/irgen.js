@@ -1440,7 +1440,7 @@ class IRGenerator {
             }
 
             // If a procedure used by a script may yield, the script itself may yield.
-            if (procedureData.yields) {
+            if (procedureData.yields && !script.yields) {
                 script.yields = true;
                 this.analyzeMadeChanges = true;
             }
