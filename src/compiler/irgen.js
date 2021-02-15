@@ -1394,7 +1394,6 @@ class IRGenerator {
         this.procedures = {};
 
         this.analyzedProcedures = [];
-        this.analyzeMadeChanges = false;
     }
 
     addProcedureDependencies (dependencies) {
@@ -1429,22 +1428,26 @@ class IRGenerator {
      * @param {IntermediateScript} script Intermediate script.
      */
     analyzeScript (script) {
+        let madeChanges = false;
         for (const procedureCode of script.dependedProcedures) {
             const procedureData = this.procedures[procedureCode];
 
             // Analyze newly found procedures.
             if (!this.analyzedProcedures.includes(procedureCode)) {
                 this.analyzedProcedures.push(procedureCode);
-                this.analyzeScript(procedureData);
+                if (this.analyzeScript(procedureData)) {
+                    madeChanges = true;
+                }
                 this.analyzedProcedures.pop();
             }
 
             // If a procedure used by a script may yield, the script itself may yield.
             if (procedureData.yields && !script.yields) {
                 script.yields = true;
-                this.analyzeMadeChanges = true;
+                madeChanges = true;
             }
         }
+        return madeChanges;
     }
 
     /**
@@ -1490,10 +1493,8 @@ class IRGenerator {
             }
         }
 
-        do {
-            this.analyzeScript(entry);
-            this.analyzeMadeChanges = false;
-        } while (this.analyzeMadeChanges);
+        // Analyze scripts until no changes are made.
+        while (this.analyzeScript(entry));
 
         const ir = new IntermediateRepresentation();
         ir.entry = entry;
