@@ -1394,6 +1394,7 @@ class IRGenerator {
         this.procedures = {};
 
         this.analyzedProcedures = [];
+        this.analyzeMadeChanges = false;
     }
 
     addProcedureDependencies (dependencies) {
@@ -1441,6 +1442,7 @@ class IRGenerator {
             // If a procedure used by a script may yield, the script itself may yield.
             if (procedureData.yields) {
                 script.yields = true;
+                this.analyzeMadeChanges = true;
             }
         }
     }
@@ -1488,8 +1490,10 @@ class IRGenerator {
             }
         }
 
-        // This will recursively analyze procedures as well.
-        this.analyzeScript(entry);
+        do {
+            this.analyzeScript(entry);
+            this.analyzeMadeChanges = false;
+        } while (this.analyzeMadeChanges);
 
         const ir = new IntermediateRepresentation();
         ir.entry = entry;
