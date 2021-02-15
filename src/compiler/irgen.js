@@ -1431,10 +1431,8 @@ class IRGenerator {
         for (const procedureCode of script.dependedProcedures) {
             const procedureData = this.procedures[procedureCode];
 
-            if (this.analyzedProcedures.includes(procedureCode)) {
-                // Recursion yields.
-                script.yields = true;
-            } else {
+            // Analyze newly found procedures.
+            if (!this.analyzedProcedures.includes(procedureCode)) {
                 this.analyzedProcedures.push(procedureCode);
                 this.analyzeScript(procedureData);
                 this.analyzedProcedures.pop();
