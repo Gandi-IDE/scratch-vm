@@ -893,6 +893,9 @@ class JSGenerator {
             }
             if (procedureData.yields) {
                 this.source += 'yield* ';
+                if (!this.script.yields) {
+                    throw new Error('Script uses yielding procedure but is not marked as yielding.');
+                }
             }
             this.source += `thread.procedures["${sanitize(procedureCode)}"](`;
             // Only include arguments if the procedure accepts any.
