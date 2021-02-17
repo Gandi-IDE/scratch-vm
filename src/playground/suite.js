@@ -310,7 +310,7 @@ class BenchResultView {
     }
 
     render (newResult = this.result, compareResult = this.compare) {
-        const newResultFrames = (newResult.frames ? newResult.frames : []);
+        const newResultFrames = (newResult.frames ? newResult.frames : []).filter(i => i);
         const blockFunctionFrame = newResultFrames
             .find(frame => frame.name === 'blockFunction');
         const stepThreadsInnerFrame = newResultFrames
