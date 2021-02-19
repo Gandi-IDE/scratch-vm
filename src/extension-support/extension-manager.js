@@ -29,6 +29,11 @@ const builtinExtensions = {
     gdxfor: () => require('../extensions/scratch3_gdx_for')
 };
 
+// powered by xigua start
+/** 从外部注入的扩展 */
+const injectExtensions = {};
+// powered by xigua end
+
 /**
  * @typedef {object} ArgumentInfo - Information about an extension block argument
  * @property {ArgumentType} type - the type of value this argument can take
@@ -143,7 +148,7 @@ class ExtensionManager {
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL) {
-        if (builtinExtensions.hasOwnProperty(extensionURL)) {
+        if (builtinExtensions.hasOwnProperty(extensionURL) || injectExtensions.hasOwnProperty(extensionURL)) {
             /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
             if (this.isExtensionLoaded(extensionURL)) {
                 const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;
@@ -438,6 +443,15 @@ class ExtensionManager {
 
         return blockInfo;
     }
+
+    // powered by xigua start
+    injectExtension (extensionId, extension) {
+        if (builtinExtensions.hasOwnProperty(extensionId) || injectExtensions.hasOwnProperty(extensionId)) {
+            log.warn(`${extensionId} 已存在，将替换原有扩展`);
+        }
+        injectExtensions[extensionId] = () => extension;
+    }
+    // powered by xigua end
 }
 
 module.exports = ExtensionManager;
