@@ -828,6 +828,9 @@ class JSGenerator {
             break;
         case 'motion.setXY':
             this.source += `target.setXY(${this.descendInput(node.x).asNumber()}, ${this.descendInput(node.y).asNumber()});\n`;
+            if (node.x.kind === 'op.mod' || node.y.kind === 'op.mod') {
+                this.source += `if (target.interpolationData) target.interpolationData = null;\n`;
+            }
             break;
         case 'motion.step':
             this.source += `runtime.ext_scratch3_motion._moveSteps(${this.descendInput(node.steps).asNumber()}, target);\n`;
