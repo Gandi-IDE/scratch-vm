@@ -1,8 +1,8 @@
 ## TurboWarp/scratch-vm
 
-JIT compiler for Scratch projects.
+Modified Scratch VM with a JIT compiler and more features.
 
-The public API of TurboWarp/scratch-vm should be fully compatible with LLK/scratch-vm. See "Public API" section below for more information.
+The public API of TurboWarp/scratch-vm should be compatible with LLK/scratch-vm. See "Public API" section below for more information.
 
 ## Setup
 
@@ -23,6 +23,10 @@ runtime.setFramerate(60);
 ```
 
 There is an event for framerate changes on Runtime and VirtualMachine: FRAMERATE_CHANGED (emitted with new framerate as only argument)
+
+### Runtime.setInterpolation / VirtualMachine.setInterpolation
+
+Toggles frame interpolation, an experimental feature that tries to make project motion smoother without making the script tick rate.
 
 ### Runtime.setCompilerOptions / VirtualMachine.setCompilerOptions
 
@@ -58,7 +62,7 @@ There is an event for stop on Runtime and VirtualMachine: RUNTIME_STOPPED (simil
 
 ### Runtime.stageWidth / Runtime.stageHeight
 
-These control the width and height of the stage. Set them to values other than 480 and 360 respectively to get custom stage sizes.
+These control the width and height of the stage. Set them to values other than 480 and 360 respectively to get custom stage sizes. Keep in mind that you need to manually resize the renderer as well.
 
 ### COMPILE_ERROR event
 
