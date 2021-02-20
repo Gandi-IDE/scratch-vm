@@ -171,6 +171,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.FRAMERATE_CHANGED, framerate => {
             this.emit(Runtime.FRAMERATE_CHANGED, framerate);
         });
+        this.runtime.on(Runtime.INTERPOLATION_CHANGED, framerate => {
+            this.emit(Runtime.INTERPOLATION_CHANGED, framerate);
+        });
         this.runtime.on(Runtime.COMPILE_ERROR, (target, error) => {
             this.emit(Runtime.COMPILE_ERROR, target, error);
         });
