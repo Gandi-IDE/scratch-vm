@@ -2103,6 +2103,7 @@ class Runtime extends EventEmitter {
     greenFlag () {
         this.stopAll();
         this.emit(Runtime.PROJECT_START);
+        this.updateCurrentMSecs();
         this.ioDevices.clock.resetProjectTimer();
         this.targets.forEach(target => target.clearEdgeActivatedValues());
         // Inform all targets of the green flag.
