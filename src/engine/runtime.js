@@ -972,7 +972,12 @@ class Runtime extends EventEmitter {
                     throw new Error('invalid protocol');
                 }
                 const xml = '<button ' +
-                    'text="Open Docs" ' +
+                    `text="${xmlEscape(maybeFormatMessage({
+                        // note: this translation is hardcoded in translation upload scripts
+                        id: 'tw.blocks.openDocs',
+                        default: 'Open Documentation',
+                        description: 'Button to open extensions docsURI'
+                    }))}" ` +
                     'callbackKey="OPEN_DOCUMENTATION" ' +
                     `web-class="docs-uri-${xmlEscape(extensionInfo.docsURI)}"></button>`;
                 const block = {
