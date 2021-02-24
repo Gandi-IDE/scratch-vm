@@ -129,6 +129,11 @@ class Scratch3DataBlocks {
         if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) {
             list.value.push(args.ITEM);
             list._monitorUpToDate = false;
+            // powered by xigua start
+            if (list.isCloud) {
+                util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+            }
+            // powered by xigua end
         }
     }
 
@@ -140,16 +145,29 @@ class Scratch3DataBlocks {
             return;
         } else if (index === Cast.LIST_ALL) {
             list.value = [];
+            if (list.isCloud) {
+                util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+            }
             return;
         }
         list.value.splice(index - 1, 1);
         list._monitorUpToDate = false;
+        // powered by xigua start
+        if (list.isCloud) {
+            util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+        }
+        // powered by xigua end
     }
 
     deleteAllOfList (args, util) {
         const list = util.target.lookupOrCreateList(
             args.LIST.id, args.LIST.name);
         list.value = [];
+        // powered by xigua start
+        if (list.isCloud) {
+            util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+        }
+        // powered by xigua end
         return;
     }
 
@@ -170,6 +188,12 @@ class Scratch3DataBlocks {
             list.value.pop();
         }
         list._monitorUpToDate = false;
+
+        // powered by xigua start
+        if (list.isCloud) {
+            util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+        }
+        // powered by xigua end
     }
 
     replaceItemOfList (args, util) {

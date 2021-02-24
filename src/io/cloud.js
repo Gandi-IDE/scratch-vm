@@ -143,7 +143,11 @@ class Cloud {
     updateCloudVariable (varUpdate) {
         const varName = varUpdate.name;
 
-        const variable = this.stage.lookupVariableByNameAndType(varName, Variable.SCALAR_TYPE);
+        // powered by xigua start
+        // 添加查找云列表
+        const variable = this.stage.lookupVariableByNameAndType(varName, Variable.SCALAR_TYPE) ||
+            this.stage.lookupVariableByNameAndType(varName, Variable.LIST_TYPE);
+        // powered by xigua end
         if (!variable || !variable.isCloud) {
             log.warn(`Received an update for a cloud variable that does not exist: ${varName}`);
             return;

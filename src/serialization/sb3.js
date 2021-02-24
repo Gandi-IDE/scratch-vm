@@ -404,6 +404,9 @@ const serializeVariables = function (variables) {
         }
         if (v.type === Variable.LIST_TYPE) {
             obj.lists[varId] = [v.name, v.value];
+            // powered by xigua start
+            if (v.isCloud) obj.lists[varId].push(true);
+            // powered by xigua end
             continue;
         }
 
@@ -998,11 +1001,17 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
     if (object.hasOwnProperty('lists')) {
         for (const listId in object.lists) {
             const list = object.lists[listId];
+            // powered by xigua start
+            const isCloud = (list.length === 3) && list[2] &&
+                object.isStage && runtime.canAddCloudVariable();
+            // powered by xigua end
             const newList = new Variable(
                 listId,
                 list[0],
                 Variable.LIST_TYPE,
-                false
+                // powered by xigua start
+                isCloud
+                // powered by xigua end
             );
             newList.value = list[1];
             target.variables[newList.id] = newList;
