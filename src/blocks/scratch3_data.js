@@ -126,7 +126,10 @@ class Scratch3DataBlocks {
     addToList (args, util) {
         const list = util.target.lookupOrCreateList(
             args.LIST.id, args.LIST.name);
-        if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) {
+        if (list.value.length < (
+            // 云列表限制长度更小
+            list.isCloud ? Scratch3DataBlocks.CLOUD_LIST_ITEM_LIMIT : Scratch3DataBlocks.LIST_ITEM_LIMIT)
+        ) {
             list.value.push(args.ITEM);
             list._monitorUpToDate = false;
             // powered by xigua start
@@ -276,6 +279,16 @@ class Scratch3DataBlocks {
     static get LIST_ITEM_LIMIT () {
         return 200000;
     }
+
+    // powered by xigua start
+    /**
+     * Type representation for list variables.
+     * @const {number}
+     */
+    static get CLOUD_LIST_ITEM_LIMIT () {
+        return 1000;
+    }
+    // powered by xigua end
 }
 
 module.exports = Scratch3DataBlocks;
