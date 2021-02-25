@@ -2596,6 +2596,17 @@ class Runtime extends EventEmitter {
     updateCurrentMSecs () {
         this.currentMSecs = Date.now();
     }
+
+    // powered by xigua start
+    getFormatMessage (message) {
+        const globalFormatMessage = require('format-message');
+        const formatMessage = globalFormatMessage.namespace();
+        return (...args) => {
+            formatMessage.setup({locale: globalFormatMessage.setup().locale, translations: message});
+            return formatMessage(...args);
+        };
+    }
+    // powered by xigua end
 }
 
 /**
