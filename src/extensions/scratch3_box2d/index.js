@@ -334,6 +334,114 @@ const blockIconURI = 'data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiDQoJIHht
 // eslint-disable-next-line max-len
 const menuIconURI = 'data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiDQoJIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbG5zOmE9Imh0dHA6Ly9ucy5hZG9iZS5jb20vQWRvYmVTVkdWaWV3ZXJFeHRlbnNpb25zLzMuMC8iDQoJIHg9IjBweCIgeT0iMHB4IiB3aWR0aD0iNDBweCIgaGVpZ2h0PSI0MHB4IiB2aWV3Qm94PSItMy43IC0zLjcgNDAgNDAiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgLTMuNyAtMy43IDQwIDQwIg0KCSB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxkZWZzPg0KPC9kZWZzPg0KPHJlY3QgeD0iOC45IiB5PSIxLjUiIGZpbGw9IiNGRkZGRkYiIHN0cm9rZT0iIzE2OUZCMCIgc3Ryb2tlLXdpZHRoPSIzIiB3aWR0aD0iMTQuOCIgaGVpZ2h0PSIxNC44Ii8+DQo8cmVjdCB4PSIxLjUiIHk9IjE2LjMiIGZpbGw9IiNGRkZGRkYiIHN0cm9rZT0iIzE2OUZCMCIgc3Ryb2tlLXdpZHRoPSIzIiB3aWR0aD0iMTQuOCIgaGVpZ2h0PSIxNC44Ii8+DQo8cmVjdCB4PSIxNi4zIiB5PSIxNi4zIiBmaWxsPSIjRkZGRkZGIiBzdHJva2U9IiMxNjlGQjAiIHN0cm9rZS13aWR0aD0iMyIgd2lkdGg9IjE0LjgiIGhlaWdodD0iMTQuOCIvPg0KPC9zdmc+';
 
+const l10nMessage = {
+    'en': {
+        categoryName: 'Physics',
+        setStage: 'setup stage [stageType]',
+        setGravity: 'set gravity to x: [gx] y: [gy]',
+        setPhysics: 'enable for [shape] mode [mode]',
+        doTick: 'step simulation',
+        setPosition: 'go to x: [x] y: [y] [space]',
+        setVelocity: 'set velocity to sx: [sx] sy: [sy]',
+        changeVelocity: 'change velocity by sx: [sx] sy: [sy]',
+        getVelocityX: 'x velocity',
+        getVelocityY: 'y velocity',
+        applyForce: 'push with force [force] in direction [dir]',
+        applyAngForce: 'spin with force [force]',
+        setStatic: 'set fixed [static]',
+        setProperties: 'set density [density] roughness [friction] bounce [restitution]',
+        getTouching: 'touching [where]',
+        setScroll: 'set scroll x: [ox] y: [oy]',
+        changeScroll: 'change scroll by x: [ox] y: [oy]',
+        getScrollX: 'x scroll',
+        getScrollY: 'y scroll',
+        // menu
+        stageTypeMenuBoxedStage: 'boxed stage',
+        stageTypeMenuOpenWithFloor: 'open (with floor)',
+        stageTypeMenuOpenNoFloor: 'open (no floor)',
+        shapeTypeMenuThisCostume: 'this costume',
+        shapeTypeMenuThisCircle: 'this circle',
+        shapeTypeMenuThisPolygon: 'this polygon',
+        shapeTypeMenuAllSprites: 'all sprites',
+        spaceTypeMenuInWorld: 'in world',
+        spaceTypeMenuOnStage: 'on stage',
+        spaceTypeMenuRelative: 'relative',
+        staticTypeMenuFree: 'free',
+        staticTypeMenuFixedInPlace: 'fixed in place',
+        staticTypeMenuFixedButCanRotate: 'fixed (but can rotate)',
+        frictionTypeMenuNone: 'none',
+        frictionTypeMenuSmooth: 'smooth',
+        frictionTypeMenuNormal: 'normal',
+        frictionTypeMenuRough: 'rough',
+        frictionTypeMenuExtremelyRough: 'extremely rough',
+        restitutionTypeMenuNone: 'none',
+        restitutionTypeMenuLittle: 'little',
+        restitutionTypeMenuNormal: 'normal',
+        restitutionTypeMenuQuiteBouncy: 'quite bouncy',
+        restitutionTypeMenuVeryBouncy: 'very bouncy',
+        restitutionTypeMenuUnstable: 'unstable',
+        whereTypeMenuAny: 'any',
+        whereTypeMenuFeet: 'feet',
+        enableTypesTypeMenuNormal: 'normal',
+        enableTypesTypeMenuPrecision: 'precision'
+    },
+    'zh-cn': {
+        categoryName: '物理引擎',
+        setStage: '把空间设置为 [stageType]',
+        setGravity: '将重力设为 x: [gx] y: [gy]',
+        setPhysics: '为 [shape] 开启 [mode] 模式',
+        doTick: '分步模拟',
+        setPosition: '移动到 x: [x] y: [y] [space]',
+        setVelocity: '将速度设为 sx: [sx] sy: [sy]',
+        changeVelocity: '将速度增加 sx: [sx] sy: [sy]',
+        getVelocityX: 'x 速度',
+        getVelocityY: 'y 速度',
+        applyForce: '用大小为 [force] 方向为 [dir] 的力推角色',
+        applyAngForce: '用大小为 [force] 的力转动角色',
+        setStatic: '将角色设置为 [static]',
+        setProperties: '设置角色的密度 [density] 粗糙度 [friction] 弹性 [restitution]',
+        getTouching: '触碰到角色的 [where]',
+        setScroll: '将舞台区滚动设为 x: [ox] y: [oy]',
+        changeScroll: '将舞台区滚动增加 x: [ox] y: [oy]',
+        getScrollX: '舞台区滚动 x',
+        getScrollY: '舞台区滚动 y',
+        densityTypeMenuVeryLight: '非常轻',
+        densityTypeMenuLight: '轻',
+        densityTypeMenuNormal: '正常',
+        densityTypeMenuHeavy: '重',
+        densityTypeMenuVeryHeavy: '非常重',
+        // menu
+        stageTypeMenuBoxedStage: '舞台区内',
+        stageTypeMenuOpenWithFloor: '开放舞台区（有地面）',
+        stageTypeMenuOpenNoFloor: '开放舞台区（无地面）',
+        shapeTypeMenuThisCostume: '造型区域范围',
+        shapeTypeMenuThisCircle: '圆形区域范围',
+        shapeTypeMenuThisPolygon: '多边形区域范围',
+        shapeTypeMenuAllSprites: '所有角色',
+        spaceTypeMenuInWorld: '在空间中',
+        spaceTypeMenuOnStage: '在舞台区中',
+        spaceTypeMenuRelative: '相对位置',
+        staticTypeMenuFree: '自由的',
+        staticTypeMenuFixedInPlace: '固定的',
+        staticTypeMenuFixedButCanRotate: '固定的（可以旋转）',
+        frictionTypeMenuNone: '光滑',
+        frictionTypeMenuSmooth: '比较滑',
+        frictionTypeMenuNormal: '正常',
+        frictionTypeMenuRough: '粗糙',
+        frictionTypeMenuExtremelyRough: '极度粗糙',
+        restitutionTypeMenuNone: '没有弹性',
+        restitutionTypeMenuLittle: '有一点弹性',
+        restitutionTypeMenuNormal: '正常',
+        restitutionTypeMenuQuiteBouncy: '弹性强',
+        restitutionTypeMenuVeryBouncy: '弹性非常强',
+        restitutionTypeMenuUnstable: '不稳定的',
+        whereTypeMenuAny: '任何位置',
+        whereTypeMenuFeet: '底部',
+        enableTypesTypeMenuNormal: '普通',
+        enableTypesTypeMenuPrecision: '精确'
+    }
+};
+
 /**
  * Class for the music-related blocks in Scratch 3.0
  * @param {Runtime} runtime - the runtime instantiating this block package.
@@ -365,6 +473,8 @@ class Scratch3Box2d {
         fixDef.restitution = 0.2; // 0.2
 
         _setStageType(STAGE_TYPE_OPTIONS.BOXED);
+
+        this.formatMessage = runtime.getFormatMessage(l10nMessage);
     }
 
     reset () {
@@ -395,11 +505,7 @@ class Scratch3Box2d {
     getInfo () {
         return {
             id: 'box2d',
-            name: formatMessage({
-                id: 'griffpatch.categoryName',
-                default: 'Physics',
-                description: 'Label for the Griffpatch extension category'
-            }),
+            name: this.formatMessage('categoryName'),
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
             blocks: [
@@ -408,11 +514,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'setStage',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.setStage',
-                        default: 'setup stage [stageType]',
-                        description: 'Set the stage type'
-                    }),
+                    text: this.formatMessage('setStage'),
                     arguments: {
                         stageType: {
                             type: ArgumentType.STRING,
@@ -424,11 +526,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'setGravity',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.setGravity',
-                        default: 'set gravity to x: [gx] y: [gy]',
-                        description: 'Set the gravity'
-                    }),
+                    text: this.formatMessage('setGravity'),
                     arguments: {
                         gx: {
                             type: ArgumentType.NUMBER,
@@ -446,11 +544,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'setPhysics',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.setPhysics',
-                        default: 'enable for [shape] mode [mode]',
-                        description: 'Enable Physics for this Sprite'
-                    }),
+                    text: this.formatMessage('setPhysics'),
                     arguments: {
                         shape: {
                             type: ArgumentType.STRING,
@@ -495,11 +589,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'doTick',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.doTick',
-                        default: 'step simulation',
-                        description: 'Run a single tick of the physics simulation'
-                    })
+                    text: this.formatMessage('doTick')
                 },
 
                 '---',
@@ -507,11 +597,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'setPosition',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.setPosition',
-                        default: 'go to x: [x] y: [y] [space]',
-                        description: 'Position Sprite'
-                    }),
+                    text: this.formatMessage('setPosition'),
                     arguments: {
                         x: {
                             type: ArgumentType.NUMBER,
@@ -539,11 +625,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'setVelocity',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.setVelocity',
-                        default: 'set velocity to sx: [sx] sy: [sy]',
-                        description: 'Set Velocity'
-                    }),
+                    text: this.formatMessage('setVelocity'),
                     arguments: {
                         sx: {
                             type: ArgumentType.NUMBER,
@@ -558,11 +640,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'changeVelocity',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.changeVelocity',
-                        default: 'change velocity by sx: [sx] sy: [sy]',
-                        description: 'Change Velocity'
-                    }),
+                    text: this.formatMessage('changeVelocity'),
                     arguments: {
                         sx: {
                             type: ArgumentType.NUMBER,
@@ -576,20 +654,12 @@ class Scratch3Box2d {
                 },
                 {
                     opcode: 'getVelocityX',
-                    text: formatMessage({
-                        id: 'griffpatch.getVelocityX',
-                        default: 'x velocity',
-                        description: 'get the x velocity'
-                    }),
+                    text: this.formatMessage('getVelocityX'),
                     blockType: BlockType.REPORTER
                 },
                 {
                     opcode: 'getVelocityY',
-                    text: formatMessage({
-                        id: 'griffpatch.getVelocityY',
-                        default: 'y velocity',
-                        description: 'get the y velocity'
-                    }),
+                    text: this.formatMessage('getVelocityY'),
                     blockType: BlockType.REPORTER
                 },
 
@@ -598,11 +668,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'applyForce',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.applyForce',
-                        default: 'push with force [force] in direction [dir]',
-                        description: 'Push this object in a given direction'
-                    }),
+                    text: this.formatMessage('applyForce'),
                     arguments: {
                         force: {
                             type: ArgumentType.NUMBER,
@@ -617,11 +683,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'applyAngForce',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.applyAngForce',
-                        default: 'spin with force [force]',
-                        description: 'Push this object in a given direction'
-                    }),
+                    text: this.formatMessage('applyAngForce'),
                     arguments: {
                         force: {
                             type: ArgumentType.NUMBER,
@@ -635,11 +697,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'setStatic',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.setStatic',
-                        default: 'set fixed [static]',
-                        description: 'Sets whether this block is static or dynamic'
-                    }),
+                    text: this.formatMessage('setStatic'),
                     arguments: {
                         static: {
                             type: ArgumentType.STRING,
@@ -666,11 +724,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'setProperties',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.setProperties',
-                        default: 'set density [density] roughness [friction] bounce [restitution]',
-                        description: 'Set the density of the object'
-                    }),
+                    text: this.formatMessage('setProperties'),
                     arguments: {
                         density: {
                             type: ArgumentType.NUMBER,
@@ -713,11 +767,7 @@ class Scratch3Box2d {
 
                 {
                     opcode: 'getTouching',
-                    text: formatMessage({
-                        id: 'griffpatch.getTouching',
-                        default: 'touching [where]',
-                        description: 'get the name of any sprites we are touching'
-                    }),
+                    text: this.formatMessage('getTouching'),
                     blockType: BlockType.REPORTER,
                     arguments: {
                         where: {
@@ -735,11 +785,7 @@ class Scratch3Box2d {
                 {
                     opcode: 'setScroll',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.setScroll',
-                        default: 'set scroll x: [ox] y: [oy]',
-                        description: 'Sets whether this block is static or dynamic'
-                    }),
+                    text: this.formatMessage('setScroll'),
                     arguments: {
                         ox: {
                             type: ArgumentType.NUMBER,
@@ -754,8 +800,8 @@ class Scratch3Box2d {
                 {
                     opcode: 'changeScroll',
                     blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'griffpatch.changeScroll',
+                    text: this.formatMessage({
+                        id: 'changeScroll',
                         default: 'change scroll by x: [ox] y: [oy]',
                         description: 'Sets whether this block is static or dynamic'
                     }),
@@ -772,20 +818,12 @@ class Scratch3Box2d {
                 },
                 {
                     opcode: 'getScrollX',
-                    text: formatMessage({
-                        id: 'griffpatch.getScrollX',
-                        default: 'x scroll',
-                        description: 'get the x scroll'
-                    }),
+                    text: this.formatMessage('getScrollX'),
                     blockType: BlockType.REPORTER
                 },
                 {
                     opcode: 'getScrollY',
-                    text: formatMessage({
-                        id: 'griffpatch.getScrollY',
-                        default: 'y scroll',
-                        description: 'get the y scroll'
-                    }),
+                    text: this.formatMessage('getScrollY'),
                     blockType: BlockType.REPORTER
                 }
 
@@ -817,79 +855,79 @@ class Scratch3Box2d {
 
     get STAGE_TYPE_MENU () {
         return [
-            {text: 'boxed stage', value: STAGE_TYPE_OPTIONS.BOXED},
-            {text: 'open (with floor)', value: STAGE_TYPE_OPTIONS.FLOOR},
-            {text: 'open (no floor)', value: STAGE_TYPE_OPTIONS.OPEN}
+            {text: this.formatMessage('stageTypeMenuBoxedStage'), value: STAGE_TYPE_OPTIONS.BOXED},
+            {text: this.formatMessage('stageTypeMenuOpenWithFloor'), value: STAGE_TYPE_OPTIONS.FLOOR},
+            {text: this.formatMessage('stageTypeMenuOpenNoFloor'), value: STAGE_TYPE_OPTIONS.OPEN}
         ];
     }
 
     get SPACE_TYPE_MENU () {
         return [
-            {text: 'in world', value: SPACE_TYPE_OPTIONS.WORLD},
-            {text: 'on stage', value: SPACE_TYPE_OPTIONS.STAGE},
-            {text: 'relative', value: SPACE_TYPE_OPTIONS.RELATIVE}
+            {text: this.formatMessage('spaceTypeMenuInWorld'), value: SPACE_TYPE_OPTIONS.WORLD},
+            {text: this.formatMessage('spaceTypeMenuOnStage'), value: SPACE_TYPE_OPTIONS.STAGE},
+            {text: this.formatMessage('spaceTypeMenuRelative'), value: SPACE_TYPE_OPTIONS.RELATIVE}
         ];
     }
 
     get WHERE_TYPE_MENU () {
         return [
-            {text: 'any', value: WHERE_TYPE_OPTIONS.ANY},
-            {text: 'feet', value: WHERE_TYPE_OPTIONS.FEET}
+            {text: this.formatMessage('whereTypeMenuAny'), value: WHERE_TYPE_OPTIONS.ANY},
+            {text: this.formatMessage('whereTypeMenuFeet'), value: WHERE_TYPE_OPTIONS.FEET}
         ];
     }
 
     get SHAPE_TYPE_MENU () {
         return [
-            {text: 'this costume', value: SHAPE_TYPE_OPTIONS.COSTUME},
-            {text: 'this circle', value: SHAPE_TYPE_OPTIONS.CIRCLE},
-            {text: 'this polygon', value: SHAPE_TYPE_OPTIONS.SVG_POLYGON},
-            {text: 'all sprites', value: SHAPE_TYPE_OPTIONS.ALL}
+            {text: this.formatMessage('shapeTypeMenuThisCostume'), value: SHAPE_TYPE_OPTIONS.COSTUME},
+            {text: this.formatMessage('shapeTypeMenuThisCircle'), value: SHAPE_TYPE_OPTIONS.CIRCLE},
+            {text: this.formatMessage('shapeTypeMenuThisPolygon'), value: SHAPE_TYPE_OPTIONS.SVG_POLYGON},
+            {text: this.formatMessage('shapeTypeMenuAllSprites'), value: SHAPE_TYPE_OPTIONS.ALL}
         ];
     }
 
     get ENABLE_TYPES_TYPE_MENU () {
         return [
-            {text: 'normal', value: 'normal'},
-            {text: 'precision', value: 'bullet'}
+            {text: this.formatMessage('enableTypesTypeMenuNormal'), value: 'normal'},
+            {text: this.formatMessage('enableTypesTypeMenuPrecision'), value: 'bullet'}
         ];
     }
 
     get STATIC_TYPE_MENU () {
         return [
-            {text: 'free', value: 'dynamic'},
-            {text: 'fixed in place', value: 'static'},
-            {text: 'fixed (but can rotate)', value: 'pinned'}
+            {text: this.formatMessage('staticTypeMenuFree'), value: 'dynamic'},
+            {text: this.formatMessage('staticTypeMenuFixedInPlace'), value: 'static'},
+            {text: this.formatMessage('staticTypeMenuFixedButCanRotate'), value: 'pinned'}
         ];
     }
 
     get DENSITY_TYPE_MENU () {
         return [
-            {text: 'very light', value: '25'},
-            {text: 'light', value: '50'},
-            {text: 'normal', value: '100'},
-            {text: 'heavy', value: '200'},
-            {text: 'very heavy', value: '400'}
+            {text: this.formatMessage('densityTypeMenuVeryLight'), value: '25'},
+            {text: this.formatMessage('densityTypeMenuLight'), value: '50'},
+            {text: this.formatMessage('densityTypeMenuNormal'), value: '100'},
+            {text: this.formatMessage('densityTypeMenuHeavy'), value: '200'},
+            {text: this.formatMessage('densityTypeMenuVeryHeavy'), value: '400'}
         ];
     }
 
     get FRICTION_TYPE_MENU () {
         return [
-            {text: 'none', value: '0'},
-            {text: 'smooth', value: '20'},
-            {text: 'normal', value: '50'},
-            {text: 'rough', value: '75'},
-            {text: 'extremely rough', value: '100'}
+            {text: this.formatMessage('frictionTypeMenuNone'), value: '0'},
+            {text: this.formatMessage('frictionTypeMenuSmooth'), value: '20'},
+            {text: this.formatMessage('frictionTypeMenuNormal'), value: '50'},
+            {text: this.formatMessage('frictionTypeMenuRough'), value: '75'},
+            {text: this.formatMessage('frictionTypeMenuExtremelyRough'), value: '100'}
         ];
     }
 
     get RESTITUTION_TYPE_MENU () {
         return [
-            {text: 'none', value: '0'},
-            {text: 'little', value: '10'},
-            {text: 'normal', value: '20'},
-            {text: 'quite bouncy', value: '40'},
-            {text: 'very bouncy', value: '70'},
-            {text: 'unstable', value: '100'}
+            {text: this.formatMessage('restitutionTypeMenuNone'), value: '0'},
+            {text: this.formatMessage('restitutionTypeMenuLittle'), value: '10'},
+            {text: this.formatMessage('restitutionTypeMenuNormal'), value: '20'},
+            {text: this.formatMessage('restitutionTypeMenuQuiteBouncy'), value: '40'},
+            {text: this.formatMessage('restitutionTypeMenuVeryBouncy'), value: '70'},
+            {text: this.formatMessage('restitutionTypeMenuUnstable'), value: '100'}
         ];
     }
 
