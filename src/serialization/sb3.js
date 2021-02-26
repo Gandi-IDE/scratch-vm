@@ -1013,6 +1013,9 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
                 isCloud
                 // powered by xigua end
             );
+            // powered by xigua start
+            if (isCloud) runtime.addCloudVariable();
+            // powered by xigua end
             newList.value = list[1];
             target.variables[newList.id] = newList;
         }
