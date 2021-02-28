@@ -1,4 +1,10 @@
-const _TextEncoder = require('./tw-text-encoder');
+let _TextEncoder;
+if (typeof TextEncoder === 'undefined') {
+    _TextEncoder = require('text-encoding').TextEncoder;
+} else {
+    /* global TextEncoder */
+    _TextEncoder = TextEncoder;
+}
 const EventEmitter = require('events');
 const JSZip = require('jszip');
 
