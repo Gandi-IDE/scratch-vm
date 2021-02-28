@@ -1906,6 +1906,10 @@ class Runtime extends EventEmitter {
             optMatchFields[opts] = optMatchFields[opts].toUpperCase();
         }
 
+        // tw: By assuming that all new threads will not interfere with eachother, we can optimize the loops
+        // inside the allScriptsByOpcodeDo callback below.
+        const startingThreadListLength = this.threads.length;
+
         // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
         this.allScriptsByOpcodeDo(requestedHatOpcode, (script, target) => {
             const {
@@ -1928,7 +1932,7 @@ class Runtime extends EventEmitter {
             if (hatMeta.restartExistingThreads) {
                 // If `restartExistingThreads` is true, we should stop
                 // any existing threads starting with the top block.
-                for (let i = 0; i < this.threads.length; i++) {
+                for (let i = 0; i < startingThreadListLength; i++) {
                     if (this.threads[i].target === target &&
                         this.threads[i].topBlock === topBlockId &&
                         // stack click threads and hat threads can coexist
@@ -1940,7 +1944,7 @@ class Runtime extends EventEmitter {
             } else {
                 // If `restartExistingThreads` is false, we should
                 // give up if any threads with the top block are running.
-                for (let j = 0; j < this.threads.length; j++) {
+                for (let j = 0; j < startingThreadListLength; j++) {
                     if (this.threads[j].target === target &&
                         this.threads[j].topBlock === topBlockId &&
                         // stack click threads and hat threads can coexist
