@@ -72,8 +72,8 @@ const interpolate = (runtime, time) => {
 
             // Large movements are likely intended to be instantaneous.
             if (absoluteXDistance < xTolerance && absoluteYDistance < yTolerance) {
-                const newX = interpolationData.x + xDistance * time;
-                const newY = interpolationData.y + yDistance * time;
+                const newX = interpolationData.x + (xDistance * time);
+                const newY = interpolationData.y + (yDistance * time);
                 renderer.updateDrawablePosition(drawableID, [newX, newY]);
             }
         }
@@ -83,7 +83,7 @@ const interpolate = (runtime, time) => {
         const absoluteGhostChange = Math.abs(ghostChange);
         // Large changes are likely intended to be instantaneous.
         if (absoluteGhostChange > 0 && absoluteGhostChange < 25) {
-            const newGhost = target.effects.ghost + ghostChange * time;
+            const newGhost = target.effects.ghost + (ghostChange * time);
             renderer.updateDrawableEffect(drawableID, 'ghost', newGhost);
         }
 
@@ -101,8 +101,8 @@ const interpolate = (runtime, time) => {
                     const currentRadians = direction * Math.PI / 180;
                     const startingRadians = interpolationData.direction * Math.PI / 180;
                     direction = Math.atan2(
-                        Math.sin(currentRadians) * time + Math.sin(startingRadians) * (1 - time),
-                        Math.cos(currentRadians) * time + Math.cos(startingRadians) * (1 - time)
+                        (Math.sin(currentRadians) * time) + (Math.sin(startingRadians) * (1 - time)),
+                        (Math.cos(currentRadians) * time) + (Math.cos(startingRadians) * (1 - time))
                     ) * 180 / Math.PI;
                     updateDrawableDirectionScale = true;
                 }
@@ -119,8 +119,8 @@ const interpolate = (runtime, time) => {
                     const absoluteChangeY = Math.abs(changeY);
                     // Large changes are likely intended to be instantaneous.
                     if (absoluteChangeX < 100 && absoluteChangeY < 100) {
-                        scale[0] = startingScale[0] + changeX * time;
-                        scale[1] = startingScale[1] + changeY * time;
+                        scale[0] = startingScale[0] + (changeX * time);
+                        scale[1] = startingScale[1] + (changeY * time);
                         updateDrawableDirectionScale = true;
                     }
                 }
