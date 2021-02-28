@@ -524,7 +524,7 @@ class Scratch3LooksBlocks {
         );
     }
 
-    clampEffect (effect, value) {
+    clampEffect (effect, value) { // used by compiler
         let clampedValue = value;
         switch (effect) {
         case 'ghost':

@@ -400,7 +400,7 @@ class RenderedTarget extends Target {
      * @param {!string} effectName Name of effect (see `RenderedTarget.prototype.effects`).
      * @param {!number} value Numerical magnitude of effect.
      */
-    setEffect (effectName, value) {
+    setEffect (effectName, value) { // used by compiler
         if (!this.effects.hasOwnProperty(effectName)) return;
         this.effects[effectName] = value;
         if (this.renderer) {

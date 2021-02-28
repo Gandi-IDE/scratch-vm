@@ -844,6 +844,12 @@ class ScriptTreeGenerator {
                 broadcast: this.descendInputOfBlock(block, 'BROADCAST_INPUT')
             };
 
+        case 'looks_changeeffectby':
+            return {
+                kind: 'looks.changeEffect',
+                effect: block.fields.EFFECT.value.toLowerCase(),
+                value: this.descendInputOfBlock(block, 'CHANGE')
+            };
         case 'looks_changesizeby':
             return {
                 kind: 'looks.changeSize',
@@ -884,6 +890,12 @@ class ScriptTreeGenerator {
         case 'looks_nextcostume':
             return {
                 kind: 'looks.nextCostume'
+            };
+        case 'looks_seteffectto':
+            return {
+                kind: 'looks.setEffect',
+                effect: block.fields.EFFECT.value.toLowerCase(),
+                value: this.descendInputOfBlock(block, 'VALUE')
             };
         case 'looks_setsizeto':
             return {
