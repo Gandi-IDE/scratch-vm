@@ -161,7 +161,15 @@ class ConstantInput {
     }
 
     isAlwaysNumber () {
-        return !Number.isNaN(+this.constantValue);
+        const value = +this.constantValue;
+        if (Number.isNaN(value)) {
+            return false;
+        }
+        // Empty strings evaluate to 0 but should not be considered a number.
+        if (value === 0) {
+            return this.constantValue.toString().trim() !== '';
+        }
+        return true;
     }
 
     isNeverNumber () {
