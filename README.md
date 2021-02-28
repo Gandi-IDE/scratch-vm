@@ -26,7 +26,9 @@ There is an event for framerate changes on Runtime and VirtualMachine: FRAMERATE
 
 ### Runtime.setInterpolation / VirtualMachine.setInterpolation
 
-Toggles frame interpolation, an experimental feature that tries to make project motion smoother without making the script tick rate.
+Toggles frame interpolation, an experimental feature that tries to make project motion smoother without changing the script tick rate.
+
+There is an event for changes on Runtime and VirtualMachine: INTERPOLATION_CHANGED
 
 ### Runtime.setCompilerOptions / VirtualMachine.setCompilerOptions
 
