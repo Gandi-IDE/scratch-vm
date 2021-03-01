@@ -64,14 +64,12 @@ const interpolate = (runtime, time) => {
         const absoluteYDistance = Math.abs(yDistance);
         if (absoluteXDistance > 0.1 || absoluteYDistance > 0.1) {
             const drawable = renderer._allDrawables[drawableID];
+            // Large movements are likely intended to be instantaneous.
             // getAABB is less accurate than getBounds, but it's much faster
             const bounds = drawable.getAABB();
-
-            const xTolerance = Math.min(50, 10 + bounds.width);
-            const yTolerance = Math.min(50, 10 + bounds.height);
-
-            // Large movements are likely intended to be instantaneous.
-            if (absoluteXDistance < xTolerance && absoluteYDistance < yTolerance) {
+            const tolerance = Math.min(240, Math.max(50, 1.5 * (bounds.width + bounds.height)));
+            const distance = Math.sqrt((absoluteXDistance ** 2) + (absoluteYDistance ** 2));
+            if (distance < tolerance) {
                 const newX = interpolationData.x + (xDistance * time);
                 const newY = interpolationData.y + (yDistance * time);
                 renderer.updateDrawablePosition(drawableID, [newX, newY]);
