@@ -223,6 +223,13 @@ class VirtualMachine extends EventEmitter {
         this.runtime.stopAll();
     }
 
+    // powered by xigua start
+    disposeAll () {
+        this.runtime.disposeAll();
+        this.editingTarget = null;
+    }
+    // powered by xigua end
+
     /**
      * Clear out current running project data.
      */

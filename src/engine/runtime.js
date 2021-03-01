@@ -1872,6 +1872,14 @@ class Runtime extends EventEmitter {
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
     }
 
+    // powered by xigua start
+    disposeAll () {
+        this.dispose();
+        clearInterval(this._steppingInterval);
+        this._steppingInterval = null;
+    }
+    // powered by xigua end
+
     /**
      * Add a target to the runtime. This tracks the sprite pane
      * ordering of the target. The target still needs to be put
