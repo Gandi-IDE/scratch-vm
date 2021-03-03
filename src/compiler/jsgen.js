@@ -699,16 +699,16 @@ class JSGenerator {
             }
             break;
         case 'control.wait': {
-            const timer = this.localVariables.next();
             const duration = this.localVariables.next();
-            this.source += `var ${timer} = timer();\n`;
+            this.source += `thread.timer = timer();\n`;
             this.source += `var ${duration} = Math.max(0, 1000 * ${this.descendInput(node.seconds).asNumber()});\n`;
             this.requestRedraw();
             // always yield at least once, even on 0 second durations
             this.yieldNotWarp();
-            this.source += `while (${timer}.timeElapsed() < ${duration}) {\n`;
+            this.source += `while (thread.timer.timeElapsed() < ${duration}) {\n`;
             this.yieldNotWarpOrStuck();
             this.source += '}\n';
+            this.source += 'thread.timer = null;\n';
             break;
         }
         case 'control.waitUntil': {

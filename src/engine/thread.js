@@ -196,6 +196,7 @@ class Thread {
 
         // compiler data
         // these values only make sense if isCompiled == true
+        this.timer = null;
         /**
          * Warp level
          * @type {number}
