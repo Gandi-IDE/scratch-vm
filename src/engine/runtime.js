@@ -2614,6 +2614,35 @@ class Runtime extends EventEmitter {
             return formatMessage(...args);
         };
     }
+
+    loadOnlineExtensionsLibrary () {
+        const onlineScriptId = '__scratchOnlineLibId__';
+
+        if (!document.getElementById(onlineScriptId)) {
+            // eslint-disable-next-line no-undef
+            const ENV = process.env.DEPLOY_ENV;
+            // https://static-dev.xiguacity.cn/h1t86b7fg6c7k36wnt0cb30m/static/js/
+            const staticName = {
+                dev: '-dev',
+                qa: '-qa',
+                prod: ''
+            }[ENV];
+            const script = document.createElement('script');
+            script.src = `${staticName === void 0 ? 'http://127.0.0.1:8080/dist' : `https://static${staticName}.xiguacity.cn/h1t86b7fg6c7k36wnt0cb30m`}/static/js/main.js?_=${onlineScriptId}`;
+            script.id = onlineScriptId;
+            return new Promise((resolve, reject) => {
+                script.onload = () => {
+                    resolve(window.scratchExtensions);
+                };
+
+                script.onerror = reject;
+
+                document.body.append(script);
+            });
+        }
+
+        return Promise.resolve(window.scratchExtensions);
+    }
     // powered by xigua end
 }
 

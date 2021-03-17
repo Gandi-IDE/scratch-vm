@@ -1587,6 +1587,12 @@ class VirtualMachine extends EventEmitter {
     configureScratchLinkSocketFactory (factory) {
         this.runtime.configureScratchLinkSocketFactory(factory);
     }
+    // powered by xigua start
+
+    loadOnlineExtensionsLibrary () {
+        return this.runtime.loadOnlineExtensionsLibrary();
+    }
+    // powered by xigua end
 }
 
 module.exports = VirtualMachine;
