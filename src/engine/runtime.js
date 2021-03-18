@@ -2620,7 +2620,7 @@ class Runtime extends EventEmitter {
 
         if (!document.getElementById(onlineScriptId)) {
             // eslint-disable-next-line no-undef
-            const ENV = process.env.DEPLOY_ENV;
+            const ENV = typeof DEPLOY_ENV === 'undefined' ? void 0 : DEPLOY_ENV;
             // https://static-dev.xiguacity.cn/h1t86b7fg6c7k36wnt0cb30m/static/js/
             const staticName = {
                 dev: '-dev',
