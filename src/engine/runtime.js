@@ -2628,7 +2628,7 @@ class Runtime extends EventEmitter {
                 prod: ''
             }[ENV];
             const script = document.createElement('script');
-            script.src = `${staticName === void 0 ? 'http://127.0.0.1:8080/dist' : `https://static${staticName}.xiguacity.cn/h1t86b7fg6c7k36wnt0cb30m`}/static/js/main.js?_=${Date.now()}`;
+            script.src = `${staticName === void 0 ? '' : `https://static${staticName}.xiguacity.cn/h1t86b7fg6c7k36wnt0cb30m`}/static/js/main.js?_=${Date.now()}`;
             script.id = onlineScriptId;
             return new Promise((resolve, reject) => {
                 script.onload = () => {
