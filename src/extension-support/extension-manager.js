@@ -451,6 +451,10 @@ class ExtensionManager {
         }
         injectExtensions[extensionId] = () => extension;
     }
+
+    clearLoadedExtensions () {
+        this._loadedExtensions.clear();
+    }
     // powered by xigua end
 }
 
