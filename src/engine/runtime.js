@@ -2343,28 +2343,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * tw: Enable or disable limits. Uses setRuntimeOptions internally.
-     * @param {boolean} limits True if limits should be enabled.
-     */
-    setLimits (limits) {
-        this.setRuntimeOptions({
-            maxClones: limits ? Runtime.MAX_CLONES : Infinity,
-            effectLimits: limits,
-            fencing: limits
-        });
-    }
-
-    /**
-     * tw: Determine if limits are enabled or disabled.
-     * @returns {boolean} True if some limits are enabled.
-     */
-    hasLimits () {
-        return this.runtimeOptions.maxClones !== Infinity ||
-            this.runtimeOptions.effectLimits ||
-            this.runtimeOptions.fencing;
-    }
-
-    /**
      * tw: Update runtime options
      * @param {*} runtimeOptions New options
      */
