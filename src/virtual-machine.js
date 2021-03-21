@@ -244,6 +244,14 @@ class VirtualMachine extends EventEmitter {
         this.runtime.setInterpolation(interpolationEnabled);
     }
 
+    setLimits (limits) {
+        this.runtime.setLimits(limits);
+    }
+
+    hasLimits () {
+        return this.runtime.hasLimits();
+    }
+
     setRuntimeOptions (runtimeOptions) {
         this.runtime.setRuntimeOptions(runtimeOptions);
     }

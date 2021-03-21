@@ -271,7 +271,9 @@ class RenderedTarget extends Target {
         const oldX = this.x;
         const oldY = this.y;
         if (this.renderer) {
-            const position = this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]);
+            const position = this.runtime.runtimeOptions.fencing ?
+                this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]) :
+                [x, y];
             this.x = position[0];
             this.y = position[1];
 

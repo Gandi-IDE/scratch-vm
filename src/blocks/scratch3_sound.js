@@ -275,8 +275,10 @@ class Scratch3SoundBlocks {
             soundState.effects[effect] = value;
         }
 
-        const {min, max} = Scratch3SoundBlocks.EFFECT_RANGE[effect];
-        soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], min, max);
+        if (util.sequencer.runtime.runtimeOptions.effectLimits) {
+            const {min, max} = Scratch3SoundBlocks.EFFECT_RANGE[effect];
+            soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], min, max);
+        }
 
         this._syncEffectsForTarget(util.target);
         // Yield until the next tick.

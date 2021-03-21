@@ -53,6 +53,8 @@ There is an event for compiler option changes on Runtime and VirtualMachine: COM
 Similar to setCompilerOption. This lets you control some behavior of the runtime.
 
  - maxClones (number; default 300) - controls the clone limit; Infinity to disable
+ - effectLimits (boolean; default true) - controls whether effect limits should be applied (pitch, pan)
+ - fencing (number; default true) - controls whether sprite fencing should be enabled
 
 There is an event for runtime option changes on Runtime and VirtualMachine: RUNTIME_OPTIONS_CHANGED (called with current options)
 
@@ -65,6 +67,10 @@ There is an event for stop on Runtime and VirtualMachine: RUNTIME_STOPPED (simil
 ### Runtime.stageWidth / Runtime.stageHeight
 
 These control the width and height of the stage. Set them to values other than 480 and 360 respectively to get custom stage sizes. Keep in mind that you need to manually resize the renderer as well.
+
+### Runtime.setLimits / Runtime.hasLimits / Virtualmachine.setLimits / VirtualMachine.hasLimits
+
+Automatically sets or reads runtimeOptions to determine whether "limits" are enabled.
 
 ### COMPILE_ERROR event
 
