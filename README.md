@@ -68,10 +68,6 @@ There is an event for stop on Runtime and VirtualMachine: RUNTIME_STOPPED (simil
 
 These control the width and height of the stage. Set them to values other than 480 and 360 respectively to get custom stage sizes. Keep in mind that you need to manually resize the renderer as well.
 
-### Runtime.setLimits / Runtime.hasLimits / Virtualmachine.setLimits / VirtualMachine.hasLimits
-
-Automatically sets or reads runtimeOptions to determine whether "limits" are enabled.
-
 ### COMPILE_ERROR event
 
 A COMPILE_ERROR is fired on Runtime and VirtualMachine when a script couldn't be compiled.
