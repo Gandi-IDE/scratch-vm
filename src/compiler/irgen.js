@@ -652,6 +652,11 @@ class ScriptTreeGenerator {
      */
     descendStackedBlock (block) {
         switch (block.opcode) {
+        case 'control_all_at_once':
+            return {
+                kind: 'control.allAtOnce',
+                do: this.descendSubstack(block, 'SUBSTACK')
+            };
         case 'control_create_clone_of':
             return {
                 kind: 'control.createClone',
