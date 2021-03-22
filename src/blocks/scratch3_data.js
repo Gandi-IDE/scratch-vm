@@ -211,6 +211,11 @@ class Scratch3DataBlocks {
         }
         list.value[index - 1] = item;
         list._monitorUpToDate = false;
+        // powered by xigua start
+        if (list.isCloud) {
+            util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+        }
+        // powered by xigua end
     }
 
     getItemOfList (args, util) {
