@@ -159,8 +159,18 @@ class ExtensionManager {
             return Promise.resolve();
         }
 
+        try {
+            const parsedUrl = new URL(extensionURL);
+            if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+                return Promise.reject(new Error('Invalid protocol'));
+            }
+        } catch (e) {
+            extensionURL = `//${extensionURL}`;
+        }
+
         return new Promise((resolve, reject) => {
             // If we `require` this at the global level it breaks non-webpack targets, including tests
+            // eslint-disable-next-line max-len
             const ExtensionWorker = require('worker-loader?name=js/extension-worker/extension-worker.[hash].js!./extension-worker');
 
             this.pendingExtensions.push({extensionURL, resolve, reject});
