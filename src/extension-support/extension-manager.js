@@ -12,9 +12,6 @@ const builtinExtensions = {
     // This is an example that isn't loaded with the other core blocks,
     // but serves as a reference for loading core blocks as extensions.
     coreExample: () => require('../blocks/scratch3_core_example'),
-    // powered by xigua start
-    box2d: () => require('../extensions/scratch3_box2d'),
-    // powered by xigua end
     // These are the non-core built-in extensions.
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
@@ -163,13 +160,26 @@ class ExtensionManager {
             return Promise.resolve();
         }
 
-        return new Promise((resolve, reject) => {
-            // If we `require` this at the global level it breaks non-webpack targets, including tests
-            const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
+        return this.runtime.loadOnlineExtensionsLibrary().then(lib => lib.default())
+            .then(({default: remoteExtensions}) => {
+                const remoteExtensionConfig = remoteExtensions[extensionURL];
+                if (remoteExtensionConfig && remoteExtensionConfig.Extension) {
+                    return remoteExtensionConfig.Extension().then(({default: remoteExtension}) => {
+                        const extensionInstance = new remoteExtension(this.runtime);
+                        const serviceName = this._registerInternalExtension(extensionInstance);
+                        this._loadedExtensions.set(extensionURL, serviceName);
+                        return Promise.resolve();
+                    });
+                }
 
-            this.pendingExtensions.push({extensionURL, resolve, reject});
-            dispatch.addWorker(new ExtensionWorker());
-        });
+                return new Promise((resolve, reject) => {
+                    // If we `require` this at the global level it breaks non-webpack targets, including tests
+                    const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
+
+                    this.pendingExtensions.push({extensionURL, resolve, reject});
+                    dispatch.addWorker(new ExtensionWorker());
+                });
+            });
     }
 
     /**
