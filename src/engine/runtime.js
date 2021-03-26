@@ -409,6 +409,8 @@ class Runtime extends EventEmitter {
             warpTimer: false
         };
 
+        this.debug = false;
+
         this._animationFrame = this._animationFrame.bind(this);
         this._animationFrameId = null;
         this._lastStepTime = Date.now();
@@ -2385,6 +2387,11 @@ class Runtime extends EventEmitter {
                 thread.tryCompile();
             }
         });
+    }
+
+    enableDebug () {
+        this.resetAllCaches();
+        this.debug = true;
     }
 
     /**

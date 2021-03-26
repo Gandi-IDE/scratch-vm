@@ -252,6 +252,10 @@ class VirtualMachine extends EventEmitter {
         this.runtime.setCompilerOptions(compilerOptions);
     }
 
+    enableDebug () {
+        this.runtime.enableDebug();
+    }
+
     /**
      * Stop all threads and running activities.
      */
