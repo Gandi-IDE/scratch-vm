@@ -359,6 +359,8 @@ class JSGenerator {
         this._setupVariables = {};
 
         this.descendedIntoModulo = false;
+
+        this.debug = this.target.runtime.debug;
     }
 
     /**
@@ -1185,7 +1187,9 @@ class JSGenerator {
         const factory = this.createScriptFactory();
         const fn = jsexecute.scopedEval(factory);
 
-        log.info(`JS: ${this.target.getName()}: compiled ${this.script.procedureCode || 'script'}`, factory);
+        if (this.debug) {
+            log.info(`JS: ${this.target.getName()}: compiled ${this.script.procedureCode || 'script'}`, factory);
+        }
 
         return fn;
     }
