@@ -275,7 +275,7 @@ class Scratch3SoundBlocks {
             soundState.effects[effect] = value;
         }
 
-        if (util.sequencer.runtime.runtimeOptions.effectLimits) {
+        if (util.sequencer.runtime.runtimeOptions.miscLimits) {
             const {min, max} = Scratch3SoundBlocks.EFFECT_RANGE[effect];
             soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], min, max);
         }
