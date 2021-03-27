@@ -411,3 +411,11 @@ test('stageWidth and stageHeight', t => {
     t.equal(rt.stageHeight, 360);
     t.end();
 });
+
+test('debug', t => {
+    const rt = new Runtime();
+    t.equal(rt.debug, false);
+    rt.enableDebug();
+    t.equal(rt.debug, true);
+    t.end();
+});
