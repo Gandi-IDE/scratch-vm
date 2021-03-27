@@ -288,6 +288,51 @@ test('setFramrate and setCompatibilityMode do not emit a stop event', t => {
     t.end();
 });
 
+test('setInterpolation emits an event', t => {
+    t.plan(1);
+    const rt = new Runtime();
+    rt.addListener('INTERPOLATION_CHANGED', enabled => {
+        if (enabled) {
+            t.pass();
+        }
+    });
+    rt.setInterpolation(true);
+    t.end();
+});
+
+test('setInterpolation does not restart runtime if not running', t => {
+    const rt = new Runtime();
+    let started = false;
+    let stopped = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+    rt.addListener('RUNTIME_STOPPED', () => {
+        stopped = true;
+    });
+    rt.setInterpolation(true);
+    t.equal(started, false);
+    t.equal(stopped, false);
+    t.end();
+});
+
+test('setInterpolation restarts runtime if it is running', t => {
+    const rt = new Runtime();
+    rt.start();
+    let started = false;
+    let stopped = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+    rt.addListener('RUNTIME_STOPPED', () => {
+        stopped = true;
+    });
+    rt.setInterpolation(true);
+    t.equal(started, true);
+    t.equal(stopped, true);
+    t.end();
+});
+
 test('Disposing the runtime emits an event', t => {
     let disposed = false;
     const rt = new Runtime();
