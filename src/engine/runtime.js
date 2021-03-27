@@ -400,7 +400,7 @@ class Runtime extends EventEmitter {
 
         this.runtimeOptions = {
             maxClones: Runtime.MAX_CLONES,
-            effectLimits: true,
+            miscLimits: true,
             fencing: true
         };
 

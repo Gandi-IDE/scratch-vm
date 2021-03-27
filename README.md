@@ -53,7 +53,7 @@ There is an event for compiler option changes on Runtime and VirtualMachine: COM
 Similar to setCompilerOption. This lets you control some behavior of the runtime.
 
  - maxClones (number; default 300) - controls the clone limit; Infinity to disable
- - effectLimits (boolean; default true) - controls whether effect limits should be applied (pitch, pan)
+ - miscLimits (boolean; default true) - controls various limits such as pitch, pan, etc.
  - fencing (number; default true) - controls whether sprite fencing should be enabled
 
 There is an event for runtime option changes on Runtime and VirtualMachine: RUNTIME_OPTIONS_CHANGED (called with current options)
