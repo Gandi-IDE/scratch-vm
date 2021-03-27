@@ -172,6 +172,14 @@ let stepThreadsProfilerId = -1;
  */
 let rendererDrawProfilerId = -1;
 
+// Use setTimeout to polyfill requestAnimationFrame in Node environments
+const _requestAnimationFrame = typeof requestAnimationFrame === 'function' ?
+    requestAnimationFrame :
+    (f => setTimeout(f, 1000 / 60));
+const _cancelAnimationFrame = typeof requestAnimationFrame === 'function' ?
+    cancelAnimationFrame :
+    clearTimeout;
+
 /**
  * Manages targets, scripts, and the sequencer.
  * @constructor
@@ -2164,7 +2172,7 @@ class Runtime extends EventEmitter {
     }
 
     _animationFrame () {
-        this._animationFrameId = requestAnimationFrame(this._animationFrame);
+        this._animationFrameId = _requestAnimationFrame(this._animationFrame);
 
         const frameStarted = this._lastStepTime;
         const now = Date.now();
@@ -2821,7 +2829,7 @@ class Runtime extends EventEmitter {
         if (this._steppingInterval) return;
 
         if (this.interpolationEnabled) {
-            this._animationFrameId = requestAnimationFrame(this._animationFrame);
+            this._animationFrameId = _requestAnimationFrame(this._animationFrame);
         }
 
         const interval = 1000 / this.framerate;
@@ -2845,7 +2853,7 @@ class Runtime extends EventEmitter {
 
         // tw: also cancel the animation frame loop
         if (this._animationFrameId !== null) {
-            cancelAnimationFrame(this._animationFrameId);
+            _cancelAnimationFrame(this._animationFrameId);
             this._animationFrameId = null;
         }
 
