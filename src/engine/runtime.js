@@ -655,6 +655,12 @@ class Runtime extends EventEmitter {
         return 'MIC_LISTENING';
     }
 
+    // powered by xigua start
+    static get EXTENSION_DATA_LOADING () {
+        return 'EXTENSION_DATA_LOADING';
+    }
+    // powered by xigua end
+
     /**
      * Event name for reporting that blocksInfo was updated.
      * @const {string}

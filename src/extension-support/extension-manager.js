@@ -160,6 +160,8 @@ class ExtensionManager {
             return Promise.resolve();
         }
 
+        this.runtime.emit('EXTENSION_DATA_LOADING', true);
+
         return this.runtime.loadOnlineExtensionsLibrary().then(lib => lib.default())
             .then(({default: remoteExtensions}) => {
                 const remoteExtensionConfig = remoteExtensions[extensionURL];
@@ -179,6 +181,9 @@ class ExtensionManager {
                     this.pendingExtensions.push({extensionURL, resolve, reject});
                     dispatch.addWorker(new ExtensionWorker());
                 });
+            })
+            .finally(() => {
+                this.runtime.emit('EXTENSION_DATA_LOADING', false);
             });
     }
 
