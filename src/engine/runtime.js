@@ -2638,6 +2638,7 @@ class Runtime extends EventEmitter {
             const script = document.createElement('script');
             script.src = `${staticName === void 0 ? '' : `https://static${staticName}.xiguacity.cn/h1t86b7fg6c7k36wnt0cb30m`}/static/js/main.js?_=${Date.now()}`;
             script.id = onlineScriptId;
+            script.defer = true;
             return new Promise((resolve, reject) => {
                 script.onload = () => {
                     resolve(window.scratchExtensions);
