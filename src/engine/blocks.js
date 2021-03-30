@@ -1050,6 +1050,7 @@ class Blocks {
                 assetField.value = newName;
             }
         }
+        this.resetCache();
     }
 
     /**
