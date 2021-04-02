@@ -2625,8 +2625,9 @@ class Runtime extends EventEmitter {
 
     loadOnlineExtensionsLibrary () {
         const onlineScriptId = '__scratchOnlineLibId__';
+        const maybeCreatedScript = document.getElementById(onlineScriptId);
 
-        if (!document.getElementById(onlineScriptId)) {
+        if (!maybeCreatedScript) {
             // eslint-disable-next-line no-undef
             const ENV = typeof DEPLOY_ENV === 'undefined' ? void 0 : DEPLOY_ENV;
             // https://static-dev.xiguacity.cn/h1t86b7fg6c7k36wnt0cb30m/static/js/
@@ -2639,14 +2640,33 @@ class Runtime extends EventEmitter {
             script.src = `${staticName === void 0 ? '' : `https://static${staticName}.xiguacity.cn/h1t86b7fg6c7k36wnt0cb30m`}/static/js/main.js?_=${Date.now()}`;
             script.id = onlineScriptId;
             script.defer = true;
+
+            script._successCallBacks = [];
+            script._failedCallBacks = [];
             return new Promise((resolve, reject) => {
                 script.onload = () => {
-                    resolve(window.scratchExtensions);
+                    const {scratchExtensions} = window;
+                    resolve(scratchExtensions);
+                    script._successCallBacks.forEach(successCallBack => {
+                        successCallBack(scratchExtensions);
+                    });
                 };
 
-                script.onerror = reject;
+                script.onerror = e => {
+                    reject(e);
+                    script._failedCallBacks.forEach(failedCallBack => {
+                        failedCallBack(e);
+                    });
+                };
 
                 document.body.append(script);
+            });
+        }
+
+        if (!window.scratchExtensions) {
+            return new Promise((resolve, reject) => {
+                maybeCreatedScript._successCallBacks.push(resolve);
+                maybeCreatedScript._failedCallBacks.push(reject);
             });
         }
 
