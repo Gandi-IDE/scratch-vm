@@ -23,7 +23,6 @@
 
 const stacked = [
     'control_clear_counter',
-    'control_get_counter',
     'control_incr_counter',
     'looks_changestretchby',
     'looks_say',
