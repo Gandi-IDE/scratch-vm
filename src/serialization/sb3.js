@@ -1093,6 +1093,8 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
     const yOffset = (runtime.stageHeight - 360) / 2;
     monitorData.x += xOffset;
     monitorData.y += yOffset;
+    monitorData.x = MathUtil.clamp(monitorData.x, 0, runtime.stageWidth);
+    monitorData.y = MathUtil.clamp(monitorData.y, 0, runtime.stageHeight);
 
     // If the serialized monitor has spriteName defined, look up the sprite
     // by name in the given list of targets and update the monitor's targetId
