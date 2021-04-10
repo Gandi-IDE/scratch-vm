@@ -1178,8 +1178,12 @@ class VirtualMachine extends EventEmitter {
         return this.runtime && this.runtime.renderer;
     }
 
-    // @deprecated
-    attachV2SVGAdapter () {
+    /**
+     * Set the svg adapter for the VM/runtime, which converts scratch 2 svgs to scratch 3 svgs
+     * @param {!SvgRenderer} svgAdapter The adapter to attach
+     */
+    attachV2SVGAdapter (svgAdapter) {
+        this.runtime.attachV2SVGAdapter(svgAdapter);
     }
 
     /**
