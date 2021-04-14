@@ -275,14 +275,17 @@ class Scratch3SoundBlocks {
             soundState.effects[effect] = value;
         }
 
-        if (util.target.runtime.runtimeOptions.miscLimits) {
+        const miscLimits = util.target.runtime.runtimeOptions.miscLimits;
+        if (miscLimits) {
             const {min, max} = Scratch3SoundBlocks.EFFECT_RANGE[effect];
             soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], min, max);
         }
 
         this._syncEffectsForTarget(util.target);
-        // Yield until the next tick.
-        return Promise.resolve();
+        if (miscLimits) {
+            // Yield until the next tick.
+            return Promise.resolve();
+        }
     }
 
     _syncEffectsForTarget (target) {
@@ -328,8 +331,10 @@ class Scratch3SoundBlocks {
         util.target.volume = volume;
         this._syncEffectsForTarget(util.target);
 
-        // Yield until the next tick.
-        return Promise.resolve();
+        if (util.target.runtime.runtimeOptions.miscLimits) {
+            // Yield until the next tick.
+            return Promise.resolve();
+        }
     }
 
     getVolume (args, util) {
