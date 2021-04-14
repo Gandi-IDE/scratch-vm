@@ -202,6 +202,9 @@ const serializeBlock = function (block) {
     obj.inputs = serializeInputs(block.inputs);
     obj.fields = serializeFields(block.fields);
     obj.shadow = block.shadow;
+    // powered by xigua start
+    obj.hidden = block.hidden;
+    // powered by xigua end
     if (block.topLevel) {
         obj.topLevel = true;
         obj.x = block.x ? Math.round(block.x) : 0;

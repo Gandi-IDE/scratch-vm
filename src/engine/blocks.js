@@ -502,6 +502,17 @@ class Blocks {
                 this.emitProjectChanged();
             }
             break;
+
+        case 'blockHidden':
+            if (this.runtime.getEditingTarget()) {
+                const currTarget = this.runtime.getEditingTarget();
+                const block = currTarget.blocks.getBlock(e.blockId);
+                if (e.hidden) {
+                    block.hidden = true;
+                } else {
+                    delete block.hidden;
+                }
+            }
         }
     }
 
@@ -1072,6 +1083,7 @@ class Blocks {
             `<${tagName}
                 id="${block.id}"
                 type="${block.opcode}"
+                ${block.hidden ? `hidden="${block.hidden}"` : ''}
                 ${block.topLevel ? `x="${block.x}" y="${block.y}"` : ''}
             >`;
         const commentId = block.comment;

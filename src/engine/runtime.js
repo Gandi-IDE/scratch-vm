@@ -830,6 +830,12 @@ class Runtime extends EventEmitter {
             categoryInfo.color3 = defaultExtensionColors[2];
         }
 
+        // powered by xigua start
+        if (extensionInfo.onlyVisibleOnShortcut) {
+            categoryInfo.onlyVisibleOnShortcut = true;
+        }
+        // powered by xigua end
+
         this._blockInfo.push(categoryInfo);
 
         this._fillExtensionCategory(categoryInfo, extensionInfo);
@@ -1376,7 +1382,8 @@ class Runtime extends EventEmitter {
      * @property {string} xml - the XML text for this category, starting with `<category>` and ending with `</category>`
      */
     getBlocksXML (target) {
-        return this._blockInfo.map(categoryInfo => {
+        // eslint-disable-next-line max-len
+        return this._blockInfo/* powered by xigua start */.filter(({onlyVisibleOnShortcut}) => window.__XIGUA_SHORTCUT || Boolean(!onlyVisibleOnShortcut))/* powered by xigua end */.map(categoryInfo => {
             const {name, color1, color2} = categoryInfo;
             // Filter out blocks that aren't supposed to be shown on this target, as determined by the block info's
             // `hideFromPalette` and `filter` properties.
@@ -1876,8 +1883,6 @@ class Runtime extends EventEmitter {
         this.canAddCloudVariable = newCloudDataManager.canAddCloudVariable;
         this.addCloudVariable = this._initializeAddCloudVariable(newCloudDataManager);
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
-
-        this._blockInfo = [];
     }
 
     // powered by xigua start

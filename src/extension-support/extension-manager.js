@@ -174,6 +174,9 @@ class ExtensionManager {
                     });
                 }
 
+                // eslint-disable-next-line no-console
+                console.warn(`扩展[extensionURL]未找到`);
+
                 return new Promise((resolve, reject) => {
                     // If we `require` this at the global level it breaks non-webpack targets, including tests
                     const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
@@ -465,10 +468,6 @@ class ExtensionManager {
             log.warn(`${extensionId} 已存在，将替换原有扩展`);
         }
         injectExtensions[extensionId] = () => extension;
-    }
-
-    clearLoadedExtensions () {
-        this._loadedExtensions.clear();
     }
     // powered by xigua end
 }
