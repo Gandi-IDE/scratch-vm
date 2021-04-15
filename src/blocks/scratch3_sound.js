@@ -286,6 +286,7 @@ class Scratch3SoundBlocks {
             // Yield until the next tick.
             return Promise.resolve();
         }
+        this.runtime.requestRedraw();
     }
 
     _syncEffectsForTarget (target) {
@@ -335,6 +336,7 @@ class Scratch3SoundBlocks {
             // Yield until the next tick.
             return Promise.resolve();
         }
+        this.runtime.requestRedraw();
     }
 
     getVolume (args, util) {
