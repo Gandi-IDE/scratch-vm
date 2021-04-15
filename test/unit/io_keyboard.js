@@ -142,3 +142,25 @@ test('tw: last key pressed', t => {
     t.strictEqual(k.getLastKeyPressed(), 'b');
     t.end();
 });
+
+test('multiple keys on the same physical key', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
+
+    // Press Shift+2 to produce @
+    k.postData({
+        key: '@',
+        isDown: true,
+        keyCode: 50
+    });
+    t.strictEqual(k.getKeyIsDown('@'), true);
+    // Release shift, then release 2
+    k.postData({
+        key: '2',
+        isDown: false,
+        keyCode: 50
+    });
+    t.strictEqual(k.getKeyIsDown('@'), false);
+
+    t.end();
+});

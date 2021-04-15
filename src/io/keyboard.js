@@ -52,6 +52,7 @@ class Keyboard {
         this.runtime = runtime;
         // tw: track last pressed key
         this.lastKeyPressed = '';
+        this._numeralKeyCodesToStringKey = new Map();
     }
 
     /**
@@ -168,6 +169,20 @@ class Keyboard {
         } else if (index > -1) {
             // If already present, remove from the list.
             this._keysPressed.splice(index, 1);
+        }
+        // https://github.com/LLK/scratch-vm/issues/2271
+        if (data.hasOwnProperty('keyCode')) {
+            const keyCode = data.keyCode;
+            if (data.isDown) {
+                this._numeralKeyCodesToStringKey.set(keyCode, scratchKey);
+            } else if (this._numeralKeyCodesToStringKey.has(keyCode)) {
+                const alias = this._numeralKeyCodesToStringKey.get(keyCode);
+                this._numeralKeyCodesToStringKey.delete(keyCode);
+                const indexOfAlias = this._keysPressed.indexOf(alias);
+                if (indexOfAlias !== -1) {
+                    this._keysPressed.splice(indexOfAlias, 1);
+                }
+            }
         }
     }
 
