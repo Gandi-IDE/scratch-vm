@@ -143,7 +143,7 @@ test('tw: last key pressed', t => {
     t.end();
 });
 
-test('multiple keys on the same physical key', t => {
+test('holding shift and key, releasing shift, then releasing key', t => {
     const rt = new Runtime();
     const k = new Keyboard(rt);
 
@@ -153,14 +153,62 @@ test('multiple keys on the same physical key', t => {
         isDown: true,
         keyCode: 50
     });
-    t.strictEqual(k.getKeyIsDown('@'), true);
+    t.equal(k.getKeyIsDown('2'), false);
+    t.equal(k.getKeyIsDown('@'), true);
+    t.equal(k.getKeyIsDown('any'), true);
     // Release shift, then release 2
+    k.postData({
+        key: 'Shift',
+        isDown: false,
+        keyCode: 16
+    });
     k.postData({
         key: '2',
         isDown: false,
         keyCode: 50
     });
-    t.strictEqual(k.getKeyIsDown('@'), false);
+    t.equal(k.getKeyIsDown('@'), false);
+    t.equal(k.getKeyIsDown('2'), false);
+    t.equal(k.getKeyIsDown('any'), false);
+
+    t.end();
+});
+
+test('holding shift and key, releasing shift, waiting, then releasing key', t => {
+    const rt = new Runtime();
+    const k = new Keyboard(rt);
+
+    k.postData({
+        key: '@',
+        isDown: true,
+        keyCode: 50
+    });
+    t.equal(k.getKeyIsDown('2'), false);
+    t.equal(k.getKeyIsDown('@'), true);
+    t.equal(k.getKeyIsDown('any'), true);
+    k.postData({
+        key: 'Shift',
+        isDown: false,
+        keyCode: 16
+    });
+    // But 2 is still being held, so it will send a press event
+    k.postData({
+        key: '2',
+        isDown: true,
+        keyCode: 50
+    });
+    t.equal(k.getKeyIsDown('@'), false);
+    t.equal(k.getKeyIsDown('2'), true);
+    t.equal(k.getKeyIsDown('any'), true);
+    // And now we release 2
+    k.postData({
+        key: '2',
+        isDown: false,
+        keyCode: 50
+    });
+    t.equal(k.getKeyIsDown('@'), false);
+    t.equal(k.getKeyIsDown('2'), false);
+    t.equal(k.getKeyIsDown('any'), false);
 
     t.end();
 });

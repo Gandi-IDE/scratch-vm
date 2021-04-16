@@ -170,19 +170,19 @@ class Keyboard {
             // If already present, remove from the list.
             this._keysPressed.splice(index, 1);
         }
-        // https://github.com/LLK/scratch-vm/issues/2271
+        // Fix for https://github.com/LLK/scratch-vm/issues/2271
         if (data.hasOwnProperty('keyCode')) {
             const keyCode = data.keyCode;
-            if (data.isDown) {
-                this._numeralKeyCodesToStringKey.set(keyCode, scratchKey);
-            } else if (this._numeralKeyCodesToStringKey.has(keyCode)) {
-                const alias = this._numeralKeyCodesToStringKey.get(keyCode);
-                this._numeralKeyCodesToStringKey.delete(keyCode);
-                const indexOfAlias = this._keysPressed.indexOf(alias);
-                if (indexOfAlias !== -1) {
-                    this._keysPressed.splice(indexOfAlias, 1);
+            if (this._numeralKeyCodesToStringKey.has(keyCode)) {
+                const lastKeyOfSameCode = this._numeralKeyCodesToStringKey.get(keyCode);
+                if (lastKeyOfSameCode !== scratchKey) {
+                    const indexToUnpress = this._keysPressed.indexOf(lastKeyOfSameCode);
+                    if (indexToUnpress !== -1) {
+                        this._keysPressed.splice(indexToUnpress, 1);
+                    }
                 }
             }
+            this._numeralKeyCodesToStringKey.set(keyCode, scratchKey);
         }
     }
 
