@@ -179,6 +179,7 @@ class VirtualMachine extends EventEmitter {
             const code = `${Math.random()}${Math.random()}`.replace(/\./g, '').substr(1, 16);
             localStorage.setItem(thirdPartApiKey, code);
         }
+        this._cancelDeserializeProject = null;
         // powered by xigua end
     }
 
@@ -228,6 +229,9 @@ class VirtualMachine extends EventEmitter {
 
     // powered by xigua start
     disposeAll () {
+        // 如果Promise还未被resolve，此时要卸载scratch，那我们就先reject
+        // eslint-disable-next-line no-unused-expressions
+        this._cancelDeserializeProject?.('reject deserialize project promise');
         this.runtime.disposeAll();
         this.editingTarget = null;
     }
@@ -538,9 +542,16 @@ class VirtualMachine extends EventEmitter {
             }
             return Promise.reject('Unable to verify Scratch Project version.');
         };
-        return deserializePromise()
-            .then(({targets, extensions}) =>
-                this.installTargets(targets, extensions, true));
+        // powered by xigua start
+        // 解决工程加载中途scratch被卸载后又立刻重新加载另一个工程，导致两个工程的角色被混合
+        return new Promise((resole, reject) => {
+            this._cancelDeserializeProject = reject;
+            deserializePromise()
+                .then(({targets, extensions}) =>
+                    this.installTargets(targets, extensions, true))
+                .then(resole, reject);
+        });
+        // powered by xigua end
     }
 
     /**
