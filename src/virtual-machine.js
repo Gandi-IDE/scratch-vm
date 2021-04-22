@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 let _TextEncoder;
 if (typeof TextEncoder === 'undefined') {
     _TextEncoder = require('text-encoding').TextEncoder;
@@ -230,10 +231,11 @@ class VirtualMachine extends EventEmitter {
     // powered by xigua start
     disposeAll () {
         // 如果Promise还未被resolve，此时要卸载scratch，那我们就先reject
-        // eslint-disable-next-line no-unused-expressions
         this._cancelDeserializeProject?.('reject deserialize project promise');
         this.runtime.disposeAll();
         this.editingTarget = null;
+        // sprite资源被后也清空舞台区
+        this.renderer?.draw();
     }
     // powered by xigua end
 
