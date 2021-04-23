@@ -1239,6 +1239,12 @@ class Runtime extends EventEmitter {
 
         const extensionMessageContext = this.makeMessageContextForTarget();
         const buttonText = maybeFormatMessage(buttonInfo.text, extensionMessageContext);
+        // powered by xigua start
+        if (typeof buttonInfo.onClick === 'function' && this.scratchBlocks && !buttonInfo.func) {
+            const randomKey = buttonInfo.func = Math.random();
+            this.scratchBlocks.mainWorkspace.registerButtonCallback(randomKey, buttonInfo.onClick);
+        }
+        // powered by xigua end
         return {
             info: buttonInfo,
             xml: `<button text="${buttonText}" callbackKey="${buttonInfo.func}"></button>`
@@ -1594,6 +1600,12 @@ class Runtime extends EventEmitter {
     attachStorage (storage) {
         this.storage = storage;
     }
+
+    // powered by xigua start
+    attachBlocks (scratchBlocks) {
+        this.scratchBlocks = scratchBlocks;
+    }
+    // powered by xigua end
 
     // -----------------------------------------------------------------------------
     // -----------------------------------------------------------------------------
