@@ -337,6 +337,9 @@ class VirtualMachine extends EventEmitter {
         }
 
         const validationPromise = new Promise((resolve, reject) => {
+            // powered by xigua start
+            this._cancelDeserializeProject = reject;
+            // powered by xigua end
             const validate = require('scratch-parser');
             // The second argument of false below indicates to the validator that the
             // input should be parsed/validated as an entire project (and not a single sprite)
