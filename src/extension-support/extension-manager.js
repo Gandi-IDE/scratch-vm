@@ -15,7 +15,10 @@ const builtinExtensions = {
     // These are the non-core built-in extensions.
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
-    music: () => require('../extensions/scratch3_music'),
+    // powered by xigua start
+    // music包太大了，放到异步扩展里去
+    // music: () => require('../extensions/scratch3_music'),
+    // powered by xigua end
     microbit: () => require('../extensions/scratch3_microbit'),
     text2speech: () => require('../extensions/scratch3_text2speech'),
     translate: () => require('../extensions/scratch3_translate'),

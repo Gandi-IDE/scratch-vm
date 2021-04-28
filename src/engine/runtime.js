@@ -2640,6 +2640,10 @@ class Runtime extends EventEmitter {
         };
     }
 
+    getOriginalFormatMessage () {
+        return require('format-message');
+    }
+
     loadOnlineExtensionsLibrary () {
         const onlineScriptId = '__scratchOnlineLibId__';
         const maybeCreatedScript = document.getElementById(onlineScriptId);
