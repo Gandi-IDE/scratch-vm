@@ -258,6 +258,11 @@ class Thread {
         return 4; // used by compiler
     }
 
+    static getId (target, topBlock) {
+        // & should never appear in any generated IDs
+        return `${target.id}&${topBlock}`;
+    }
+
     /**
      * Push stack and update stack frames appropriately.
      * @param {string} blockId Block ID to push to stack.
