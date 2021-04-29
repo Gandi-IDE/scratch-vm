@@ -180,7 +180,7 @@ class VirtualMachine extends EventEmitter {
             const code = `${Math.random()}${Math.random()}`.replace(/\./g, '').substr(1, 16);
             localStorage.setItem(thirdPartApiKey, code);
         }
-        this._cancelDeserializeProject = null;
+        this._projectProcessingUniqueId = 0;
         // powered by xigua end
     }
 
@@ -230,8 +230,6 @@ class VirtualMachine extends EventEmitter {
 
     // powered by xigua start
     disposeAll () {
-        // 如果Promise还未被resolve，此时要卸载scratch，那我们就先reject
-        this._cancelDeserializeProject?.('reject deserialize project promise');
         this.runtime.disposeAll();
         this.editingTarget = null;
         // sprite资源被后也清空舞台区
@@ -325,6 +323,7 @@ class VirtualMachine extends EventEmitter {
      * @return {!Promise} Promise that resolves after targets are installed.
      */
     loadProject (input) {
+        const _projectProcessingUniqueId = this._projectProcessingUniqueId = Math.random();
         if (typeof input === 'object' && !(input instanceof ArrayBuffer) &&
           !ArrayBuffer.isView(input)) {
             // If the input is an object and not any ArrayBuffer
@@ -337,9 +336,6 @@ class VirtualMachine extends EventEmitter {
         }
 
         const validationPromise = new Promise((resolve, reject) => {
-            // powered by xigua start
-            this._cancelDeserializeProject = reject;
-            // powered by xigua end
             const validate = require('scratch-parser');
             // The second argument of false below indicates to the validator that the
             // input should be parsed/validated as an entire project (and not a single sprite)
@@ -397,7 +393,7 @@ class VirtualMachine extends EventEmitter {
 
                     zip = null;
                 }
-                return this.deserializeProject(json, zip);
+                return this.deserializeProject(json, zip, _projectProcessingUniqueId);
             })
             .then(() => this.runtime.emitProjectLoaded())
             .catch(error => {
@@ -528,9 +524,10 @@ class VirtualMachine extends EventEmitter {
      * Load a project from a Scratch JSON representation.
      * @param {string} projectJSON JSON string representing a project.
      * @param {?JSZip} zip Optional zipped project containing assets to be loaded.
+     * @param {number} _projectProcessingUniqueId 加载project的Id
      * @returns {Promise} Promise that resolves after the project has loaded
      */
-    deserializeProject (projectJSON, zip) {
+    deserializeProject (projectJSON, zip, _projectProcessingUniqueId) {
         // Clear the current runtime
         this.clear();
 
@@ -547,16 +544,9 @@ class VirtualMachine extends EventEmitter {
             }
             return Promise.reject('Unable to verify Scratch Project version.');
         };
-        // powered by xigua start
-        // 解决工程加载中途scratch被卸载后又立刻重新加载另一个工程，导致两个工程的角色被混合
-        return new Promise((resole, reject) => {
-            this._cancelDeserializeProject = reject;
-            deserializePromise()
-                .then(({targets, extensions}) =>
-                    this.installTargets(targets, extensions, true))
-                .then(resole, reject);
-        });
-        // powered by xigua end
+        return deserializePromise()
+            .then(({targets, extensions}) =>
+                this.installTargets(targets, extensions, true, _projectProcessingUniqueId));
     }
 
     /**
@@ -564,9 +554,10 @@ class VirtualMachine extends EventEmitter {
      * @param {Array.<Target>} targets - the targets to be installed
      * @param {ImportedExtensionsInfo} extensions - metadata about extensions used by these targets
      * @param {boolean} wholeProject - set to true if installing a whole project, as opposed to a single sprite.
+     * @param {number} _projectProcessingUniqueId 加载project的Id
      * @returns {Promise} resolved once targets have been installed
      */
-    installTargets (targets, extensions, wholeProject) {
+    installTargets (targets, extensions, wholeProject, _projectProcessingUniqueId) {
         const extensionPromises = [];
 
         extensions.extensionIDs.forEach(extensionID => {
@@ -577,6 +568,10 @@ class VirtualMachine extends EventEmitter {
         });
 
         targets = targets.filter(target => !!target);
+
+        if (_projectProcessingUniqueId && this._projectProcessingUniqueId !== _projectProcessingUniqueId) {
+            return Promise.resolve();
+        }
 
         return Promise.all(extensionPromises).then(() => {
             targets.forEach(target => {
