@@ -503,7 +503,7 @@ const serializeMonitors = function (monitors, runtime) {
             opcode: monitorData.opcode,
             params: monitorData.params,
             spriteName: monitorData.spriteName,
-            value: monitorData.value,
+            value: Array.isArray(monitorData.value) ? [] : 0,
             width: monitorData.width,
             height: monitorData.height,
             x: monitorData.x - xOffset,
