@@ -541,9 +541,6 @@ class VirtualMachine extends EventEmitter {
      * @return {string} Serialized state of the runtime.
      */
     toJSON (serializationOptions) {
-        if (this.runtime.targets.length === 0) {
-            throw new Error('Will not serialize empty VM');
-        }
         const sb3 = require('./serialization/sb3');
         return StringUtil.stringify(sb3.serialize(this.runtime, null, serializationOptions));
     }
