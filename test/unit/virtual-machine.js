@@ -1047,7 +1047,7 @@ test('toJSON encodes Infinity/NaN as 0, not null', t => {
 
     runtime.targets = [stage];
 
-    const json = JSON.parse(vm.toJSON());
+    const json = JSON.parse(vm.toJSON({allowOptimization: false}));
     t.equal(json.targets[0].volume, 0);
     t.equal(json.targets[0].tempo, 0);
     t.equal(json.targets[0].variables.id1[1], 0);

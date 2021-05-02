@@ -526,7 +526,7 @@ const serializeMonitors = function (monitors, runtime) {
  * @param {string=} targetId Optional target id if serializing only a single target
  * @return {object} Serialized runtime instance.
  */
-const serialize = function (runtime, targetId) {
+const serialize = function (runtime, targetId, {allowOptimization = true} = {}) {
     // Fetch targets
     const obj = Object.create(null);
     // Create extension set to hold extension ids found while serializing targets
@@ -573,8 +573,9 @@ const serialize = function (runtime, targetId) {
     // Assemble payload and return
     obj.meta = meta;
 
-    // Optimize project
-    optimize(obj);
+    if (allowOptimization) {
+        optimize(obj);
+    }
 
     return obj;
 };
