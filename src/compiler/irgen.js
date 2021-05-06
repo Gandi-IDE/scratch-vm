@@ -669,9 +669,15 @@ class ScriptTreeGenerator {
     descendStackedBlock (block) {
         switch (block.opcode) {
         case 'control_all_at_once':
+            // In Scratch 3, this block behaves like "if 1 = 1"
             return {
-                kind: 'control.allAtOnce',
-                do: this.descendSubstack(block, 'SUBSTACK')
+                kind: 'control.if',
+                condition: {
+                    kind: 'constant',
+                    value: true
+                },
+                whenTrue: this.descendSubstack(block, 'SUBSTACK'),
+                whenFalse: []
             };
         case 'control_create_clone_of':
             return {

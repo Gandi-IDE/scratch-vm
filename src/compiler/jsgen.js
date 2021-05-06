@@ -665,10 +665,6 @@ class JSGenerator {
             break;
         }
 
-        case 'control.allAtOnce':
-            // Scratch 3 behavior is to treat this as essentially `if (true) {`
-            this.descendStack(node.do, new Frame(false));
-            break;
         case 'control.createClone':
             this.source += `runtime.ext_scratch3_control._createClone(${this.descendInput(node.target).asString()}, target);\n`;
             break;
