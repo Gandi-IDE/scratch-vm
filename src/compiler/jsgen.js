@@ -656,7 +656,7 @@ class JSGenerator {
         switch (node.kind) {
         case 'compat': {
             // If the last command in a loop returns a promise, immediately continue to the next iteration.
-            // If you don't do this, you would the loop effectively yields twice per iteration and will run at half-speed.
+            // If you don't do this, the loop effectively yields twice per iteration and will run at half-speed.
             const isLastInLoop = this.isLastBlockInLoop();
             this.source += `${this.generateCompatibilityLayerCall(node, isLastInLoop)};\n`;
             if (isLastInLoop) {
