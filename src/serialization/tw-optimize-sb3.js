@@ -17,9 +17,9 @@
 const SOUP = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#%()*+,-./:;=?@[]^_`{|}~';
 const generateId = i => {
     // Certain IDs already have other meanings, so we will skip these
+    // There are some other ones that have meaning (see Object.keys(vm.runtime.monitorBlocks._blocks)),
+    // but these would take at least ten million items to appear, so we don't bother listing them here.
     if (i > 1309) i++; // of
-    // There are some other ones that have meaning (Object.keys(vm.runtime.monitorBlocks._blocks)),
-    // but these would take an unreasonably large amount of items to hit, so we don't bother listing them here.
     let str = '';
     while (i >= 0) {
         str = SOUP[i % SOUP.length] + str;
@@ -39,7 +39,6 @@ class Pool {
     }
     generateNewIds () {
         const entries = Array.from(this.references.entries());
-        // Sort descending by count.
         // The most used original IDs should get the shortest new IDs.
         entries.sort((a, b) => b[1] - a[1]);
         for (let i = 0; i < entries.length; i++) {
@@ -55,70 +54,64 @@ class Pool {
 }
 
 const optimize = projectData => {
-    // Scan the project and find all IDs and how often they're used
-    const targetPools = new Map();
-    const variablePool = new Pool();
-    // monitors has to be converted to an array
+    // For now, we use a single pool of IDs for everything.
+    // This is not ideal, but we we want to be safe and avoid corrupting projects again.
+    const pool = new Pool();
+
+    // monitors has to be converted to an array from an OrderedMap
     projectData.monitors = Array.from(projectData.monitors);
     for (const monitor of projectData.monitors) {
         const monitorOpcode = monitor.opcode;
         if (monitorOpcode === 'data_variable' || monitorOpcode === 'data_listcontents') {
             const monitorId = monitor.id;
-            variablePool.addReference(monitorId);
+            pool.addReference(monitorId);
         }
     }
     for (const target of projectData.targets) {
-        const blockPool = new Pool();
-        const commentPool = new Pool();
-        targetPools.set(target, {
-            blockPool,
-            commentPool
-        });
-
         const handleCompressedNative = native => {
             const type = native[0];
             if (type === /* VAR_PRIMITIVE */ 12 || type === /* LIST_PRIMITIVE */ 13) {
                 const variableId = native[2];
-                variablePool.addReference(variableId);
+                pool.addReference(variableId);
             } else if (type === /* BROADCAST_PRIMITIVE */ 11) {
                 const broadcastId = native[2];
-                variablePool.addReference(broadcastId);
+                pool.addReference(broadcastId);
             }
         };
 
         for (const variableId of Object.keys(target.variables)) {
-            variablePool.addReference(variableId);
+            pool.addReference(variableId);
         }
         for (const variableId of Object.keys(target.lists)) {
-            variablePool.addReference(variableId);
+            pool.addReference(variableId);
         }
         for (const broadcastId of Object.keys(target.broadcasts)) {
-            variablePool.addReference(broadcastId);
+            pool.addReference(broadcastId);
         }
         for (const blockId of Object.keys(target.blocks)) {
             const block = target.blocks[blockId];
-            blockPool.addReference(blockId);
+            pool.addReference(blockId);
             if (Array.isArray(block)) {
                 handleCompressedNative(block);
                 continue;
             }
             if (block.parent) {
-                blockPool.addReference(block.parent);
+                pool.addReference(block.parent);
             }
             if (block.next) {
-                blockPool.addReference(block.next);
+                pool.addReference(block.next);
             }
             if (block.comment) {
-                commentPool.addReference(block.comment);
+                pool.addReference(block.comment);
             }
             if (block.fields.VARIABLE) {
-                variablePool.addReference(block.fields.VARIABLE[1]);
+                pool.addReference(block.fields.VARIABLE[1]);
             }
             if (block.fields.LIST) {
-                variablePool.addReference(block.fields.LIST[1]);
+                pool.addReference(block.fields.LIST[1]);
             }
             if (block.fields.BROADCAST_OPTION) {
-                variablePool.addReference(block.fields.BROADCAST_OPTION[1]);
+                pool.addReference(block.fields.BROADCAST_OPTION[1]);
             }
             for (const inputName of Object.keys(block.inputs)) {
                 const input = block.inputs[inputName];
@@ -127,31 +120,31 @@ const optimize = projectData => {
                     handleCompressedNative(inputValue);
                 } else if (typeof inputValue === 'string') {
                     const childBlockId = input[1];
-                    blockPool.addReference(childBlockId);
+                    pool.addReference(childBlockId);
                 }
             }
         }
         for (const commentId of Object.keys(target.comments)) {
             const comment = target.comments[commentId];
-            commentPool.addReference(commentId);
+            pool.addReference(commentId);
             if (comment.blockId) {
-                blockPool.addReference(comment.blockId);
+                pool.addReference(comment.blockId);
             }
         }
     }
 
     // Used the data from the first scan to replace all the IDs with shorter versions
-    variablePool.generateNewIds();
+    pool.generateNewIds();
     for (const monitor of projectData.monitors) {
         const monitorOpcode = monitor.opcode;
         if (monitorOpcode === 'data_variable' || monitorOpcode === 'data_listcontents') {
             const monitorId = monitor.id;
-            monitor.id = variablePool.getNewId(monitorId);
+            monitor.id = pool.getNewId(monitorId);
         }
     }
-    for (const [target, {blockPool, commentPool}] of targetPools.entries()) {
-        blockPool.generateNewIds();
-        commentPool.generateNewIds();
+    for (const target of projectData.targets) {
+        pool.generateNewIds();
+        pool.generateNewIds();
 
         const newVariables = {};
         const newLists = {};
@@ -163,49 +156,49 @@ const optimize = projectData => {
             const type = native[0];
             if (type === /* VAR_PRIMITIVE */ 12 || type === /* LIST_PRIMITIVE */ 13) {
                 const variableId = native[2];
-                native[2] = variablePool.getNewId(variableId);
+                native[2] = pool.getNewId(variableId);
             } else if (type === /* BROADCAST_PRIMITIVE */ 11) {
                 const broadcastId = native[2];
-                native[2] = variablePool.getNewId(broadcastId);
+                native[2] = pool.getNewId(broadcastId);
             }
         };
 
         for (const variableId of Object.keys(target.variables)) {
             const variable = target.variables[variableId];
-            newVariables[variablePool.getNewId(variableId)] = variable;
+            newVariables[pool.getNewId(variableId)] = variable;
         }
         for (const variableId of Object.keys(target.lists)) {
             const variable = target.lists[variableId];
-            newLists[variablePool.getNewId(variableId)] = variable;
+            newLists[pool.getNewId(variableId)] = variable;
         }
         for (const broadcastId of Object.keys(target.broadcasts)) {
             const broadcast = target.broadcasts[broadcastId];
-            newBroadcasts[variablePool.getNewId(broadcastId)] = broadcast;
+            newBroadcasts[pool.getNewId(broadcastId)] = broadcast;
         }
         for (const blockId of Object.keys(target.blocks)) {
             const block = target.blocks[blockId];
-            newBlocks[blockPool.getNewId(blockId)] = block;
+            newBlocks[pool.getNewId(blockId)] = block;
             if (Array.isArray(block)) {
                 handleCompressedNative(block);
                 continue;
             }
             if (block.parent) {
-                block.parent = blockPool.getNewId(block.parent);
+                block.parent = pool.getNewId(block.parent);
             }
             if (block.next) {
-                block.next = blockPool.getNewId(block.next);
+                block.next = pool.getNewId(block.next);
             }
             if (block.comment) {
-                block.comment = commentPool.getNewId(block.comment);
+                block.comment = pool.getNewId(block.comment);
             }
             if (block.fields.VARIABLE) {
-                block.fields.VARIABLE[1] = variablePool.getNewId(block.fields.VARIABLE[1]);
+                block.fields.VARIABLE[1] = pool.getNewId(block.fields.VARIABLE[1]);
             }
             if (block.fields.LIST) {
-                block.fields.LIST[1] = variablePool.getNewId(block.fields.LIST[1]);
+                block.fields.LIST[1] = pool.getNewId(block.fields.LIST[1]);
             }
             if (block.fields.BROADCAST_OPTION) {
-                block.fields.BROADCAST_OPTION[1] = variablePool.getNewId(block.fields.BROADCAST_OPTION[1]);
+                block.fields.BROADCAST_OPTION[1] = pool.getNewId(block.fields.BROADCAST_OPTION[1]);
             }
             for (const inputName of Object.keys(block.inputs)) {
                 const input = block.inputs[inputName];
@@ -214,31 +207,15 @@ const optimize = projectData => {
                     handleCompressedNative(inputValue);
                 } else if (typeof inputValue === 'string') {
                     const childBlockId = input[1];
-                    input[1] = blockPool.getNewId(childBlockId);
+                    input[1] = pool.getNewId(childBlockId);
                 }
-            }
-            if (block.opcode === 'procedures_call' || block.opcode === 'procedures_prototype') {
-                const argumentIds = JSON.parse(block.mutation.argumentids);
-                const newArgumentIds = [];
-                const newInputs = {};
-                for (let i = 0; i < argumentIds.length; i++) {
-                    const newArgumentId = generateId(i);
-                    const originalArgumentId = argumentIds[i];
-                    const argumentInput = block.inputs[originalArgumentId];
-                    if (argumentInput) {
-                        newInputs[newArgumentId] = argumentInput;
-                    }
-                    newArgumentIds.push(newArgumentId);
-                }
-                block.inputs = newInputs;
-                block.mutation.argumentids = JSON.stringify(newArgumentIds);
             }
         }
         for (const commentId of Object.keys(target.comments)) {
             const comment = target.comments[commentId];
-            newComments[commentPool.getNewId(commentId)] = comment;
+            newComments[pool.getNewId(commentId)] = comment;
             if (comment.blockId) {
-                comment.blockId = blockPool.getNewId(comment.blockId);
+                comment.blockId = pool.getNewId(comment.blockId);
             }
         }
 
