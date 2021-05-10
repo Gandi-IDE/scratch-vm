@@ -753,6 +753,7 @@ class JSGenerator {
             break;
         case 'event.broadcastAndWait':
             this.source += `yield* waitThreads(startHats("event_whenbroadcastreceived", { BROADCAST_OPTION: ${this.descendInput(node.broadcast).asString()} }));\n`;
+            this.yielded();
             break;
 
         case 'list.add': {
