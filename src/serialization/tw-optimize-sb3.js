@@ -143,9 +143,6 @@ const optimize = projectData => {
         }
     }
     for (const target of projectData.targets) {
-        pool.generateNewIds();
-        pool.generateNewIds();
-
         const newVariables = {};
         const newLists = {};
         const newBroadcasts = {};
