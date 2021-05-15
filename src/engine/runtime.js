@@ -2400,7 +2400,7 @@ class Runtime extends EventEmitter {
         const jsonText = lineWithMagic.substr(0, lineWithMagic.length - COMMENT_CONFIG_MAGIC.length);
         let parsed;
         try {
-            parsed = JSON.parse(jsonText);
+            parsed = ExtendedJSON.parse(jsonText);
             if (!parsed || typeof parsed !== 'object') {
                 throw new Error('Invalid object');
             }
@@ -2436,7 +2436,7 @@ class Runtime extends EventEmitter {
     storeProjectOptions () {
         const options = this.generateProjectOptions();
         // TODO: translate
-        const text = `Configuration for https://turbowarp.org/\nDo not edit by hand\n${JSON.stringify(options)}${COMMENT_CONFIG_MAGIC}`;
+        const text = `Configuration for https://turbowarp.org/\nDo not edit by hand\n${ExtendedJSON.stringify(options)}${COMMENT_CONFIG_MAGIC}`;
         const existingComment = this.findProjectOptionsComment();
         if (existingComment) {
             existingComment.text = text;

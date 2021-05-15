@@ -30,6 +30,15 @@ test('Parses turbo', t => {
     });
 });
 
+test('Parses infinite clones', t => {
+    const project = readFileToBuffer(path.resolve(__dirname, '../fixtures/tw-self-configuration/infinite-clones.sb3'));
+    const vm = makeVM();
+    vm.loadProject(project).then(() => {
+        t.equal(vm.runtime.runtimeOptions.maxClones, Infinity);
+        t.end();
+    });
+});
+
 for (const file of ['empty-comment.sb3', 'no-comment.sb3']) {
     test(`serializes and deserializes settings (${file})`, t => {
         const project = readFileToBuffer(path.resolve(__dirname, `../fixtures/tw-self-configuration/${file}`));
@@ -39,7 +48,8 @@ for (const file of ['empty-comment.sb3', 'no-comment.sb3']) {
             vm.setTurboMode(true);
             vm.setInterpolation(true);
             vm.setRuntimeOptions({
-                warpTimer: true
+                warpTimer: true,
+                maxClones: Infinity
             });
             vm.storeProjectOptions();
 
