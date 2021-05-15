@@ -19,6 +19,7 @@ const formatMessage = require('format-message');
 
 const Variable = require('./engine/variable');
 const newBlockIds = require('./util/new-block-ids');
+const ExtendedJSON = require('./tw-extended-json');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
@@ -380,7 +381,7 @@ class VirtualMachine extends EventEmitter {
                         return reject(error);
                     }
                     if (typeof input !== 'string') input = new TextDecoder().decode(input);
-                    input = require('./tw-extended-json')(input);
+                    input = ExtendedJSON.parse(input);
                     input = JSON.stringify(input);
                     return validate(input, false, (error2, res2) => {
                         if (error2) return reject(error);
