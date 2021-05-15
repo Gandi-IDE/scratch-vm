@@ -1,6 +1,6 @@
 /* eslint-disable no-constant-condition */
 
-// ExtendedJSON is a superset of JSON that supports [-]Infinity and NaN
+// ExtendedJSON is a superset of JSON that supports certain non-standard things such as Infinity
 
 class JSONParser {
     constructor (source) {
@@ -46,6 +46,9 @@ class JSONParser {
         this.next();
     }
     peek (length = 1, offset = 1) {
+        if (this.index + offset + length >= this.source.length) {
+            return false;
+        }
         if (length === 1) {
             return this.charAt(this.index + offset);
         }
@@ -108,12 +111,6 @@ class JSONParser {
             }
             return Infinity;
         }
-        if (this.peek(9, 0) === '-Infinity') {
-            for (let i = 0; i < 9; i++) {
-                this.next();
-            }
-            return -Infinity;
-        }
         if (this.peek(3, 0) === 'NaN') {
             for (let i = 0; i < 3; i++) {
                 this.next();
@@ -123,6 +120,13 @@ class JSONParser {
         this.error(`Unknown word (starts with ${this.char()})`);
     }
     parseNumber () {
+        // Non-standard extension
+        if (this.peek(9, 0) === '-Infinity') {
+            for (let i = 0; i < 9; i++) {
+                this.next();
+            }
+            return -Infinity;
+        }
         let number = '';
         while (true) {
             number += this.char();
@@ -264,7 +268,7 @@ const stringify = object => {
         if (Number.isNaN(object)) {
             return '0';
         }
-        // Difference from regular JSON: NaN and Infinity will be sanitized as-is
+        // Difference from regular JSON: [-]Infinity will be sanitized as-is
         return object.toString();
     }
     if (typeof object === 'boolean') {
