@@ -3,12 +3,12 @@ const ExtendedJSON = require('../../src/tw-extended-json');
 
 const test = tap.test;
 
-test('parse complex', t => {
-    const str = JSON.stringify({
-        a: 3,
-        b: [
+const objects = [
+    {
+        'a': 3,
+        'b': [
             {
-                c: [
+                '': [
                     {
                         e: false,
                         d: true
@@ -21,9 +21,33 @@ test('parse complex', t => {
                 ]
             }
         ],
-        c: '1\n2\b3'
-    });
-    t.same(ExtendedJSON.parse(str), JSON.parse(str));
+        'e#$%(&$\b# 4': 'Hello !',
+        'c': '1\n2\b3'
+    },
+    {
+        framerate: 40
+    },
+    true,
+    false,
+    0,
+    1,
+    2,
+    3,
+    'e'
+];
+
+const stringObjects = [
+    '{"test":4.3e-3}'
+];
+
+test('parse objects', t => {
+    for (const object of objects) {
+        const str = JSON.stringify(object);
+        t.same(ExtendedJSON.parse(str), JSON.parse(str));
+    }
+    for (const str of stringObjects) {
+        t.same(ExtendedJSON.parse(str), JSON.parse(str));
+    }
     t.end();
 });
 
@@ -37,27 +61,10 @@ test('parse extended', t => {
     t.end();
 });
 
-test('stringify complex', t => {
-    const object = {
-        a: 3,
-        b: [
-            {
-                c: [
-                    {
-                        e: false,
-                        d: true
-                    },
-                    [
-                        [
-                            '3'
-                        ]
-                    ]
-                ]
-            }
-        ],
-        c: '1\n2\b3'
-    };
-    t.same(ExtendedJSON.stringify(object), JSON.stringify(object));
+test('stringify objects', t => {
+    for (const object of objects) {
+        t.same(ExtendedJSON.stringify(object), JSON.stringify(object));
+    }
     t.end();
 });
 

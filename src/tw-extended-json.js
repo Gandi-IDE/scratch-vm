@@ -46,8 +46,8 @@ class JSONParser {
         this.next();
     }
     peek (length = 1, offset = 1) {
-        if (this.index + offset + length >= this.source.length) {
-            return false;
+        if (this.index + offset + length > this.source.length) {
+            return '';
         }
         if (length === 1) {
             return this.charAt(this.index + offset);
@@ -130,7 +130,7 @@ class JSONParser {
         let number = '';
         while (true) {
             number += this.char();
-            if (/[\d\.e+-]/i.test(this.peek())) {
+            if (/[\d.e+-]/i.test(this.peek())) {
                 this.next();
             } else {
                 break;
@@ -183,11 +183,11 @@ class JSONParser {
                     let hexString = '';
                     for (let i = 0; i < 4; i++) {
                         this.next();
-                        const char = this.char();
-                        if (!/[0-9a-f]/i.test(char)) {
-                            this.error(`Invalid hex code: ${char}`);
+                        const nextChar = this.char();
+                        if (!/[0-9a-f]/i.test(nextChar)) {
+                            this.error(`Invalid hex code: ${nextChar}`);
                         }
-                        hexString += char;
+                        hexString += nextChar;
                     }
                     const hexNumber = Number.parseInt(hexString, 16);
                     const letter = String.fromCharCode(hexNumber);
