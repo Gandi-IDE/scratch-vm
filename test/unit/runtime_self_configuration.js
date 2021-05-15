@@ -48,7 +48,6 @@ for (const file of ['empty-comment.sb3', 'no-comment.sb3']) {
             vm.setTurboMode(true);
             vm.setInterpolation(true);
             vm.setRuntimeOptions({
-                warpTimer: true,
                 maxClones: Infinity
             });
             vm.storeProjectOptions();

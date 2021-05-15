@@ -2422,14 +2422,22 @@ class Runtime extends EventEmitter {
         if (parsed.runtimeOptions) {
             this.setRuntimeOptions(parsed.runtimeOptions);
         }
+        if (parsed.hq) {
+            this.renderer.setUseHighQualityRender(true);
+        }
     }
 
     generateProjectOptions () {
         const options = {};
         options.framerate = this.framerate;
-        options.runtimeOptions = this.runtimeOptions;
+        options.runtimeOptions = {
+            // Omitting warpTimer for now
+            maxClones: this.runtimeOptions.maxClones,
+            miscLimits: this.runtimeOptions.miscLimits
+        };
         options.interpolation = this.interpolationEnabled;
         options.turbo = this.turboMode;
+        options.hq = this.renderer ? this.renderer.useHighQualityRender : false;
         return options;
     }
 
