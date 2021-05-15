@@ -46,6 +46,8 @@ const interpolate = require('./tw-interpolate');
 
 const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];
 
+const COMMENT_CONFIG_MAGIC = ' // _twconfig_';
+
 /**
  * Information used for converting Scratch argument types into scratch-blocks data.
  * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}
@@ -2372,6 +2374,77 @@ class Runtime extends EventEmitter {
                 target.blocks.resetCache();
             }
         }
+    }
+
+    findProjectOptionsComment () {
+        const target = this.getTargetForStage();
+        const comments = target.comments;
+        for (const comment of Object.values(comments)) {
+            if (comment.text.includes(COMMENT_CONFIG_MAGIC)) {
+                return comment;
+            }
+        }
+        return null;
+    }
+
+    parseProjectOptions () {
+        const comment = this.findProjectOptionsComment();
+        if (!comment) return;
+        const lineWithMagic = comment.text.split('\n').find(i => i.endsWith(COMMENT_CONFIG_MAGIC));
+        if (!lineWithMagic) {
+            log.warn('Config comment does not contain valid line');
+            return;
+        }
+
+        const jsonText = lineWithMagic.substr(0, lineWithMagic.length - COMMENT_CONFIG_MAGIC.length);
+        let parsed;
+        try {
+            parsed = JSON.parse(jsonText);
+            if (!parsed || typeof parsed !== 'object') {
+                throw new Error('Invalid object');
+            }
+        } catch (e) {
+            log.warn('Config comment has invalid JSON', e);
+            return;
+        }
+
+        if (typeof parsed.framerate === 'number') {
+            this.setFramerate(parsed.framerate);
+        }
+        if (parsed.turbo) {
+            this.turboMode = true;
+            this.emit(Runtime.TURBO_MODE_ON);
+        }
+        if (parsed.interpolation) {
+            this.setInterpolation(true);
+        }
+        if (parsed.runtimeOptions) {
+            this.setRuntimeOptions(parsed.runtimeOptions);
+        }
+    }
+
+    generateProjectOptions () {
+        const options = {};
+        options.framerate = this.framerate;
+        options.runtimeOptions = this.runtimeOptions;
+        options.interpolation = this.interpolationEnabled;
+        options.turbo = this.turboMode;
+        return options;
+    }
+
+    storeProjectOptions () {
+        const options = this.generateProjectOptions();
+        // TODO: translate
+        const text = `Configuration for https://turbowarp.org/\nDo not edit by hand\n${JSON.stringify(options)}${COMMENT_CONFIG_MAGIC}`;
+        const existingComment = this.findProjectOptionsComment();
+        if (existingComment) {
+            existingComment.text = text;
+        } else {
+            const target = this.getTargetForStage();
+            // TODO: smarter position logic
+            target.createComment(uid(), null, text, 50, 50, 350, 150, false);
+        }
+        this.emitProjectChanged();
     }
 
     /**

@@ -252,6 +252,13 @@ class VirtualMachine extends EventEmitter {
         this.runtime.setCompilerOptions(compilerOptions);
     }
 
+    storeProjectOptions () {
+        this.runtime.storeProjectOptions();
+        if (this.editingTarget.isStage) {
+            this.emitWorkspaceUpdate();
+        }
+    }
+
     enableDebug () {
         this.runtime.enableDebug();
     }
@@ -627,6 +634,10 @@ class VirtualMachine extends EventEmitter {
 
             if (!wholeProject) {
                 this.editingTarget.fixUpVariableReferences();
+            }
+
+            if (wholeProject) {
+                this.runtime.parseProjectOptions();
             }
 
             // Update the VM user's knowledge of targets and blocks on the workspace.
