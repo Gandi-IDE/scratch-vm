@@ -236,7 +236,7 @@ class JSONParser {
             this.next();
             return {};
         }
-        const result = Object.create(null);
+        const result = {};
         while (true) {
             this.skipWhitespace();
             const key = this.parseString();
