@@ -1,5 +1,5 @@
 {
-  "name": "scratch-vm",
+  "name": "@xigua/scratch-vm",
   "version": "0.2.0",
   "description": "Virtual Machine for Scratch 3.0",
   "author": "Massachusetts Institute of Technology",
