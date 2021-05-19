@@ -293,6 +293,7 @@ class Scratch3TranslateBlocks {
         const tempThis = this;
         // powered by xigua start
         const translatePromise = fetchWithTimeout(xiguaServerURL, {
+            method: 'post',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json;charset=UTF-8',
