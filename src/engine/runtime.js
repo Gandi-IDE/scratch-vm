@@ -400,6 +400,13 @@ class Runtime extends EventEmitter {
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
 
+        /**
+         * A string representing the origin of the current project from outside of the
+         * Scratch community, such as CSFirst.
+         * @type {?string}
+         */
+        this.origin = null;
+
         this._stageTarget = null;
 
         // 60 to match default of compatibility mode off
