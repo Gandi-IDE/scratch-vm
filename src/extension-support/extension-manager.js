@@ -96,6 +96,9 @@ class ExtensionManager {
          */
         this.runtime = runtime;
 
+        this.loadingAsyncExtensions = 0;
+        this.asyncExtensionsLoadedCallbacks = [];
+
         dispatch.setService('extensions', this).catch(e => {
             log.error(`ExtensionManager was unable to register extension service: ${JSON.stringify(e)}`);
         });
@@ -168,6 +171,8 @@ class ExtensionManager {
             extensionURL = `//${extensionURL}`;
         }
 
+        this.loadingAsyncExtensions++;
+
         return new Promise((resolve, reject) => {
             // If we `require` this at the global level it breaks non-webpack targets, including tests
             // eslint-disable-next-line max-len
@@ -175,6 +180,26 @@ class ExtensionManager {
 
             this.pendingExtensions.push({extensionURL, resolve, reject});
             dispatch.addWorker(new ExtensionWorker());
+        })
+            .then(() => {
+                this.loadingAsyncExtensions--;
+                if (this.loadingAsyncExtensions === 0) {
+                    this.asyncExtensionsLoadedCallbacks.forEach(i => i());
+                    this.asyncExtensionsLoadedCallbacks = [];
+                }
+            });
+    }
+
+    /**
+     * Wait until all async extensions have loaded
+     * @returns {Promise} resolved when all async extensions have loaded
+     */
+    allAsyncExtensionsLoaded () {
+        if (this.loadingAsyncExtensions === 0) {
+            return;
+        }
+        return new Promise(resolve => {
+            this.asyncExtensionsLoadedCallbacks.push(resolve);
         });
     }
 

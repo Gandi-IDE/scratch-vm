@@ -600,7 +600,9 @@ class VirtualMachine extends EventEmitter {
      * @param {boolean} wholeProject - set to true if installing a whole project, as opposed to a single sprite.
      * @returns {Promise} resolved once targets have been installed
      */
-    installTargets (targets, extensions, wholeProject) {
+    async installTargets (targets, extensions, wholeProject) {
+        await this.extensionManager.allAsyncExtensionsLoaded();
+
         const extensionPromises = [];
 
         extensions.extensionIDs.forEach(extensionID => {
