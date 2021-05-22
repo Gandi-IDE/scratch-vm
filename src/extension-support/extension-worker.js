@@ -3,6 +3,7 @@
 const ArgumentType = require('../extension-support/argument-type');
 const BlockType = require('../extension-support/block-type');
 const dispatch = require('../dispatch/worker-dispatch');
+const log = require('../util/log');
 const TargetType = require('../extension-support/target-type');
 
 class ExtensionWorker {
@@ -24,6 +25,7 @@ class ExtensionWorker {
 
                     Promise.all(initialRegistrations).then(() => dispatch.call('extensions', 'onWorkerInit', id));
                 } catch (e) {
+                    log.error(e);
                     dispatch.call('extensions', 'onWorkerInit', id, e);
                 }
             });
