@@ -2382,6 +2382,8 @@ class Runtime extends EventEmitter {
                 target.blocks.resetCache();
             }
         }
+        this.flyoutBlocks.resetCache();
+        this.monitorBlocks.resetCache();
     }
 
     findProjectOptionsComment () {
