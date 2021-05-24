@@ -258,8 +258,13 @@ class Thread {
         return 4; // used by compiler
     }
 
+    /**
+     * @param {Target} target The target running the thread.
+     * @param {string} topBlock ID of the thread's top block.
+     * @returns {string} A unique ID for this target and thread.
+     */
     static getId (target, topBlock) {
-        // & should never appear in any generated IDs
+        // & should never appear in any IDs, so we can use it as a separator
         return `${target.id}&${topBlock}`;
     }
 

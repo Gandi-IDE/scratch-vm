@@ -2212,6 +2212,7 @@ class Runtime extends EventEmitter {
         // Clean up threads that were told to stop during or since the last step
         this.threads = this.threads.filter(thread => !thread.isKilled);
 
+        // Clean up dead threads from the thread map.
         for (const [id, thread] of this.threadMap.entries()) {
             if (thread.status === Thread.STATUS_DONE || thread.isKilled) {
                 this.threadMap.delete(id);
