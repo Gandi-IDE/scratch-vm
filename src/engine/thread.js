@@ -259,16 +259,6 @@ class Thread {
     }
 
     /**
-     * @param {Target} target The target running the thread.
-     * @param {string} topBlock ID of the thread's top block.
-     * @returns {string} A unique ID for this target and thread.
-     */
-    static getId (target, topBlock) {
-        // & should never appear in any IDs, so we can use it as a separator
-        return `${target.id}&${topBlock}`;
-    }
-
-    /**
      * Push stack and update stack frames appropriately.
      * @param {string} blockId Block ID to push to stack.
      */
