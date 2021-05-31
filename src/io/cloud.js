@@ -145,8 +145,17 @@ class Cloud {
 
         // powered by xigua start
         // 添加查找云列表
-        const variable = this.stage.lookupVariableByNameAndType(varName, Variable.SCALAR_TYPE) ||
-            this.stage.lookupVariableByNameAndType(varName, Variable.LIST_TYPE);
+        let variable = this.stage.lookupVariableByNameAndType(varName, Variable.SCALAR_TYPE);
+        if (variable && varUpdate.value === null) {
+            varUpdate.value = 0;
+        }
+        if (!variable) {
+            variable = this.stage.lookupVariableByNameAndType(varName, Variable.LIST_TYPE);
+            if (variable && varUpdate.value === null) {
+                varUpdate.value = [];
+            }
+        }
+
         // powered by xigua end
         if (!variable || !variable.isCloud) {
             log.warn(`Received an update for a cloud variable that does not exist: ${varName}`);
