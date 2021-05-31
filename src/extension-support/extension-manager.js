@@ -179,6 +179,7 @@ class ExtensionManager {
 
                 // eslint-disable-next-line no-console
                 console.warn(`扩展[${extensionURL}]未找到`);
+                this.runtime.emit('EXTENSION_NOT_FOUND', extensionURL);
 
                 return new Promise((resolve, reject) => {
                     // If we `require` this at the global level it breaks non-webpack targets, including tests
