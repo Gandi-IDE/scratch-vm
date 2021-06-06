@@ -683,6 +683,7 @@ class JSGenerator {
             this.source += `${index}++; `;
             this.source += `${this.referenceVariable(node.variable)}.value = ${index};\n`;
             this.descendStack(node.do, new Frame(true));
+            this.yieldLoop();
             this.source += '}\n';
             break;
         }
