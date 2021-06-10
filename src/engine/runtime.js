@@ -2510,9 +2510,9 @@ class Runtime extends EventEmitter {
         const options = {};
         options.framerate = this.framerate;
         options.runtimeOptions = {
-            // Omitting warpTimer for now
             maxClones: this.runtimeOptions.maxClones,
-            miscLimits: this.runtimeOptions.miscLimits
+            miscLimits: this.runtimeOptions.miscLimits,
+            fencing: this.runtimeOptions.fencing
         };
         options.interpolation = this.interpolationEnabled;
         options.turbo = this.turboMode;
