@@ -1406,15 +1406,24 @@ class VirtualMachine extends EventEmitter {
      */
     emitTargetsUpdate (triggerProjectChange) {
         if (typeof triggerProjectChange === 'undefined') triggerProjectChange = true;
+        let lazyTargetList;
+        const getTargetListLazily = () => {
+            if (!lazyTargetList) {
+                lazyTargetList = this.runtime.targets
+                    .filter(
+                        // Don't report clones.
+                        target => !target.hasOwnProperty('isOriginal') || target.isOriginal
+                    ).map(
+                        target => target.toJSON()
+                    );
+            }
+            return lazyTargetList;
+        };
         this.emit('targetsUpdate', {
             // [[target id, human readable target name], ...].
-            targetList: this.runtime.targets
-                .filter(
-                    // Don't report clones.
-                    target => !target.hasOwnProperty('isOriginal') || target.isOriginal
-                ).map(
-                    target => target.toJSON()
-                ),
+            get targetList () {
+                return getTargetListLazily();
+            },
             // Currently editing target id.
             editingTarget: this.editingTarget ? this.editingTarget.id : null
         });
