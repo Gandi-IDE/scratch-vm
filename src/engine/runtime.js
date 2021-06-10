@@ -1506,7 +1506,6 @@ class Runtime extends EventEmitter {
      * @property {string} xml - the XML text for this category, starting with `<category>` and ending with `</category>`
      */
     getBlocksXML (target) {
-        try{
         return this._blockInfo.map(categoryInfo => {
             const {name, color1, color2} = categoryInfo;
             // Filter out blocks that aren't supposed to be shown on this target, as determined by the block info's
@@ -1548,7 +1547,6 @@ class Runtime extends EventEmitter {
                     paletteBlocks.map(block => block.xml).join('')}</category>`
             };
         });
-    }catch(e){console.error(e)}
     }
 
     /**
