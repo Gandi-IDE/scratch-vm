@@ -198,6 +198,26 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction, useFlags) {
 };
 
 /**
+ * Run an addon block.
+ * @param {string} procedureCode The block's procedure code
+ * @param {string} blockId The ID of the block being run
+ * @param {object} args The arguments to pass to the block
+ */
+const callAddonBlock = (procedureCode, blockId, args) => {
+    const addonBlock = thread.target.runtime.getAddonBlock(procedureCode);
+    if (addonBlock) {
+        const target = thread.target;
+        addonBlock.callback(args, {
+            // Shim enough of BlockUtility to make addons work
+            peekStack () {
+                return blockId;
+            },
+            target
+        });
+    }
+};
+
+/**
  * End the current script.
  */
 const retire = () => {

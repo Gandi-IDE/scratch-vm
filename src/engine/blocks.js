@@ -335,6 +335,11 @@ class Blocks {
             }
         }
 
+        const addonBlock = this.runtime.getAddonBlock(name);
+        if (addonBlock) {
+            return addonBlock.namesIdsDefaults;
+        }
+
         this._cache.procedureParamNames[name] = null;
         return null;
     }

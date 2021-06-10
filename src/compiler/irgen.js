@@ -1116,7 +1116,30 @@ class ScriptTreeGenerator {
                 };
             }
 
-            const [_paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
+            const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
+
+            const addonBlock = this.runtime.getAddonBlock(procedureCode);
+            if (addonBlock) {
+                const args = {};
+                for (let i = 0; i < paramIds.length; i++) {
+                    let value;
+                    if (block.inputs[paramIds[i]] && block.inputs[paramIds[i]].block) {
+                        value = this.descendInputOfBlock(block, paramIds[i]);
+                    } else {
+                        value = {
+                            kind: 'constant',
+                            value: paramDefaults[i]
+                        };
+                    }
+                    args[paramNames[i]] = value;
+                }
+                return {
+                    kind: 'addons.call',
+                    code: procedureCode,
+                    arguments: args,
+                    blockId: block.id
+                };
+            }
 
             if (!this.script.dependedProcedures.includes(procedureCode)) {
                 this.script.dependedProcedures.push(procedureCode);

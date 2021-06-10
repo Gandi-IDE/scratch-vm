@@ -413,6 +413,8 @@ class Runtime extends EventEmitter {
         // scratch-gui will set this to 30
         this.framerate = 60;
 
+        this.addonBlocks = {};
+
         this.stageWidth = Runtime.STAGE_WIDTH;
         this.stageHeight = Runtime.STAGE_HEIGHT;
 
@@ -1504,6 +1506,7 @@ class Runtime extends EventEmitter {
      * @property {string} xml - the XML text for this category, starting with `<category>` and ending with `</category>`
      */
     getBlocksXML (target) {
+        try{
         return this._blockInfo.map(categoryInfo => {
             const {name, color1, color2} = categoryInfo;
             // Filter out blocks that aren't supposed to be shown on this target, as determined by the block info's
@@ -1545,6 +1548,7 @@ class Runtime extends EventEmitter {
                     paletteBlocks.map(block => block.xml).join('')}</category>`
             };
         });
+    }catch(e){console.error(e)}
     }
 
     /**
@@ -2384,6 +2388,59 @@ class Runtime extends EventEmitter {
         }
         this.flyoutBlocks.resetCache();
         this.monitorBlocks.resetCache();
+    }
+
+    /**
+     * Add an "addon block"
+     * @param {object} options Options object
+     * @param {string} options.procedureCode The ID of the block
+     * @param {function} options.callback The callback, called with (args, BlockUtility)
+     * @param {string[]} options.arguments Names of the arguments accepted
+     * @param {string} options.color Primary color
+     * @param {string} options.secondaryColor Secondary color
+     */
+    addAddonBlock (options) {
+        const procedureCode = options.procedureCode;
+        const names = options.arguments;
+        const ids = options.arguments.map((_, i) => `arg${i}`);
+        const defaults = options.arguments.map(() => '');
+        this.addonBlocks[procedureCode] = {
+            namesIdsDefaults: [names, ids, defaults],
+            ...options
+        };
+
+        const ID = 'a-b';
+        let blockInfo = this._blockInfo.find(i => i.id === ID);
+        if (!blockInfo) {
+            blockInfo = {
+                id: ID,
+                name: 'Addons',
+                color1: options.color,
+                color2: options.secondaryColor,
+                color3: options.secondaryColor,
+                blocks: []
+            };
+            this._blockInfo.splice(1, 0, blockInfo);
+        }
+        blockInfo.blocks.push({
+            info: {},
+            xml:
+               '<block type="procedures_call" gap="16"><mutation generateshadows="true" warp="false"' +
+                ` proccode="${xmlEscape(procedureCode)}"` +
+                ` argumentnames="${xmlEscape(JSON.stringify(names))}"` +
+                ` argumentids="${xmlEscape(JSON.stringify(ids))}"` +
+                ` argumentdefaults="${xmlEscape(JSON.stringify(defaults))}"` +
+                '></mutation></block>'
+        });
+
+        this.resetAllCaches();
+    }
+
+    getAddonBlock (procedureCode) {
+        if (Object.prototype.hasOwnProperty.call(this.addonBlocks, procedureCode)) {
+            return this.addonBlocks[procedureCode];
+        }
+        return null;
     }
 
     findProjectOptionsComment () {

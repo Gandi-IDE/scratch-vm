@@ -253,6 +253,10 @@ class VirtualMachine extends EventEmitter {
         this.runtime.setCompilerOptions(compilerOptions);
     }
 
+    addAddonBlock (options) {
+        this.runtime.addAddonBlock(options);
+    }
+
     storeProjectOptions () {
         this.runtime.storeProjectOptions();
         if (this.editingTarget.isStage) {

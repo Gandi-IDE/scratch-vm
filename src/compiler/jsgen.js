@@ -654,6 +654,15 @@ class JSGenerator {
      */
     descendStackedBlock (node) {
         switch (node.kind) {
+        case 'addons.call':
+            this.source += `callAddonBlock("${sanitize(node.code)}","${sanitize(node.blockId)}",{`;
+            for (const argumentName of Object.keys(node.arguments)) {
+                const argumentValue = node.arguments[argumentName];
+                this.source += `"${sanitize(argumentName)}":${this.descendInput(argumentValue).asSafe()},`;
+            }
+            this.source += '});\n';
+            break;
+
         case 'compat': {
             // If the last command in a loop returns a promise, immediately continue to the next iteration.
             // If you don't do this, the loop effectively yields twice per iteration and will run at half-speed.
