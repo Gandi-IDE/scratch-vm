@@ -1736,7 +1736,7 @@ class Runtime extends EventEmitter {
 
         thread.pushStack(id);
         this.threads.push(thread);
-        if (!thread.stackClick) {
+        if (!thread.stackClick && !thread.updateMonitor) {
             this.threadMap.set(thread.getId(), thread);
         }
 
@@ -1958,9 +1958,22 @@ class Runtime extends EventEmitter {
                 // any existing threads starting with the top block.
                 const existingThread = this.threadMap.get(Thread.getIdFromTargetAndBlock(target, topBlockId));
                 if (existingThread) {
+                    const index = this.threads.indexOf(existingThread);
+                    if (index === -1) {
+                        // ???
+                    }
                     newThreads.push(this._restartThread(existingThread));
                     return;
                 }
+                // for (let i = 0; i < startingThreadListLength; i++) {
+                //     if (this.threads[i].target === target &&
+                //         this.threads[i].topBlock === topBlockId &&
+                //         // stack click threads and hat threads can coexist
+                //         !this.threads[i].stackClick) {
+                //         newThreads.push(this._restartThread(this.threads[i]));
+                //         return;
+                //     }
+                // }
             } else {
                 // If `restartExistingThreads` is false, we should
                 // give up if any threads with the top block are running.
@@ -2195,6 +2208,14 @@ class Runtime extends EventEmitter {
         }
     }
 
+    cleanupThreadMap () {
+        for (const [id, thread] of this.threadMap.entries()) {
+            if (thread.status === Thread.STATUS_DONE || thread.isKilled) {
+                this.threadMap.delete(id);
+            }
+        }
+    }
+
     /**
      * Repeatedly run `sequencer.stepThreads` and filter out
      * inactive threads after each iteration.
@@ -2213,13 +2234,6 @@ class Runtime extends EventEmitter {
 
         // Clean up threads that were told to stop during or since the last step
         this.threads = this.threads.filter(thread => !thread.isKilled);
-
-        // Clean up dead threads from the thread map.
-        for (const [id, thread] of this.threadMap.entries()) {
-            if (thread.status === Thread.STATUS_DONE || thread.isKilled) {
-                this.threadMap.delete(id);
-            }
-        }
 
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
