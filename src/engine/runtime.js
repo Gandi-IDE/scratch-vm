@@ -2002,7 +2002,7 @@ class Runtime extends EventEmitter {
         });
 
         this.targets.map(this.disposeTarget, this);
-        // tw: when disposing runtime, explicitly emit a MONITORS_UPDATE instead of relying on implicit behavior of _step()
+        // tw: explicitly emit a MONITORS_UPDATE instead of relying on implicit behavior of _step()
         const emptyMonitorState = OrderedMap({});
         if (!emptyMonitorState.equals(this._monitorState)) {
             this._monitorState = emptyMonitorState;

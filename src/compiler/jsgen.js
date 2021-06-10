@@ -19,8 +19,11 @@ const Cast = require('../util/cast');
 const VariablePool = require('./variable-pool');
 const jsexecute = require('./jsexecute');
 const {disableToString} = require('./util');
-const {IntermediateScript, IntermediateRepresentation} = require('./intermediate');
 const environment = require('./environment');
+
+// Imported for JSDoc types, not to actually use
+// eslint-disable-next-line no-unused-vars
+const {IntermediateScript, IntermediateRepresentation} = require('./intermediate');
 
 /**
  * @fileoverview Convert intermediate representations to JavaScript functions.
@@ -337,9 +340,9 @@ class Frame {
 
 class JSGenerator {
     /**
-     * @param {IntermediateScript} script 
-     * @param {IntermediateRepresentation} ir 
-     * @param {Target} target 
+     * @param {IntermediateScript} script
+     * @param {IntermediateRepresentation} ir
+     * @param {Target} target
      */
     constructor (script, ir, target) {
         this.script = script;
