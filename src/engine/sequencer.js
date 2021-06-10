@@ -161,6 +161,7 @@ class Sequencer {
                         this.runtime.threads[nextActiveThread] = thread;
                         nextActiveThread++;
                     } else {
+                        this.runtime.threadMap.delete(thread.getId());
                         doneThreads.push(thread);
                     }
                 }
