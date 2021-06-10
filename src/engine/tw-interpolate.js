@@ -126,7 +126,10 @@ const interpolate = (runtime, time) => {
             const startingScale = interpolationData.scale;
             if (scale[0] !== startingScale[0] || scale[1] !== startingScale[1]) {
                 // Do not interpolate size when the sign of either scale differs.
-                if (Math.sign(scale[0]) === Math.sign(startingScale[0]) && Math.sign(scale[1]) === Math.sign(startingScale[1])) {
+                if (
+                    Math.sign(scale[0]) === Math.sign(startingScale[0]) &&
+                    Math.sign(scale[1]) === Math.sign(startingScale[1])
+                ) {
                     const changeX = scale[0] - startingScale[0];
                     const changeY = scale[1] - startingScale[1];
                     const absoluteChangeX = Math.abs(changeX);
