@@ -2509,11 +2509,7 @@ class Runtime extends EventEmitter {
     generateProjectOptions () {
         const options = {};
         options.framerate = this.framerate;
-        options.runtimeOptions = {
-            maxClones: this.runtimeOptions.maxClones,
-            miscLimits: this.runtimeOptions.miscLimits,
-            fencing: this.runtimeOptions.fencing
-        };
+        options.runtimeOptions = this.runtimeOptions;
         options.interpolation = this.interpolationEnabled;
         options.turbo = this.turboMode;
         options.hq = this.renderer ? this.renderer.useHighQualityRender : false;
