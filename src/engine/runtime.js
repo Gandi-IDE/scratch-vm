@@ -2431,7 +2431,9 @@ class Runtime extends EventEmitter {
                 color1: options.color,
                 color2: options.secondaryColor,
                 color3: options.secondaryColor,
-                blocks: []
+                blocks: [],
+                customFieldTypes: {},
+                menus: []
             };
             this._blockInfo.splice(1, 0, blockInfo);
         }
