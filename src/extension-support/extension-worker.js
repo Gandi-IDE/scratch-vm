@@ -26,7 +26,7 @@ class ExtensionWorker {
                     Promise.all(initialRegistrations).then(() => dispatch.call('extensions', 'onWorkerInit', id));
                 } catch (e) {
                     log.error(e);
-                    dispatch.call('extensions', 'onWorkerInit', id, e);
+                    dispatch.call('extensions', 'onWorkerInit', id, `${e}`);
                 }
             });
         });
