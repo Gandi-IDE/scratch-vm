@@ -608,7 +608,7 @@ class Runtime extends EventEmitter {
     static get PERIPHERAL_LIST_UPDATE () {
         return 'PERIPHERAL_LIST_UPDATE';
     }
-    
+
     /**
      * Event name for when the user picks a bluetooth device to connect to
      * via Companion Device Manager (CDM)
@@ -1903,6 +1903,10 @@ class Runtime extends EventEmitter {
         this.canAddCloudVariable = newCloudDataManager.canAddCloudVariable;
         this.addCloudVariable = this._initializeAddCloudVariable(newCloudDataManager);
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
+
+        // powered by xigua start
+        this._blockInfo = [];
+        // powered by xigua end
     }
 
     // powered by xigua start
