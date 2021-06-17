@@ -193,7 +193,7 @@ When scripts can't be compiled, they run in the standard (slow) scratch-vm inter
 
 ## License
 
-TurboWarp's modifications to Scratch are licensed under the GNU General Public License v3.0. See LICENSE or https://www.gnu.org/licenses/ for details.
+TurboWarp's modifications to Scratch are licensed under the GNU Lesser General Public License version 3. See COPYING and COPYING.LESSER for more information.
 
 Original license for scratch-vm:
 
