@@ -2503,7 +2503,7 @@ class Runtime extends EventEmitter {
         if (parsed.runtimeOptions) {
             this.setRuntimeOptions(parsed.runtimeOptions);
         }
-        if (parsed.hq) {
+        if (parsed.hq && this.renderer) {
             this.renderer.setUseHighQualityRender(true);
         }
     }
