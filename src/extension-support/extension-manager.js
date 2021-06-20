@@ -162,11 +162,9 @@ class ExtensionManager {
             return Promise.resolve();
         }
 
+        // Add implicit protocol if missing
         try {
-            const parsedUrl = new URL(extensionURL);
-            if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-                return Promise.reject(new Error('Invalid protocol'));
-            }
+            const _url = new URL(extensionURL);
         } catch (e) {
             extensionURL = `//${extensionURL}`;
         }
