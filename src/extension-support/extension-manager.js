@@ -162,13 +162,6 @@ class ExtensionManager {
             return Promise.resolve();
         }
 
-        // Add implicit protocol if missing
-        try {
-            const _url = new URL(extensionURL);
-        } catch (e) {
-            extensionURL = `//${extensionURL}`;
-        }
-
         this.loadingAsyncExtensions++;
 
         return new Promise((resolve, reject) => {
