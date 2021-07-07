@@ -399,6 +399,11 @@ class Thread {
         return null;
     }
 
+    getAllparams () {
+        const stackFrame = this.peekStackFrame();
+        return stackFrame.params;
+    }
+
     /**
      * Whether the current execution of a thread is at the top of the stack.
      * @return {boolean} True if execution is at top of the stack.
