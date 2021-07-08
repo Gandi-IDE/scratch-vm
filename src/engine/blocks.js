@@ -337,6 +337,7 @@ class Blocks {
 
         const addonBlock = this.runtime.getAddonBlock(name);
         if (addonBlock) {
+            this._cache.procedureParamNames[name] = addonBlock.namesIdsDefaults;
             return addonBlock.namesIdsDefaults;
         }
 

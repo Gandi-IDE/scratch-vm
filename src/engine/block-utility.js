@@ -151,6 +151,11 @@ class BlockUtility {
      * @param {string} procedureCode Procedure code for procedure to start.
      */
     startProcedure (procedureCode) {
+        const addonBlock = this.runtime.getAddonBlock(procedureCode);
+        if (addonBlock) {
+            addonBlock.callback(this.thread.getAllparams(), this.thread);
+            return;
+        }
         this.sequencer.stepToProcedure(this.thread, procedureCode);
     }
 
