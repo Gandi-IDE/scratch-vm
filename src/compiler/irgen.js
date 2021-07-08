@@ -1120,6 +1120,7 @@ class ScriptTreeGenerator {
 
             const addonBlock = this.runtime.getAddonBlock(procedureCode);
             if (addonBlock) {
+                this.script.yields = true;
                 const args = {};
                 for (let i = 0; i < paramIds.length; i++) {
                     let value;

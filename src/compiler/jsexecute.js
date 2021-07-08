@@ -203,7 +203,7 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction, useFlags) {
  * @param {string} blockId The ID of the block being run
  * @param {object} args The arguments to pass to the block
  */
-const callAddonBlock = (procedureCode, blockId, args) => {
+const callAddonBlock = function*(procedureCode, blockId, args) {
     const addonBlock = thread.target.runtime.getAddonBlock(procedureCode);
     if (addonBlock) {
         const target = thread.target;
@@ -214,6 +214,9 @@ const callAddonBlock = (procedureCode, blockId, args) => {
             },
             target
         });
+        if (thread.status === Thread.STATUS_PROMISE_WAIT) {
+            yield;
+        }
     }
 };
 

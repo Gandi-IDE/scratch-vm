@@ -658,7 +658,8 @@ class JSGenerator {
     descendStackedBlock (node) {
         switch (node.kind) {
         case 'addons.call':
-            this.source += `callAddonBlock("${sanitize(node.code)}","${sanitize(node.blockId)}",{`;
+            this.source += `yield* callAddonBlock("${sanitize(node.code)}","${sanitize(node.blockId)}",{`;
+            this.yielded();
             for (const argumentName of Object.keys(node.arguments)) {
                 const argumentValue = node.arguments[argumentName];
                 this.source += `"${sanitize(argumentName)}":${this.descendInput(argumentValue).asSafe()},`;
