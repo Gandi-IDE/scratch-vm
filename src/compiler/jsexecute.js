@@ -116,16 +116,16 @@ const waitPromise = function*(promise) {
     promise
         .then(value => {
             returnValue = value;
-            _thread.status = Thread.STATUS_RUNNING;
+            _thread.status = 0; // STATUS_RUNNING
         })
         .catch(error => {
-            _thread.status = Thread.STATUS_RUNNING;
+            _thread.status = 0; // STATUS_RUNNING
             log.warn('Promise rejected in compiled script:', error);
         });
 
     // enter STATUS_PROMISE_WAIT and yield
     // this will stop script execution until the promise handlers reset the thread status
-    thread.status = Thread.STATUS_PROMISE_WAIT;
+    thread.status = 1; // STATUS_PROMISE_WAIT
     yield;
 
     return returnValue;
@@ -168,10 +168,10 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction, useFlags) {
         return returnValue;
     }
 
-    while (thread.status === Thread.STATUS_YIELD || thread.status === Thread.STATUS_YIELD_TICK) {
+    while (thread.status === 2 /* STATUS_YIELD */ || thread.status === 3 /* STATUS_YIELD_TICK */) {
         // Yielded threads will run next iteration.
-        if (thread.status === Thread.STATUS_YIELD) {
-            thread.status = Thread.STATUS_RUNNING;
+        if (thread.status === 2 /* STATUS_YIELD */) {
+            thread.status = 0; // STATUS_RUNNING
             // Yield back to the event loop when stuck or not in warp mode.
             if (thread.warp === 0 || isStuck()) {
                 yield;
@@ -214,7 +214,7 @@ const callAddonBlock = function*(procedureCode, blockId, args) {
             },
             target
         });
-        if (thread.status === Thread.STATUS_PROMISE_WAIT) {
+        if (thread.status === 1 /* STATUS_PROMISE_WAIT */) {
             yield;
         }
     }
