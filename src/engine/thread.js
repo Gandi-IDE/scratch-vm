@@ -482,10 +482,10 @@ class Thread {
 
         this.procedures = {};
         for (const procedureCode of Object.keys(result.procedures)) {
-            this.procedures[procedureCode] = result.procedures[procedureCode](this.target);
+            this.procedures[procedureCode] = result.procedures[procedureCode](this);
         }
 
-        this.generator = result.startingFunction(this.target)();
+        this.generator = result.startingFunction(this)();
 
         if (!this.blockContainer.forceNoGlow) {
             this.blockGlowInFrame = this.topBlock;

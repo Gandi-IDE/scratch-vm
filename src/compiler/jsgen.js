@@ -1166,7 +1166,8 @@ class JSGenerator {
         let script = '';
 
         // Setup the factory
-        script += `(function ${this.getScriptFactoryName()}(target) { `;
+        script += `(function ${this.getScriptFactoryName()}(thread) { `;
+        script += 'const target = thread.target; ';
         script += 'const runtime = target.runtime; ';
         script += 'const stage = runtime.getTargetForStage();\n';
         for (const varValue of Object.keys(this._setupVariables)) {
