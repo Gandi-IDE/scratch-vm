@@ -14,7 +14,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-const Thread = require('../engine/thread');
 const Timer = require('../util/timer');
 const Cast = require('../util/cast');
 const log = require('../util/log');
