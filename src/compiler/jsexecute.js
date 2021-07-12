@@ -30,11 +30,7 @@ const globalState = {
     thread: null
 };
 
-// All the functions defined here will be available to compiled scripts.
-// The JSDoc annotations define the function's contract.
-// Most of these functions are only used at runtime by generated scripts.
-// Despite what your editor may say, they are not unused.
-
+const RUNTIME = `
 let stuckCounter = 0;
 /**
  * Determine whether the current tick is likely stuck.
@@ -550,6 +546,7 @@ const mod = (n, modulus) => {
     if (result / modulus < 0) result += modulus;
     return result;
 };
+`;
 
 /**
  * Step a compiled thread.
@@ -568,7 +565,7 @@ const execute = thread => {
 const scopedEval = source => {
     try {
         // eslint-disable-next-line no-eval
-        return eval(source);
+        return new Function('globalState', `${RUNTIME}return ${source}`)(globalState);
     } catch (e) {
         globalState.log.error('was unable to compile script', source);
         throw e;
