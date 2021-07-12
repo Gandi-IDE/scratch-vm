@@ -557,6 +557,12 @@ const execute = thread => {
     thread.generator.next();
 };
 
+const insertRuntime = source => {
+    let result = RUNTIME;
+    result += `return ${source}`;
+    return result;
+};
+
 /**
  * Evaluate arbitrary JS in the context of the runtime.
  * @param {string} source The string to evaluate.
@@ -564,8 +570,8 @@ const execute = thread => {
  */
 const scopedEval = source => {
     try {
-        // eslint-disable-next-line no-eval
-        return new Function('globalState', `${RUNTIME}return ${source}`)(globalState);
+        const withRuntime = insertRuntime(source);
+        return new Function('globalState', withRuntime)(globalState);
     } catch (e) {
         globalState.log.error('was unable to compile script', source);
         throw e;
