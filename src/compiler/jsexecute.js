@@ -583,5 +583,6 @@ const scopedEval = source => {
 };
 
 execute.scopedEval = scopedEval;
+execute.runtimeFunctions = runtimeFunctions;
 
 module.exports = execute;
