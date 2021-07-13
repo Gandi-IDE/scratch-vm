@@ -30,13 +30,15 @@ const globalState = {
     thread: null
 };
 
-const RUNTIME = `
-let stuckCounter = 0;
+let baseRuntime = '';
+const runtimeFunctions = {};
+
 /**
  * Determine whether the current tick is likely stuck.
  * This implements similar functionality to the warp timer found in Scratch.
  * @returns {boolean} true if the current tick is likely stuck.
  */
+runtimeFunctions.isStuck = `let stuckCounter = 0;
 const isStuck = () => {
     // The real time is not checked on every call for performance.
     stuckCounter++;
@@ -45,7 +47,7 @@ const isStuck = () => {
         return globalState.thread.target.runtime.sequencer.timer.timeElapsed() > 500;
     }
     return false;
-};
+}`;
 
 /**
  * Start hats by opcode.
@@ -53,17 +55,17 @@ const isStuck = () => {
  * @param {*} optMatchFields Fields to match.
  * @returns {Array} A list of threads that were started.
  */
-const startHats = (requestedHat, optMatchFields) => {
+runtimeFunctions.startHats = `const startHats = (requestedHat, optMatchFields) => {
     const thread = globalState.thread;
     const threads = thread.target.runtime.startHats(requestedHat, optMatchFields);
     return threads;
-};
+}`;
 
 /**
  * Implements "thread waiting", where scripts are halted until all the scripts have finished executing.
  * @param {Array} threads The list of threads.
  */
-const waitThreads = function*(threads) {
+runtimeFunctions.waitThreads = `const waitThreads = function*(threads) {
     const thread = globalState.thread;
     const runtime = thread.target.runtime;
 
@@ -94,13 +96,22 @@ const waitThreads = function*(threads) {
 
         yield;
     }
-};
+}`;
 
 /**
  * Wait until a Promise resolves or rejects before continuing.
  * @param {Promise} promise The promise to wait for.
  * @returns {*} the value that the promise resolves to, otherwise undefined if the promise rejects
  */
+
+/**
+ * Execute a scratch-vm primitive.
+ * @param {*} inputs The inputs to pass to the block.
+ * @param {function} blockFunction The primitive's function.
+ * @param {boolean} useFlags Whether to set flags (hasResumedFromPromise)
+ * @returns {*} the value returned by the block, if any.
+ */
+runtimeFunctions.executeInCompatibilityLayer = `let hasResumedFromPromise = false;
 const waitPromise = function*(promise) {
     const thread = globalState.thread;
     let returnValue;
@@ -122,16 +133,6 @@ const waitPromise = function*(promise) {
 
     return returnValue;
 };
-
-let hasResumedFromPromise = false;
-
-/**
- * Execute a scratch-vm primitive.
- * @param {*} inputs The inputs to pass to the block.
- * @param {function} blockFunction The primitive's function.
- * @param {boolean} useFlags Whether to set flags (hasResumedFromPromise)
- * @returns {*} the value returned by the block, if any.
- */
 const executeInCompatibilityLayer = function*(inputs, blockFunction, useFlags) {
     const thread = globalState.thread;
 
@@ -190,7 +191,7 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction, useFlags) {
     // todo: do we have to do anything extra if status is STATUS_DONE?
 
     return returnValue;
-};
+}`;
 
 /**
  * Run an addon block.
@@ -198,7 +199,7 @@ const executeInCompatibilityLayer = function*(inputs, blockFunction, useFlags) {
  * @param {string} blockId The ID of the block being run
  * @param {object} args The arguments to pass to the block
  */
-const callAddonBlock = function*(procedureCode, blockId, args) {
+runtimeFunctions.callAddonBlock = `const callAddonBlock = function*(procedureCode, blockId, args) {
     const thread = globalState.thread;
     const addonBlock = thread.target.runtime.getAddonBlock(procedureCode);
     if (addonBlock) {
@@ -214,15 +215,15 @@ const callAddonBlock = function*(procedureCode, blockId, args) {
             yield;
         }
     }
-};
+}`;
 
 /**
  * End the current script.
  */
-const retire = () => {
+runtimeFunctions.retire = `const retire = () => {
     const thread = globalState.thread;
     thread.target.runtime.sequencer.retireThread(thread);
-};
+}`;
 
 /**
  * Scratch cast to boolean.
@@ -230,7 +231,7 @@ const retire = () => {
  * @param {*} value The value to cast
  * @returns {boolean} The value cast to a boolean
  */
-const toBoolean = value => {
+runtimeFunctions.toBoolean = `const toBoolean = value => {
     if (typeof value === 'boolean') {
         return value;
     }
@@ -241,7 +242,7 @@ const toBoolean = value => {
         return true;
     }
     return !!value;
-};
+}`;
 
 /**
  * Check if a value is considered whitespace.
@@ -249,9 +250,10 @@ const toBoolean = value => {
  * @param {*} val Value to check
  * @returns {boolean} true if the value is whitespace
  */
+baseRuntime += `
 const isWhiteSpace = val => (
     val === null || (typeof val === 'string' && val.trim().length === 0)
-);
+);`;
 
 /**
  * Determine if two values are equal.
@@ -259,6 +261,7 @@ const isWhiteSpace = val => (
  * @param {*} v2 Second value
  * @returns {boolean} true if v1 is equal to v2
  */
+baseRuntime += `
 const compareEqual = (v1, v2) => {
     let n1 = +v1;
     let n2 = +v2;
@@ -273,7 +276,7 @@ const compareEqual = (v1, v2) => {
         return s1 === s2;
     }
     return n1 === n2;
-};
+};`;
 
 /**
  * Determine if one value is greater than another.
@@ -281,7 +284,7 @@ const compareEqual = (v1, v2) => {
  * @param {*} v2 Second value
  * @returns {boolean} true if v1 is greater than v2
  */
-const compareGreaterThan = (v1, v2) => {
+runtimeFunctions.compareGreaterThan = `const compareGreaterThan = (v1, v2) => {
     let n1 = +v1;
     let n2 = +v2;
     if (n1 === 0 && isWhiteSpace(v1)) {
@@ -295,7 +298,7 @@ const compareGreaterThan = (v1, v2) => {
         return s1 > s2;
     }
     return n1 > n2;
-};
+}`;
 
 /**
  * Determine if one value is less than another.
@@ -303,7 +306,7 @@ const compareGreaterThan = (v1, v2) => {
  * @param {*} v2 Second value
  * @returns {boolean} true if v1 is less than v2
  */
-const compareLessThan = (v1, v2) => {
+runtimeFunctions.compareLessThan = `const compareLessThan = (v1, v2) => {
     let n1 = +v1;
     let n2 = +v2;
     if (n1 === 0 && isWhiteSpace(v1)) {
@@ -317,7 +320,7 @@ const compareLessThan = (v1, v2) => {
         return s1 < s2;
     }
     return n1 < n2;
-};
+}`;
 
 /**
  * Generate a random integer.
@@ -325,7 +328,7 @@ const compareLessThan = (v1, v2) => {
  * @param {number} high Upper bound
  * @returns {number} A random integer between low and high, inclusive.
  */
-const randomInt = (low, high) => low + Math.floor(Math.random() * ((high + 1) - low));
+runtimeFunctions.randomInt = `const randomInt = (low, high) => low + Math.floor(Math.random() * ((high + 1) - low))`;
 
 /**
  * Generate a random float.
@@ -333,38 +336,34 @@ const randomInt = (low, high) => low + Math.floor(Math.random() * ((high + 1) - 
  * @param {number} high Upper bound
  * @returns {number} A random floating point number between low and high.
  */
-const randomFloat = (low, high) => (Math.random() * (high - low)) + low;
-
-// nowObj used for timers.
-const timerNowObj = {
-    now: () => globalState.thread.target.runtime.currentMSecs
-};
+runtimeFunctions.randomFloat = `const randomFloat = (low, high) => (Math.random() * (high - low)) + low`;
 
 /**
  * Create and start a timer.
  * @returns {Timer} A started timer
  */
-const timer = () => {
-    const t = new globalState.Timer(timerNowObj);
+runtimeFunctions.timer = `const timer = () => {
+    const t = new globalState.Timer({
+        now: () => globalState.thread.target.runtime.currentMSecs
+    });
     t.start();
     return t;
-};
+}`;
 
 /**
  * Returns the amount of days since January 1st, 2000.
  * @returns {number} Days since 2000.
  */
-const daysSince2000 = () =>
-    // Date.UTC(2000, 0, 1) === 946684800000
-    // Hardcoding it is marginally faster
-    (Date.now() - 946684800000) / (24 * 60 * 60 * 1000);
+// Date.UTC(2000, 0, 1) === 946684800000
+// Hardcoding it is marginally faster
+runtimeFunctions.daysSince2000 = `const daysSince2000 = () => (Date.now() - 946684800000) / (24 * 60 * 60 * 1000)`;
 
 /**
  * Determine distance to a sprite or point.
  * @param {string} menu The name of the sprite or location to find.
  * @returns {number} Distance to the point, or 10000 if it cannot be calculated.
  */
-const distance = menu => {
+runtimeFunctions.distance = `const distance = menu => {
     const thread = globalState.thread;
     if (thread.target.isStage) return 10000;
 
@@ -383,7 +382,7 @@ const distance = menu => {
     const dx = thread.target.x - targetX;
     const dy = thread.target.y - targetY;
     return Math.sqrt((dx * dx) + (dy * dy));
-};
+}`;
 
 /**
  * Convert a Scratch list index to a JavaScript list index.
@@ -393,6 +392,7 @@ const distance = menu => {
  * @param {number} length Length of the list.
  * @returns {number} 0 based list index, or -1 if invalid.
  */
+baseRuntime += `
 const listIndex = (index, length) => {
     if (typeof index !== 'number') {
         if (index === 'last') {
@@ -413,7 +413,7 @@ const listIndex = (index, length) => {
         return -1;
     }
     return index - 1;
-};
+};`;
 
 /**
  * Get a value from a list.
@@ -421,13 +421,13 @@ const listIndex = (index, length) => {
  * @param {*} idx The 1-indexed index in the list.
  * @returns {*} The list item, otherwise empty string if it does not exist.
  */
-const listGet = (list, idx) => {
+runtimeFunctions.listGet = `const listGet = (list, idx) => {
     const index = listIndex(idx, list.length);
     if (index === -1) {
         return '';
     }
     return list[index];
-};
+}`;
 
 /**
  * Replace a value in a list.
@@ -435,14 +435,14 @@ const listGet = (list, idx) => {
  * @param {*} idx List index, Scratch style.
  * @param {*} value The new value.
  */
-const listReplace = (list, idx, value) => {
+runtimeFunctions.listReplace = `const listReplace = (list, idx, value) => {
     const index = listIndex(idx, list.value.length);
     if (index === -1) {
         return;
     }
     list.value[index] = value;
     list._monitorUpToDate = false;
-};
+}`;
 
 /**
  * Insert a value in a list.
@@ -450,21 +450,21 @@ const listReplace = (list, idx, value) => {
  * @param {*} idx The Scratch index in the list.
  * @param {*} value The value to insert.
  */
-const listInsert = (list, idx, value) => {
+runtimeFunctions.listInsert = `const listInsert = (list, idx, value) => {
     const index = listIndex(idx, list.value.length + 1);
     if (index === -1) {
         return;
     }
     list.value.splice(index, 0, value);
     list._monitorUpToDate = false;
-};
+}`;
 
 /**
  * Delete a value from a list.
  * @param {import('../engine/variable')} list The list.
  * @param {*} idx The Scratch index in the list.
  */
-const listDelete = (list, idx) => {
+runtimeFunctions.listDelete = `const listDelete = (list, idx) => {
     if (idx === 'all') {
         list.value = [];
         return;
@@ -475,7 +475,7 @@ const listDelete = (list, idx) => {
     }
     list.value.splice(index, 1);
     list._monitorUpToDate = false;
-};
+}`;
 
 /**
  * Return whether a list contains a value.
@@ -483,7 +483,7 @@ const listDelete = (list, idx) => {
  * @param {*} item The value to search for.
  * @returns {boolean} True if the list contains the item
  */
-const listContains = (list, item) => {
+runtimeFunctions.listContains = `const listContains = (list, item) => {
     // TODO: evaluate whether indexOf is worthwhile here
     if (list.value.indexOf(item) !== -1) {
         return true;
@@ -494,7 +494,7 @@ const listContains = (list, item) => {
         }
     }
     return false;
-};
+}`;
 
 /**
  * Find the 1-indexed index of an item in a list.
@@ -502,21 +502,21 @@ const listContains = (list, item) => {
  * @param {*} item The item to search for
  * @returns {number} The 1-indexed index of the item in the list, otherwise 0
  */
-const listIndexOf = (list, item) => {
+runtimeFunctions.listIndexOf = `const listIndexOf = (list, item) => {
     for (let i = 0; i < list.value.length; i++) {
         if (compareEqual(list.value[i], item)) {
             return i + 1;
         }
     }
     return 0;
-};
+}`;
 
 /**
  * Get the stringified form of a list.
  * @param {import('../engine/variable')} list The list.
  * @returns {string} Stringified form of the list.
  */
-const listContents = list => {
+runtimeFunctions.listContents = `const listContents = list => {
     for (let i = 0; i < list.value.length; i++) {
         const listItem = list.value[i];
         // this is an intentional break from what scratch 3 does to address our automatic string -> number conversions
@@ -526,14 +526,14 @@ const listContents = list => {
         }
     }
     return list.value.join('');
-};
+}`;
 
 /**
  * Convert a color to an RGB list
  * @param {*} color The color value to convert
  * @return {Array.<number>} [r,g,b], values between 0-255.
  */
-const colorToList = color => globalState.Cast.toRgbColorList(color);
+runtimeFunctions.colorToList = `const colorToList = color => globalState.Cast.toRgbColorList(color)`;
 
 /**
  * Implements Scratch modulo (floored division instead of truncated division)
@@ -541,12 +541,11 @@ const colorToList = color => globalState.Cast.toRgbColorList(color);
  * @param {number} modulus Base
  * @returns {number} n % modulus (floored division)
  */
-const mod = (n, modulus) => {
+runtimeFunctions.mod = `const mod = (n, modulus) => {
     let result = n % modulus;
     if (result / modulus < 0) result += modulus;
     return result;
-};
-`;
+}`;
 
 /**
  * Step a compiled thread.
@@ -558,7 +557,12 @@ const execute = thread => {
 };
 
 const insertRuntime = source => {
-    let result = RUNTIME;
+    let result = baseRuntime;
+    for (const functionName of Object.keys(runtimeFunctions)) {
+        if (source.includes(functionName)) {
+            result += `${runtimeFunctions[functionName]};`;
+        }
+    }
     result += `return ${source}`;
     return result;
 };
