@@ -250,8 +250,7 @@ runtimeFunctions.toBoolean = `const toBoolean = value => {
  * @param {*} val Value to check
  * @returns {boolean} true if the value is whitespace
  */
-baseRuntime += `
-const isWhiteSpace = val => (
+baseRuntime += `const isWhiteSpace = val => (
     val === null || (typeof val === 'string' && val.trim().length === 0)
 );`;
 
@@ -261,8 +260,7 @@ const isWhiteSpace = val => (
  * @param {*} v2 Second value
  * @returns {boolean} true if v1 is equal to v2
  */
-baseRuntime += `
-const compareEqual = (v1, v2) => {
+baseRuntime += `const compareEqual = (v1, v2) => {
     let n1 = +v1;
     let n2 = +v2;
     if (n1 === 0 && isWhiteSpace(v1)) {
@@ -392,8 +390,7 @@ runtimeFunctions.distance = `const distance = menu => {
  * @param {number} length Length of the list.
  * @returns {number} 0 based list index, or -1 if invalid.
  */
-baseRuntime += `
-const listIndex = (index, length) => {
+baseRuntime += `const listIndex = (index, length) => {
     if (typeof index !== 'number') {
         if (index === 'last') {
             if (length > 0) {
