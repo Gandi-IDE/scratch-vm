@@ -2435,7 +2435,7 @@ class Runtime extends EventEmitter {
                 customFieldTypes: {},
                 menus: []
             };
-            this._blockInfo.splice(1, 0, blockInfo);
+            this._blockInfo.unshift(blockInfo);
         }
         blockInfo.blocks.push({
             info: {},
