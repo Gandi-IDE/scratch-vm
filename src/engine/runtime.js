@@ -2427,11 +2427,7 @@ class Runtime extends EventEmitter {
         if (!blockInfo) {
             blockInfo = {
                 id: ID,
-                name: maybeFormatMessage({
-                    // from scratch-gui
-                    id: 'tw.menuBar.addons',
-                    default: 'Addons'
-                }),
+                name: 'Addons',
                 color1: options.color,
                 color2: options.secondaryColor,
                 color3: options.secondaryColor,
