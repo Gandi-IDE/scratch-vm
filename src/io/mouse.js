@@ -2,8 +2,8 @@ const MathUtil = require('../util/math-util');
 
 class Mouse {
     constructor (runtime) {
-        this._x = 0;
-        this._y = 0;
+        this._clientX = 0;
+        this._clientY = 0;
         this._buttons = new Set();
         this.usesRightClickDown = false;
         this._isDown = false;
