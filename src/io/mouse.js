@@ -4,6 +4,8 @@ class Mouse {
     constructor (runtime) {
         this._clientX = 0;
         this._clientY = 0;
+        this._scratchX = 0;
+        this._scratchY = 0;
         this._buttons = new Set();
         this.usesRightClickDown = false;
         this._isDown = false;
