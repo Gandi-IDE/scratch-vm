@@ -45,6 +45,13 @@ formatMessage.setup({
     missingTranslation: 'ignore'
 });
 
+const createRuntimeService = runtime => {
+    const service = {};
+    service._refreshExtensionPrimitives = runtime._refreshExtensionPrimitives.bind(runtime);
+    service._registerExtensionPrimitives = runtime._registerExtensionPrimitives.bind(runtime);
+    return service;
+};
+
 /**
  * Handles connections between blocks, stage, and extensions.
  * @constructor
@@ -58,7 +65,7 @@ class VirtualMachine extends EventEmitter {
          * @type {!Runtime}
          */
         this.runtime = new Runtime();
-        centralDispatch.setService('runtime', this.runtime).catch(e => {
+        centralDispatch.setService('runtime', createRuntimeService(this.runtime)).catch(e => {
             log.error(`Failed to register runtime service: ${JSON.stringify(e)}`);
         });
 

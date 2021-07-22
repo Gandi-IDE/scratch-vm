@@ -60,6 +60,15 @@ const builtinExtensions = {
  * @property {Function} reject - function to call on failed worker startup
  */
 
+const createExtensionService = extensionManager => {
+    const service = {};
+    service.registerExtensionServiceSync = extensionManager.registerExtensionServiceSync.bind(extensionManager);
+    service.allocateWorker = extensionManager.allocateWorker.bind(extensionManager);
+    service.onWorkerInit = extensionManager.onWorkerInit.bind(extensionManager);
+    service.registerExtensionService = extensionManager.registerExtensionService.bind(extensionManager);
+    return service;
+};
+
 class ExtensionManager {
     constructor (runtime) {
         /**
@@ -99,7 +108,7 @@ class ExtensionManager {
         this.loadingAsyncExtensions = 0;
         this.asyncExtensionsLoadedCallbacks = [];
 
-        dispatch.setService('extensions', this).catch(e => {
+        dispatch.setService('extensions', createExtensionService(this)).catch(e => {
             log.error(`ExtensionManager was unable to register extension service: ${JSON.stringify(e)}`);
         });
     }
