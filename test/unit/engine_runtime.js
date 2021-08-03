@@ -139,6 +139,7 @@ test('Project loaded emits runtime event', t => {
     });
 });
 
+/*
 test('Cloud variable limit allows only 10 cloud variables', t => {
     // This is a test of just the cloud variable limit mechanism
     // The functions being tested below need to be used when
@@ -184,6 +185,7 @@ test('Cloud variable limit allows only 10 cloud variables', t => {
     t.end();
 
 });
+*/
 
 test('Starting the runtime emits an event', t => {
     let started = false;
