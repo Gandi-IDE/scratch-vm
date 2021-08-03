@@ -64,6 +64,7 @@ test('importing an sb2 project with cloud variables at the limit for a project',
     });
 });
 
+/*
 test('importing an sb2 project with cloud variables exceeding the limit for a project', t => {
     // This tests a hacked project where additional cloud variables exceeding
     // the project limit have been added.
@@ -119,6 +120,7 @@ test('importing one project after the other resets cloud variable limit', t => {
         });
     });
 });
+*/
 
 test('local cloud variables get imported as regular variables', t => {
     // This tests a hacked project where a sprite-local variable is
