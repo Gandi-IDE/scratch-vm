@@ -16,9 +16,8 @@
 
 const SOUP = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#%()*+,-./:;=?@[]^_`{|}~';
 const generateId = i => {
-    // Certain IDs already have other meanings, so we will skip these
-    // There are some other ones that have meaning (see Object.keys(vm.runtime.monitorBlocks._blocks)),
-    // but these would take at least ten million items to appear, so we don't bother listing them here.
+    // IDs in Object.keys(vm.runtime.monitorBlocks._blocks) already have meaning, so make sure to skip those
+    // We don't bother listing many here because most would take more than ten million items to be used
     if (i > 1309) i++; // of
     let str = '';
     while (i >= 0) {
