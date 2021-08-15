@@ -1,5 +1,5 @@
 const tap = require('tap');
-const ExtendedJSON = require('../../src/tw-extended-json');
+const ExtendedJSON = require('../../src/util/tw-extended-json');
 
 const test = tap.test;
 

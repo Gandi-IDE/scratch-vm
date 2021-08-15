@@ -19,7 +19,7 @@ const formatMessage = require('format-message');
 
 const Variable = require('./engine/variable');
 const newBlockIds = require('./util/new-block-ids');
-const ExtendedJSON = require('./tw-extended-json');
+const ExtendedJSON = require('./util/tw-extended-json');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
