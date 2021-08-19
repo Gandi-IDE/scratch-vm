@@ -3,6 +3,10 @@
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
 
 module.exports.pitch = function (request) {
+    // Technically this loader does work in other environments, but our use case does not want that.
+    if (this.target !== 'web') {
+        return 'throw new Error("Not supported in non-web environment");';
+    }
     this.cacheable(false);
     const callback = this.async();
     const compiler = this._compilation.createChildCompiler('extension worker', {});
