@@ -2,6 +2,39 @@ const source = require('./tw-load-script-as-plain-text!./tw-iframe-extension-wor
 
 let _id = 0;
 
+const none = "'none'";
+const featurePolicy = {
+    'accelerometer': none,
+    'ambient-light-sensor': none,
+    'autoplay': none,
+    'battery': none,
+    'camera': none,
+    'display-capture': none,
+    'document-domain': none,
+    'encrypted-media': none,
+    'fullscreen': none,
+    'gamepad': none,
+    'geolocation': none,
+    'gyroscope': none,
+    'magnetometer': none,
+    'microphone': none,
+    'midi': none,
+    'payment': none,
+    'picture-in-picture': none,
+    'publickey-credentials-get': none,
+    'speaker-selection': none,
+    'usb': '*',
+    'vibrate': none,
+    'vr': none,
+    'screen-wake-lock': none,
+    'web-share': none,
+    'interest-cohort': none
+};
+
+const generateAllow = () => Object.entries(featurePolicy)
+    .map(([name, permission]) => `${name} ${permission}`)
+    .join('; ');
+
 class IframeExtensionWorker {
     constructor () {
         this.id = _id++;
@@ -13,6 +46,7 @@ class IframeExtensionWorker {
         this.iframe.style.display = 'none';
         this.iframe.setAttribute('aria-hidden', 'true');
         this.iframe.sandbox = 'allow-scripts';
+        this.iframe.allow = generateAllow();
         document.body.appendChild(this.iframe);
 
         window.addEventListener('message', this._onWindowMessage.bind(this));
