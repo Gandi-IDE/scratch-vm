@@ -43,6 +43,8 @@ class IframeExtensionWorker {
         this.queuedMessages = [];
 
         this.iframe = document.createElement('iframe');
+        this.iframe.className = 'tw-custom-extension-frame';
+        this.iframe.dataset.id = this.id;
         this.iframe.style.display = 'none';
         this.iframe.setAttribute('aria-hidden', 'true');
         this.iframe.sandbox = 'allow-scripts';
