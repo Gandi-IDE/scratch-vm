@@ -1,6 +1,5 @@
-const source = require('./tw-load-script-as-plain-text!./tw-iframe-extension-worker-entry');
-
-let _id = 0;
+const uid = require('../util/uid');
+const frameSource = require('./tw-load-script-as-plain-text!./tw-iframe-extension-worker-entry');
 
 const none = "'none'";
 const featurePolicy = {
@@ -37,7 +36,7 @@ const generateAllow = () => Object.entries(featurePolicy)
 
 class IframeExtensionWorker {
     constructor () {
-        this.id = _id++;
+        this.id = uid();
         this.isRemote = true;
         this.ready = false;
         this.queuedMessages = [];
@@ -53,7 +52,7 @@ class IframeExtensionWorker {
 
         window.addEventListener('message', this._onWindowMessage.bind(this));
         const blob = new Blob([
-            `<body><script>window.__WRAPPED_IFRAME_ID__=${this.id};${source}</script></body>`
+            `<body><script>window.__WRAPPED_IFRAME_ID__=${JSON.stringify(this.id)};${frameSource}</script></body>`
         ], {
             type: 'text/html'
         });
