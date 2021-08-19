@@ -99,6 +99,14 @@ class ExtensionManager {
         this._loadedExtensions = new Map();
 
         /**
+         * Controls how remote custom extensions are loaded.
+         * One of the strings:
+         *  - "worker" (default)
+         *  - "iframe"
+         */
+        this.workerMode = 'worker';
+
+        /**
          * Keep a reference to the runtime so we can construct internal extension objects.
          * TODO: remove this in favor of extensions accessing the runtime as a service.
          * @type {Runtime}
@@ -174,12 +182,9 @@ class ExtensionManager {
         this.loadingAsyncExtensions++;
 
         return new Promise((resolve, reject) => {
-            // If we `require` this at the global level it breaks non-webpack targets, including tests
-            // eslint-disable-next-line max-len
-            const ExtensionWorker = require('worker-loader?name=js/extension-worker/extension-worker.[hash].js!./extension-worker');
-
             this.pendingExtensions.push({extensionURL, resolve, reject});
-            dispatch.addWorker(new ExtensionWorker());
+            const createExtensionWorker = require('./tw-extension-worker-loader');
+            dispatch.addWorker(createExtensionWorker(this));
         })
             .then(() => {
                 this.loadingAsyncExtensions--;
