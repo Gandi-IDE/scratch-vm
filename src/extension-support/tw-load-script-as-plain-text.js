@@ -10,7 +10,7 @@ module.exports.pitch = function (request) {
     compiler.runAsChild((err, entries, compilation) => {
         if (err) return callback(err);
         const file = entries[0].files[0];
-        const source = `export default ${JSON.stringify(compilation.assets[file].source())};`;
+        const source = `module.exports = ${JSON.stringify(compilation.assets[file].source())};`;
         return callback(null, source);
     });
 };

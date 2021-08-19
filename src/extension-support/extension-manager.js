@@ -183,8 +183,9 @@ class ExtensionManager {
 
         return new Promise((resolve, reject) => {
             this.pendingExtensions.push({extensionURL, resolve, reject});
-            const createExtensionWorker = require('./tw-extension-worker-loader');
-            dispatch.addWorker(createExtensionWorker(this));
+            this.createExtensionWorker()
+                .then(worker => dispatch.addWorker(worker))
+                .catch(error => reject(error));
         })
             .then(() => {
                 this.loadingAsyncExtensions--;
@@ -206,6 +207,22 @@ class ExtensionManager {
         return new Promise(resolve => {
             this.asyncExtensionsLoadedCallbacks.push(resolve);
         });
+    }
+
+    /**
+     * Creates a new extension worker.
+     * @returns {Promise}
+     */
+    createExtensionWorker () {
+        if (this.workerMode === 'worker') {
+            // eslint-disable-next-line max-len
+            const ExtensionWorker = require('worker-loader?name=js/extension-worker/extension-worker.[hash].js!./extension-worker');
+            return Promise.resolve(new ExtensionWorker());
+        } else if (this.workerMode === 'iframe') {
+            return import(/* webpackChunkName: "iframe-extension-worker" */ './tw-iframe-extension-worker')
+                .then(mod => new mod.default());
+        }
+        return Promise.reject(new Error('Unknown extension worker mode'));
     }
 
     /**

@@ -1,25 +1,62 @@
-const context = require('./tw-extension-worker-context');
+const source = require('./tw-load-script-as-plain-text!./tw-iframe-extension-worker-entry');
 
-const id = window.__WRAPPED_IFRAME_ID__;
+let _id = 0;
 
-context.isWorker = false;
-context.centralDispatchService = {
-    postMessage (message, transfer) {
-        const data = {
-            vmIframeId: id,
-            message
-        };
-        if (transfer) {
-            window.parent.postMessage(data, '*', transfer);
-        } else {
-            window.parent.postMessage(data, '*');
+class IframeExtensionWorker {
+    constructor () {
+        this.id = _id++;
+        this.isRemote = true;
+        this.ready = false;
+        this.queuedMessages = [];
+
+        this.iframe = document.createElement('iframe');
+        this.iframe.style.display = 'none';
+        this.iframe.setAttribute('aria-hidden', 'true');
+        this.iframe.sandbox = 'allow-scripts';
+        document.body.appendChild(this.iframe);
+
+        window.addEventListener('message', this._onWindowMessage.bind(this));
+        const blob = new Blob([
+            `<body><script>window.__WRAPPED_IFRAME_ID__=${this.id};${source}</script></body>`
+        ], {
+            type: 'text/html'
+        });
+        this.iframe.src = URL.createObjectURL(blob);
+    }
+
+    _onWindowMessage (e) {
+        if (!e.data || e.data.vmIframeId !== this.id) {
+            return;
+        }
+        if (e.data.ready) {
+            this.ready = true;
+            for (const {data, transfer} of this.queuedMessages) {
+                this.postMessage(data, transfer);
+            }
+            this.queuedMessages.length = 0;
+        }
+        if (e.data.message) {
+            this.onmessage({
+                data: e.data.message
+            });
         }
     }
-};
 
-require('./extension-worker');
+    onmessage () {
+        // Should be overridden
+    }
 
-window.parent.postMessage({
-    vmIframeId: id,
-    ready: true
-}, '*');
+    postMessage (data, transfer) {
+        if (this.ready) {
+            if (transfer) {
+                this.iframe.contentWindow.postMessage(data, '*', transfer);
+            } else {
+                this.iframe.contentWindow.postMessage(data, '*');
+            }
+        } else {
+            this.queuedMessages.push({data, transfer});
+        }
+    }
+}
+
+module.exports = IframeExtensionWorker;
