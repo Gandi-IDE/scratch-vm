@@ -23,7 +23,7 @@ const featurePolicy = {
     'picture-in-picture': none,
     'publickey-credentials-get': none,
     'speaker-selection': none,
-    'usb': '*',
+    'usb': none,
     'vibrate': none,
     'vr': none,
     'screen-wake-lock': none,
