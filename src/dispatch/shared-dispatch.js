@@ -172,7 +172,7 @@ class SharedDispatch {
                 resolve(message.result);
             }
         } catch (e) {
-            log.error(`Dispatch callback failed: ${JSON.stringify(e)}`);
+            log.error(`Dispatch callback failed: ${e}`);
         }
     }
 
