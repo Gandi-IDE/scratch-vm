@@ -27,6 +27,10 @@ class ExtensionWorker {
 
         this.initialRegistrations = [];
 
+        this.firstRegistrationPromise = new Promise(resolve => {
+            this.firstRegistrationCallback = resolve;
+        });
+
         dispatch.waitForConnection.then(() => {
             dispatch.call('extensions', 'allocateWorker').then(async x => {
                 const [id, extension] = x;
@@ -34,6 +38,7 @@ class ExtensionWorker {
 
                 try {
                     await loadScripts(extension);
+                    await this.firstRegistrationPromise;
 
                     const initialRegistrations = this.initialRegistrations;
                     this.initialRegistrations = null;
@@ -56,6 +61,7 @@ class ExtensionWorker {
         const promise = dispatch.setService(serviceName, extensionObject)
             .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName));
         if (this.initialRegistrations) {
+            this.firstRegistrationCallback();
             this.initialRegistrations.push(promise);
         }
         return promise;
