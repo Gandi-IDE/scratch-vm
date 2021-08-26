@@ -41,7 +41,19 @@ const ArgumentType = {
     /**
      * Inline image on block (as part of the label)
      */
-    IMAGE: 'image'
+    IMAGE: 'image',
+
+    /**
+     * powered by xigua
+     * XIGUA_MATRIX 小白板的12*12 Led矩阵
+     * XIGUA_WHITE_BOARD_NOTE 小白版的 MIDI note number with note picker (piano) field 超长版本
+     */
+    XIGUA_MATRIX: 'xigua_matrix',
+
+    XIGUA_WHITE_BOARD_NOTE: 'xigua_white_board_note'
+    /**
+     * powered by xigua
+     */
 };
 
 module.exports = ArgumentType;
