@@ -273,6 +273,7 @@ class VirtualMachine extends EventEmitter {
 
     enableDebug () {
         this.runtime.enableDebug();
+        return 'enabled debug mode';
     }
 
     /**
