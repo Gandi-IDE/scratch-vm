@@ -101,6 +101,20 @@ const ArgumentTypeMap = (() => {
         // They are more analagous to the label on a block.
         fieldType: 'field_image'
     };
+    //* * powered by xigua start */
+    map[ArgumentType.XIGUA_MATRIX] = {
+        shadow: {
+            type: 'xigua_matrix',
+            fieldName: 'XIGUA_MATRIX'
+        }
+    };
+    map[ArgumentType.XIGUA_WHITE_BOARD_NOTE] = {
+        shadow: {
+            type: 'xigua_white_board_note',
+            fieldName: 'XIGUA_WHITE_BOARD_NOTE'
+        }
+    };
+    //* * powered by xigua end */
     return map;
 })();
 
