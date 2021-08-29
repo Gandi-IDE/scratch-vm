@@ -3,6 +3,10 @@
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
 
 module.exports.pitch = function (request) {
+    // Temporary hack to allow TW Desktop to avoid nonsensical errors
+    if (process.env.TW_DISABLE_PLAIN_TEXT_LOADER) {
+        return 'throw new Error("Loader was disabled at build time");';
+    }
     // Technically this loader does work in other environments, but our use case does not want that.
     if (this.target !== 'web') {
         return 'throw new Error("Not supported in non-web environment");';
