@@ -186,14 +186,7 @@ class ExtensionManager {
             this.createExtensionWorker()
                 .then(worker => dispatch.addWorker(worker))
                 .catch(error => reject(error));
-        })
-            .then(() => {
-                this.loadingAsyncExtensions--;
-                if (this.loadingAsyncExtensions === 0) {
-                    this.asyncExtensionsLoadedCallbacks.forEach(i => i());
-                    this.asyncExtensionsLoadedCallbacks = [];
-                }
-            });
+        });
     }
 
     /**
@@ -267,6 +260,12 @@ class ExtensionManager {
         dispatch.call(serviceName, 'getInfo').then(info => {
             this._loadedExtensions.set(info.id, serviceName);
             this._registerExtensionInfo(serviceName, info);
+
+            this.loadingAsyncExtensions--;
+            if (this.loadingAsyncExtensions === 0) {
+                this.asyncExtensionsLoadedCallbacks.forEach(i => i());
+                this.asyncExtensionsLoadedCallbacks = [];
+            }
         });
     }
 
