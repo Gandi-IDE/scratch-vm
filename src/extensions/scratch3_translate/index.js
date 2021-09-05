@@ -247,6 +247,9 @@ class Scratch3TranslateBlocks {
      * @return {Promise} - a promise that resolves after the response from the translate server.
      */
     getTranslate (args) {
+        // tw: Temporary hack until translate API is fixed
+        return Promise.resolve(args.WORDS);
+
         // If the text contains only digits 0-9 and nothing else, return it without
         // making a request.
         if (/^\d+$/.test(args.WORDS)) return Promise.resolve(args.WORDS);
