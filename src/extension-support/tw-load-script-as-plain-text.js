@@ -14,7 +14,7 @@ module.exports.pitch = function (request) {
     this.cacheable(false);
     const callback = this.async();
     const compiler = this._compilation.createChildCompiler('extension worker', {});
-    new SingleEntryPlugin(this.context, `!!${request}`, 'main').apply(compiler);
+    new SingleEntryPlugin(this.context, `!!${request}`, 'extension worker').apply(compiler);
     compiler.runAsChild((err, entries, compilation) => {
         if (err) return callback(err);
         const file = entries[0].files[0];
