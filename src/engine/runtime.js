@@ -2521,14 +2521,14 @@ class Runtime extends EventEmitter {
     storeProjectOptions () {
         const options = this.generateProjectOptions();
         // TODO: translate
-        const text = `Configuration for https://turbowarp.org/\nDo not edit by hand\n${ExtendedJSON.stringify(options)}${COMMENT_CONFIG_MAGIC}`;
+        const text = `Configuration for https://turbowarp.org/\nYou can move, resize, and minimize this comment, but don't edit it by hand. This comment can be deleted to remove the stored settings.\n${ExtendedJSON.stringify(options)}${COMMENT_CONFIG_MAGIC}`;
         const existingComment = this.findProjectOptionsComment();
         if (existingComment) {
             existingComment.text = text;
         } else {
             const target = this.getTargetForStage();
             // TODO: smarter position logic
-            target.createComment(uid(), null, text, 50, 50, 350, 150, false);
+            target.createComment(uid(), null, text, 50, 50, 350, 170, false);
         }
         this.emitProjectChanged();
     }
