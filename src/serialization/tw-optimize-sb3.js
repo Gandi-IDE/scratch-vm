@@ -53,45 +53,21 @@ class Pool {
 }
 
 const optimize = projectData => {
-    // For now, we use a single pool of IDs for everything.
-    // This is not ideal, but we we want to be safe and avoid corrupting projects again.
+    // projectData is modified in-place
+
+    // The optimization here is not optimal. This is intentional because we want to be truly lossless and maintain
+    // all editor functionality and compatibility with third-party tools.
+
+    // Optimization happens in two "passes", one to find all IDs and sort them so that we can generate the most
+    // optimized new IDs, then one more pass to actually apply those new IDs.
     const pool = new Pool();
 
-    // monitors has to be converted to an array from an OrderedMap
-    projectData.monitors = Array.from(projectData.monitors);
-    for (const monitor of projectData.monitors) {
-        const monitorOpcode = monitor.opcode;
-        if (monitorOpcode === 'data_variable' || monitorOpcode === 'data_listcontents') {
-            const monitorId = monitor.id;
-            pool.addReference(monitorId);
-        }
-    }
     for (const target of projectData.targets) {
-        const handleCompressedNative = native => {
-            const type = native[0];
-            if (type === /* VAR_PRIMITIVE */ 12 || type === /* LIST_PRIMITIVE */ 13) {
-                const variableId = native[2];
-                pool.addReference(variableId);
-            } else if (type === /* BROADCAST_PRIMITIVE */ 11) {
-                const broadcastId = native[2];
-                pool.addReference(broadcastId);
-            }
-        };
-
-        for (const variableId of Object.keys(target.variables)) {
-            pool.addReference(variableId);
-        }
-        for (const variableId of Object.keys(target.lists)) {
-            pool.addReference(variableId);
-        }
-        for (const broadcastId of Object.keys(target.broadcasts)) {
-            pool.addReference(broadcastId);
-        }
         for (const blockId of Object.keys(target.blocks)) {
             const block = target.blocks[blockId];
             pool.addReference(blockId);
             if (Array.isArray(block)) {
-                handleCompressedNative(block);
+                // Compressed primitive
                 continue;
             }
             if (block.parent) {
@@ -103,21 +79,10 @@ const optimize = projectData => {
             if (block.comment) {
                 pool.addReference(block.comment);
             }
-            if (block.fields.VARIABLE) {
-                pool.addReference(block.fields.VARIABLE[1]);
-            }
-            if (block.fields.LIST) {
-                pool.addReference(block.fields.LIST[1]);
-            }
-            if (block.fields.BROADCAST_OPTION) {
-                pool.addReference(block.fields.BROADCAST_OPTION[1]);
-            }
             for (const inputName of Object.keys(block.inputs)) {
                 const input = block.inputs[inputName];
                 const inputValue = input[1];
-                if (Array.isArray(inputValue)) {
-                    handleCompressedNative(inputValue);
-                } else if (typeof inputValue === 'string') {
+                if (typeof inputValue === 'string') {
                     const childBlockId = input[1];
                     pool.addReference(childBlockId);
                 }
@@ -132,50 +97,14 @@ const optimize = projectData => {
         }
     }
 
-    // Used the data from the first scan to replace all the IDs with shorter versions
     pool.generateNewIds();
-    for (const monitor of projectData.monitors) {
-        const monitorOpcode = monitor.opcode;
-        if (monitorOpcode === 'data_variable' || monitorOpcode === 'data_listcontents') {
-            const monitorId = monitor.id;
-            monitor.id = pool.getNewId(monitorId);
-        }
-    }
     for (const target of projectData.targets) {
-        const newVariables = {};
-        const newLists = {};
-        const newBroadcasts = {};
         const newBlocks = {};
         const newComments = {};
-
-        const handleCompressedNative = native => {
-            const type = native[0];
-            if (type === /* VAR_PRIMITIVE */ 12 || type === /* LIST_PRIMITIVE */ 13) {
-                const variableId = native[2];
-                native[2] = pool.getNewId(variableId);
-            } else if (type === /* BROADCAST_PRIMITIVE */ 11) {
-                const broadcastId = native[2];
-                native[2] = pool.getNewId(broadcastId);
-            }
-        };
-
-        for (const variableId of Object.keys(target.variables)) {
-            const variable = target.variables[variableId];
-            newVariables[pool.getNewId(variableId)] = variable;
-        }
-        for (const variableId of Object.keys(target.lists)) {
-            const variable = target.lists[variableId];
-            newLists[pool.getNewId(variableId)] = variable;
-        }
-        for (const broadcastId of Object.keys(target.broadcasts)) {
-            const broadcast = target.broadcasts[broadcastId];
-            newBroadcasts[pool.getNewId(broadcastId)] = broadcast;
-        }
         for (const blockId of Object.keys(target.blocks)) {
             const block = target.blocks[blockId];
             newBlocks[pool.getNewId(blockId)] = block;
             if (Array.isArray(block)) {
-                handleCompressedNative(block);
                 continue;
             }
             if (block.parent) {
@@ -187,21 +116,10 @@ const optimize = projectData => {
             if (block.comment) {
                 block.comment = pool.getNewId(block.comment);
             }
-            if (block.fields.VARIABLE) {
-                block.fields.VARIABLE[1] = pool.getNewId(block.fields.VARIABLE[1]);
-            }
-            if (block.fields.LIST) {
-                block.fields.LIST[1] = pool.getNewId(block.fields.LIST[1]);
-            }
-            if (block.fields.BROADCAST_OPTION) {
-                block.fields.BROADCAST_OPTION[1] = pool.getNewId(block.fields.BROADCAST_OPTION[1]);
-            }
             for (const inputName of Object.keys(block.inputs)) {
                 const input = block.inputs[inputName];
                 const inputValue = input[1];
-                if (Array.isArray(inputValue)) {
-                    handleCompressedNative(inputValue);
-                } else if (typeof inputValue === 'string') {
+                if (typeof inputValue === 'string') {
                     const childBlockId = input[1];
                     input[1] = pool.getNewId(childBlockId);
                 }
@@ -214,10 +132,6 @@ const optimize = projectData => {
                 comment.blockId = pool.getNewId(comment.blockId);
             }
         }
-
-        target.variables = newVariables;
-        target.lists = newLists;
-        target.broadcasts = newBroadcasts;
         target.blocks = newBlocks;
         target.comments = newComments;
     }
