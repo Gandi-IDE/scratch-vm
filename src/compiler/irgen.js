@@ -1245,7 +1245,7 @@ class ScriptTreeGenerator {
         while (blockId !== null) {
             const block = this.getBlockById(blockId);
             if (!block) {
-                throw new Error('no block');
+                break;
             }
 
             const node = this.descendStackedBlock(block);
