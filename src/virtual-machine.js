@@ -412,7 +412,10 @@ class VirtualMachine extends EventEmitter {
                     json.projectVersion = 2;
                     return Promise.resolve([json, sb1.zip]);
                 } catch (sb1Error) {
-                    if (sb1Error instanceof ValidationError) {
+                    if (
+                        sb1Error instanceof ValidationError ||
+                        `${sb1Error}` === 'Non-ascii character in FixedAsciiString'
+                    ) {
                         // The input does not validate as a Scratch 1 file.
                     } else {
                         // The project appears to be a Scratch 1 file but it
