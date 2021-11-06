@@ -130,14 +130,15 @@ const ArgumentTypeMap = (() => {
  * and remove an existing cloud variable.
  * These are to be called whenever attempting to create or delete
  * a cloud variable.
+ * @param {Object} cloudOptions
+ * @param {number} cloudOptions.limit Maximum number of cloud variables
  * @return {CloudDataManager} The functions to be used when adding or removing a
  * cloud variable.
  */
-const cloudDataManager = () => {
-    const limit = 100;
+const cloudDataManager = cloudOptions => {
     let count = 0;
 
-    const canAddCloudVariable = () => count < limit;
+    const canAddCloudVariable = () => count < cloudOptions.limit;
 
     const addCloudVariable = () => {
         count++;
@@ -366,7 +367,11 @@ class Runtime extends EventEmitter {
          */
         this.profiler = null;
 
-        const newCloudDataManager = cloudDataManager();
+        this.cloudOptions = {
+            limit: 100
+        };
+
+        const newCloudDataManager = cloudDataManager(this.cloudOptions);
 
         /**
          * Check wether the runtime has any cloud data.
@@ -2024,7 +2029,7 @@ class Runtime extends EventEmitter {
         this.ioDevices.cloud.clear();
 
         // Reset runtime cloud data info
-        const newCloudDataManager = cloudDataManager();
+        const newCloudDataManager = cloudDataManager(this.cloudOptions);
         this.hasCloudData = newCloudDataManager.hasCloudVariables;
         this.canAddCloudVariable = newCloudDataManager.canAddCloudVariable;
         this.addCloudVariable = this._initializeAddCloudVariable(newCloudDataManager);
