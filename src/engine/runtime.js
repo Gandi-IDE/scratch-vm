@@ -1699,6 +1699,7 @@ class Runtime extends EventEmitter {
     attachRenderer (renderer) {
         this.renderer = renderer;
         this.renderer.setLayerGroupOrdering(StageLayering.LAYER_GROUPS);
+        this.renderer.offscreenTouching = !this.runtimeOptions.fencing;
     }
 
     /**
@@ -2383,6 +2384,9 @@ class Runtime extends EventEmitter {
     setRuntimeOptions (runtimeOptions) {
         this.runtimeOptions = Object.assign({}, this.runtimeOptions, runtimeOptions);
         this.emit(Runtime.RUNTIME_OPTIONS_CHANGED, this.runtimeOptions);
+        if (this.renderer) {
+            this.renderer.offscreenTouching = !this.runtimeOptions.fencing;
+        }
     }
 
     /**
