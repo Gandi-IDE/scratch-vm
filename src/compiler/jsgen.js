@@ -529,7 +529,7 @@ class JSGenerator {
             return new TypedInput(`compareEqual(${left.asUnknown()}, ${right.asUnknown()})`, TYPE_BOOLEAN);
         }
         case 'op.e^':
-            return new TypedInput(`(Math.E ** ${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
+            return new TypedInput(`Math.exp(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
         case 'op.floor':
             return new TypedInput(`Math.floor(${this.descendInput(node.value).asNumber()})`, TYPE_NUMBER);
         case 'op.greater': {
