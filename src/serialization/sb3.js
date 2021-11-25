@@ -570,8 +570,9 @@ const serialize = function (runtime, targetId, {allowOptimization = false} = {})
     }
 
     // Attach full user agent string to metadata if available
-    meta.agent = 'none';
-    if (typeof navigator !== 'undefined') meta.agent = navigator.userAgent;
+    meta.agent = '';
+    // TW: Never include full user agent to slightly improve user privacy
+    // if (typeof navigator !== 'undefined') meta.agent = navigator.userAgent;
 
     // Assemble payload and return
     obj.meta = meta;
