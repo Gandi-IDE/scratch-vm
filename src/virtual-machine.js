@@ -414,7 +414,7 @@ class VirtualMachine extends EventEmitter {
                 } catch (sb1Error) {
                     if (
                         sb1Error instanceof ValidationError ||
-                        `${sb1Error}` === 'Non-ascii character in FixedAsciiString'
+                        `${sb1Error}`.includes('Non-ascii character in FixedAsciiString')
                     ) {
                         // The input does not validate as a Scratch 1 file.
                     } else {
