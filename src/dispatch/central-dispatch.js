@@ -95,7 +95,7 @@ class CentralDispatch extends SharedDispatch {
             this.workers.push(worker);
             worker.onmessage = this._onMessage.bind(this, worker);
             this._remoteCall(worker, 'dispatch', 'handshake').catch(e => {
-                log.error(`Could not handshake with worker: ${JSON.stringify(e)}`);
+                log.error(`Could not handshake with worker: ${e}`);
             });
         } else {
             log.warn('Central dispatch ignoring attempt to add duplicate worker');
@@ -113,7 +113,7 @@ class CentralDispatch extends SharedDispatch {
         const provider = this.services[service];
         return provider && {
             provider,
-            isRemote: Boolean(this.workerClass && provider instanceof this.workerClass)
+            isRemote: Boolean((this.workerClass && provider instanceof this.workerClass) || provider.isRemote)
         };
     }
 

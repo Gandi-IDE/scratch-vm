@@ -5,9 +5,13 @@ test('interface', t => {
     const vm = new VirtualMachine();
     t.type(vm, 'object');
     t.type(vm.start, 'function');
+    t.type(vm.stop, 'function');
     t.type(vm.greenFlag, 'function');
     t.type(vm.setTurboMode, 'function');
     t.type(vm.setCompatibilityMode, 'function');
+    t.type(vm.setFramerate, 'function');
+    t.type(vm.setRuntimeOptions, 'function');
+    t.type(vm.setCompilerOptions, 'function');
     t.type(vm.stopAll, 'function');
     t.type(vm.clear, 'function');
 

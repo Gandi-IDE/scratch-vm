@@ -54,6 +54,104 @@ test('mouseDown', t => {
     t.end();
 });
 
+test('position clamping', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    const BIG = 9999;
+    m.postData({
+        x: BIG,
+        y: BIG,
+        canvasWidth: 480,
+        canvasHeight: 360
+    });
+    t.strictEquals(m.getClientX(), BIG);
+    t.strictEquals(m.getClientY(), BIG);
+    t.strictEquals(m.getScratchX(), 240);
+    t.strictEquals(m.getScratchY(), -180);
+    t.end();
+});
+
+test('mouseButtonDown', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    t.strictEquals(m.getButtonIsDown(0), false);
+    t.strictEquals(m.getButtonIsDown(1), false);
+    t.strictEquals(m.getButtonIsDown(2), false);
+    m.postData({
+        isDown: true,
+        button: 0
+    });
+    t.strictEquals(m.getButtonIsDown(0), true);
+    t.strictEquals(m.getButtonIsDown(1), false);
+    t.strictEquals(m.getButtonIsDown(2), false);
+    m.postData({
+        isDown: true,
+        button: 2
+    });
+    t.strictEquals(m.getButtonIsDown(0), true);
+    t.strictEquals(m.getButtonIsDown(1), false);
+    t.strictEquals(m.getButtonIsDown(2), true);
+    m.postData({
+        isDown: false,
+        button: 2
+    });
+    t.strictEquals(m.getButtonIsDown(0), true);
+    t.strictEquals(m.getButtonIsDown(1), false);
+    t.strictEquals(m.getButtonIsDown(2), false);
+    t.end();
+});
+
+test('mouseDown with buttons', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    t.strictEquals(m.getIsDown(), false);
+    m.postData({
+        isDown: true,
+        button: 0
+    });
+    t.strictEquals(m.getIsDown(), true);
+    m.postData({
+        isDown: true,
+        button: 2
+    });
+    t.strictEquals(m.getIsDown(), true);
+    m.postData({
+        isDown: false,
+        button: 2
+    });
+    t.strictEquals(m.getIsDown(), false);
+    t.end();
+});
+
+test('missing button is treated as left', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    t.strictEquals(m.getButtonIsDown(0), false);
+    m.postData({
+        isDown: true
+    });
+    t.strictEquals(m.getButtonIsDown(0), true);
+    m.postData({
+        isDown: false
+    });
+    t.strictEquals(m.getButtonIsDown(0), false);
+    t.end();
+});
+
+test('usesRightClickDown', t => {
+    const rt = new Runtime();
+    const m = new Mouse(rt);
+
+    t.strictEquals(m.usesRightClickDown, false);
+    t.strictEquals(m.getButtonIsDown(2), false);
+    t.strictEquals(m.usesRightClickDown, true);
+    t.end();
+});
+
 test('at zoomed scale', t => {
     const rt = new Runtime();
     const m = new Mouse(rt);

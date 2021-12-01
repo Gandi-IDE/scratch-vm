@@ -126,12 +126,14 @@ class Scratch3MusicBlocks {
 
         if (!assetData[fullPath]) return;
 
-        // The sound player has already been downloaded via the manifest file required above.
-        const soundBuffer = assetData[fullPath];
+        const soundFile = assetData[fullPath];
 
-        return this._decodeSound(soundBuffer).then(player => {
-            playerArray[index] = player;
-        });
+        return fetch(soundFile)
+            .then(r => r.arrayBuffer())
+            .then(soundBuffer => this._decodeSound(soundBuffer))
+            .then(player => {
+                playerArray[index] = player;
+            });
     }
 
     /**

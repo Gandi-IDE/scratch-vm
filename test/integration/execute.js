@@ -59,9 +59,9 @@ const whenThreadsComplete = (t, vm, timeLimit = 2000) => (
 const executeDir = path.resolve(__dirname, '../fixtures/execute');
 
 fs.readdirSync(executeDir)
-    .filter(uri => uri.endsWith('.sb2'))
+    .filter(uri => uri.endsWith('.sb2') || uri.endsWith('.sb3'))
     .forEach(uri => {
-        test(uri, t => {
+        const run = (t, enableCompiler) => {
             // Disable logging during this test.
             log.suggest.deny('vm', 'error');
             t.tearDown(() => log.suggest.clear());
@@ -109,6 +109,16 @@ fs.readdirSync(executeDir)
             vm.clear();
             vm.setCompatibilityMode(false);
             vm.setTurboMode(false);
+            vm.setCompilerOptions({enabled: enableCompiler});
+
+            // tw: fail test when certain errors happen
+            if (enableCompiler) {
+                vm.on('COMPILE_ERROR', (target, error) => {
+                    if (!`${error}`.includes('edge-activated hat')) {
+                        throw new Error(`Could not compile script in ${target.getName()}: ${error}`);
+                    }
+                });
+            }
 
             // Stop the runtime interval once the test is complete so the test
             // process may naturally exit.
@@ -141,5 +151,7 @@ fs.readdirSync(executeDir)
                         t.end();
                     }
                 });
-        });
+        };
+        test(`${uri} (interpreted)`, t => run(t, false));
+        test(`${uri} (compiled)`, t => run(t, true));
     });

@@ -24,6 +24,16 @@ test('setxy', t => {
     a.setXY(123, 321, true);
     t.equals(a.x, 123);
     t.equals(a.y, 321);
+    renderer.getFencedPositionOfDrawable = () => [50, 50];
+    a.setXY(100, 100, true);
+    t.equals(a.x, 50);
+    t.equals(a.y, 50);
+    r.setRuntimeOptions({
+        fencing: false
+    });
+    a.setXY(100, 100, true);
+    t.equals(a.x, 100);
+    t.equals(a.y, 100);
     t.end();
 });
 
@@ -74,6 +84,14 @@ test('setSize', t => {
     a.renderer = renderer;
     a.setSize(123);
     t.equals(a._getRenderedDirectionAndScale().scale[0], 123);
+    renderer.getCurrentSkinSize = () => [100, 100];
+    a.setSize(99999);
+    t.equals(a._getRenderedDirectionAndScale().scale[0], 540);
+    r.setRuntimeOptions({
+        fencing: false
+    });
+    a.setSize(99999);
+    t.equals(a._getRenderedDirectionAndScale().scale[0], 99999);
     t.end();
 });
 

@@ -1,3 +1,5 @@
+const log = require('../util/log');
+
 /**
  * Recycle bin for empty stackFrame objects
  * @type Array<_StackFrame>
@@ -187,6 +189,28 @@ class Thread {
         this.warpTimer = null;
 
         this.justReported = null;
+
+        this.triedToCompile = false;
+
+        this.isCompiled = false;
+
+        // compiler data
+        // these values only make sense if isCompiled == true
+        this.timer = null;
+        /**
+         * Warp level
+         * @type {number}
+         */
+        this.warp = 0;
+        /**
+         * The thread's generator.
+         * @type {Generator}
+         */
+        this.generator = null;
+        /**
+         * @type {Object.<string, import('../compiler/compile').CompiledScript>}
+         */
+        this.procedures = null;
     }
 
     /**
@@ -196,7 +220,7 @@ class Thread {
      * @const
      */
     static get STATUS_RUNNING () {
-        return 0;
+        return 0; // used by compiler
     }
 
     /**
@@ -205,7 +229,7 @@ class Thread {
      * @const
      */
     static get STATUS_PROMISE_WAIT () {
-        return 1;
+        return 1; // used by compiler
     }
 
     /**
@@ -213,7 +237,7 @@ class Thread {
      * @const
      */
     static get STATUS_YIELD () {
-        return 2;
+        return 2; // used by compiler
     }
 
     /**
@@ -222,7 +246,7 @@ class Thread {
      * @const
      */
     static get STATUS_YIELD_TICK () {
-        return 3;
+        return 3; // used by compiler
     }
 
     /**
@@ -231,7 +255,21 @@ class Thread {
      * @const
      */
     static get STATUS_DONE () {
-        return 4;
+        return 4; // used by compiler
+    }
+
+    /**
+     * @param {Target} target The target running the thread.
+     * @param {string} topBlock ID of the thread's top block.
+     * @returns {string} A unique ID for this target and thread.
+     */
+    static getIdFromTargetAndBlock (target, topBlock) {
+        // & should never appear in any IDs, so we can use it as a separator
+        return `${target.id}&${topBlock}`;
+    }
+
+    getId () {
+        return Thread.getIdFromTargetAndBlock(this.target, this.topBlock);
     }
 
     /**
@@ -361,6 +399,11 @@ class Thread {
         return null;
     }
 
+    getAllparams () {
+        const stackFrame = this.peekStackFrame();
+        return stackFrame.params;
+    }
+
     /**
      * Whether the current execution of a thread is at the top of the stack.
      * @return {boolean} True if execution is at top of the stack.
@@ -398,6 +441,58 @@ class Thread {
             if (--callCount < 0) return false;
         }
         return false;
+    }
+
+    /**
+     * Attempt to compile this thread.
+     */
+    tryCompile () {
+        if (!this.blockContainer) {
+            return;
+        }
+
+        // importing the compiler here avoids circular dependency issues
+        const compile = require('../compiler/compile');
+
+        this.triedToCompile = true;
+
+        const topBlock = this.topBlock;
+        // Flyout blocks are stored in a special block container.
+        const blocks = this.blockContainer.getBlock(topBlock) ? this.blockContainer : this.target.runtime.flyoutBlocks;
+        const cachedResult = blocks.getCachedCompileResult(topBlock);
+        // If there is a cached error, do not attempt to recompile.
+        if (cachedResult && !cachedResult.success) {
+            return;
+        }
+
+        let result;
+        if (cachedResult) {
+            result = cachedResult.value;
+        } else {
+            try {
+                result = compile(this);
+                blocks.cacheCompileResult(topBlock, result);
+            } catch (error) {
+                log.error('cannot compile script', this.target.getName(), error);
+                blocks.cacheCompileError(topBlock, error);
+                this.target.runtime.emitCompileError(this.target, error);
+                return;
+            }
+        }
+
+        this.procedures = {};
+        for (const procedureCode of Object.keys(result.procedures)) {
+            this.procedures[procedureCode] = result.procedures[procedureCode](this);
+        }
+
+        this.generator = result.startingFunction(this)();
+
+        if (!this.blockContainer.forceNoGlow) {
+            this.blockGlowInFrame = this.topBlock;
+            this.requestScriptGlowInFrame = true;
+        }
+
+        this.isCompiled = true;
     }
 }
 

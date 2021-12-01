@@ -215,7 +215,7 @@ class Scratch3LooksBlocks {
      * @return {undefined} Early return if text is empty string.
      * @private
      */
-    _renderBubble (target) {
+    _renderBubble (target) { // used by compiler
         if (!this.runtime.renderer) return;
 
         const bubbleState = this._getBubbleState(target);
@@ -329,7 +329,11 @@ class Scratch3LooksBlocks {
 
     say (args, util) {
         // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
-        this.runtime.emit(Scratch3LooksBlocks.SAY_OR_THINK, util.target, 'say', args.MESSAGE);
+        const message = args.MESSAGE;
+        this._say(message, util.target);
+    }
+    _say (message, target) { // used by compiler
+        this.runtime.emit(Scratch3LooksBlocks.SAY_OR_THINK, target, 'say', message);
     }
 
     sayforsecs (args, util) {
@@ -386,7 +390,7 @@ class Scratch3LooksBlocks {
      * @param {boolean=} optZeroIndex Set to zero-index the requestedCostume.
      * @return {Array.<!Thread>} Any threads started by this switch.
      */
-    _setCostume (target, requestedCostume, optZeroIndex) {
+    _setCostume (target, requestedCostume, optZeroIndex) { // used by compiler
         if (typeof requestedCostume === 'number') {
             // Numbers should be treated as costume indices, always
             target.setCostume(optZeroIndex ? requestedCostume : requestedCostume - 1);
@@ -420,7 +424,7 @@ class Scratch3LooksBlocks {
      * @param {boolean=} optZeroIndex Set to zero-index the requestedBackdrop.
      * @return {Array.<!Thread>} Any threads started by this switch.
      */
-    _setBackdrop (stage, requestedBackdrop, optZeroIndex) {
+    _setBackdrop (stage, requestedBackdrop, optZeroIndex) { // used by compiler
         if (typeof requestedBackdrop === 'number') {
             // Numbers should be treated as backdrop indices, always
             stage.setCostume(optZeroIndex ? requestedBackdrop : requestedBackdrop - 1);
@@ -462,7 +466,7 @@ class Scratch3LooksBlocks {
     }
 
     switchCostume (args, util) {
-        this._setCostume(util.target, args.COSTUME);
+        this._setCostume(util.target, args.COSTUME); // used by compiler
     }
 
     nextCostume (args, util) {
@@ -520,7 +524,7 @@ class Scratch3LooksBlocks {
         );
     }
 
-    clampEffect (effect, value) {
+    clampEffect (effect, value) { // used by compiler
         let clampedValue = value;
         switch (effect) {
         case 'ghost':

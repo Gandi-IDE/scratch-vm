@@ -80,6 +80,7 @@ test('#760 - broadcastAndWait', t => {
     t.strictEqual(th.status, Thread.STATUS_RUNNING);
 
     // restarts done threads that are in runtime threads
+    rt.updateThreadMap();
     th = rt._pushThread('broadcastAndWaitBlock', tgt);
     util.thread = th;
     e.broadcastAndWait({BROADCAST_OPTION: {id: 'testBroadcastID', name: 'message'}}, util);

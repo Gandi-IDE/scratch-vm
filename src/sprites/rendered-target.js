@@ -161,6 +161,8 @@ class RenderedTarget extends Target {
          * @type {string}
          */
         this.textToSpeechLanguage = null;
+
+        this.interpolationData = null;
     }
 
     /**
@@ -263,26 +265,28 @@ class RenderedTarget extends Target {
      * @param {!number} y New Y coordinate, in Scratch coordinates.
      * @param {?boolean} force Force setting X/Y, in case of dragging
      */
-    setXY (x, y, force) {
+    setXY (x, y, force) { // used by compiler
         if (this.isStage) return;
         if (this.dragging && !force) return;
         const oldX = this.x;
         const oldY = this.y;
         if (this.renderer) {
-            const position = this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]);
+            const position = this.runtime.runtimeOptions.fencing ?
+                this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]) :
+                [x, y];
             this.x = position[0];
             this.y = position[1];
 
             this.renderer.updateDrawablePosition(this.drawableID, position);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         } else {
             this.x = x;
             this.y = y;
         }
-        this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY, force);
+        this.emitFast(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY, force);
         this.runtime.requestTargetsUpdate(this);
     }
 
@@ -310,7 +314,7 @@ class RenderedTarget extends Target {
      * Set the direction.
      * @param {!number} direction New direction.
      */
-    setDirection (direction) {
+    setDirection (direction) { // used by compiler
         if (this.isStage) {
             return;
         }
@@ -323,7 +327,7 @@ class RenderedTarget extends Target {
             const {direction: renderedDirection, scale} = this._getRenderedDirectionAndScale();
             this.renderer.updateDrawableDirectionScale(this.drawableID, renderedDirection, scale);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -344,7 +348,7 @@ class RenderedTarget extends Target {
      * Set visibility; i.e., whether it's shown or hidden.
      * @param {!boolean} visible True if should be shown.
      */
-    setVisible (visible) {
+    setVisible (visible) { // used by compiler
         if (this.isStage) {
             return;
         }
@@ -352,7 +356,7 @@ class RenderedTarget extends Target {
         if (this.renderer) {
             this.renderer.updateDrawableVisible(this.drawableID, this.visible);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -363,7 +367,7 @@ class RenderedTarget extends Target {
      * Set size, as a percentage of the costume size.
      * @param {!number} size Size of rendered target, as % of costume size.
      */
-    setSize (size) {
+    setSize (size) { // used by compiler
         if (this.isStage) {
             return;
         }
@@ -373,18 +377,23 @@ class RenderedTarget extends Target {
             const costumeSize = this.renderer.getCurrentSkinSize(this.drawableID);
             const origW = costumeSize[0];
             const origH = costumeSize[1];
-            const minScale = Math.min(1, Math.max(5 / origW, 5 / origH));
-            const maxScale = Math.min(
-                (1.5 * this.runtime.constructor.STAGE_WIDTH) / origW,
-                (1.5 * this.runtime.constructor.STAGE_HEIGHT) / origH
-            );
+            const fencing = this.runtime.runtimeOptions.fencing;
+            const minScale = fencing ? Math.min(1, Math.max(5 / origW, 5 / origH)) : 0;
+            const maxScale = fencing ? Math.min(
+                (1.5 * this.runtime.stageWidth) / origW,
+                (1.5 * this.runtime.stageHeight) / origH
+            ) : Infinity;
             this.size = MathUtil.clamp(size / 100, minScale, maxScale) * 100;
             const {direction, scale} = this._getRenderedDirectionAndScale();
             this.renderer.updateDrawableDirectionScale(this.drawableID, direction, scale);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
+        } else {
+            // tw: setSize should update size even without a renderer
+            // needed by tw-change-size-does-not-use-rounded-size.sb3 test
+            this.size = size;
         }
         this.runtime.requestTargetsUpdate(this);
     }
@@ -394,13 +403,13 @@ class RenderedTarget extends Target {
      * @param {!string} effectName Name of effect (see `RenderedTarget.prototype.effects`).
      * @param {!number} value Numerical magnitude of effect.
      */
-    setEffect (effectName, value) {
+    setEffect (effectName, value) { // used by compiler
         if (!this.effects.hasOwnProperty(effectName)) return;
         this.effects[effectName] = value;
         if (this.renderer) {
             this.renderer.updateDrawableEffect(this.drawableID, effectName, value);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -409,7 +418,7 @@ class RenderedTarget extends Target {
     /**
      * Clear all graphic effects on this rendered target.
      */
-    clearEffects () {
+    clearEffects () { // used by compiler
         for (const effectName in this.effects) {
             if (!this.effects.hasOwnProperty(effectName)) continue;
             this.effects[effectName] = 0;
@@ -420,7 +429,7 @@ class RenderedTarget extends Target {
                 this.renderer.updateDrawableEffect(this.drawableID, effectName, 0);
             }
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -433,7 +442,9 @@ class RenderedTarget extends Target {
     setCostume (index) {
         // Keep the costume index within possible values.
         index = Math.round(index);
-        if ([Infinity, -Infinity, NaN].includes(index)) index = 0;
+        if (index === Infinity || index === -Infinity || !index) {
+            index = 0;
+        }
 
         this.currentCostume = MathUtil.wrapClamp(
             index, 0, this.sprite.costumes.length - 1
@@ -443,7 +454,7 @@ class RenderedTarget extends Target {
             this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
 
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -569,7 +580,7 @@ class RenderedTarget extends Target {
      * Update the rotation style.
      * @param {!string} rotationStyle New rotation style.
      */
-    setRotationStyle (rotationStyle) {
+    setRotationStyle (rotationStyle) { // used by compiler
         if (rotationStyle === RenderedTarget.ROTATION_STYLE_NONE) {
             this.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
         } else if (rotationStyle === RenderedTarget.ROTATION_STYLE_ALL_AROUND) {
@@ -581,7 +592,7 @@ class RenderedTarget extends Target {
             const {direction, scale} = this._getRenderedDirectionAndScale();
             this.renderer.updateDrawableDirectionScale(this.drawableID, direction, scale);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -594,8 +605,9 @@ class RenderedTarget extends Target {
      * @return {number} Index of the named costume, or -1 if not present.
      */
     getCostumeIndexByName (costumeName) {
-        for (let i = 0; i < this.sprite.costumes.length; i++) {
-            if (this.getCostumes()[i].name === costumeName) {
+        const costumes = this.getCostumes();
+        for (let i = 0; i < costumes.length; i++) {
+            if (costumes[i].name === costumeName) {
                 return i;
             }
         }
@@ -614,7 +626,7 @@ class RenderedTarget extends Target {
      * Get full costume list
      * @return {object[]} list of costumes
      */
-    getCostumes () {
+    getCostumes () { // used by compiler
         return this.sprite.costumes;
     }
 
@@ -687,7 +699,7 @@ class RenderedTarget extends Target {
             }
 
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }
@@ -740,7 +752,7 @@ class RenderedTarget extends Target {
      * @param {string} requestedObject an id for mouse or edge, or a sprite name.
      * @return {boolean} True if the sprite is touching the object.
      */
-    isTouchingObject (requestedObject) {
+    isTouchingObject (requestedObject) { // used by compiler
         if (requestedObject === '_mouse_') {
             if (!this.runtime.ioDevices.mouse) return false;
             const mouseX = this.runtime.ioDevices.mouse.getClientX();
@@ -771,8 +783,8 @@ class RenderedTarget extends Target {
      */
     isTouchingEdge () {
         if (this.renderer) {
-            const stageWidth = this.runtime.constructor.STAGE_WIDTH;
-            const stageHeight = this.runtime.constructor.STAGE_HEIGHT;
+            const stageWidth = this.runtime.stageWidth;
+            const stageHeight = this.runtime.stageHeight;
             const bounds = this.getBounds();
             if (bounds.left < -stageWidth / 2 ||
                 bounds.right > stageWidth / 2 ||
@@ -809,7 +821,7 @@ class RenderedTarget extends Target {
      * @param {Array.<number>} rgb [r,g,b], values between 0-255.
      * @return {Promise.<boolean>} True iff the rendered target is touching the color.
      */
-    isTouchingColor (rgb) {
+    isTouchingColor (rgb) { // used by compiler
         if (this.renderer) {
             return this.renderer.isTouchingColor(this.drawableID, rgb);
         }
@@ -822,7 +834,7 @@ class RenderedTarget extends Target {
      * @param {object} maskRgb {Array.<number>} [r,g,b], values between 0-255.
      * @return {Promise.<boolean>} True iff the color is touching the color.
      */
-    colorIsTouchingColor (targetRgb, maskRgb) {
+    colorIsTouchingColor (targetRgb, maskRgb) { // used by compiler
         if (this.renderer) {
             return this.renderer.isTouchingColor(
                 this.drawableID,
@@ -843,7 +855,7 @@ class RenderedTarget extends Target {
     /**
      * Move to the front layer.
      */
-    goToFront () { // This should only ever be used for sprites
+    goToFront () { // This should only ever be used for sprites // used by compiler
         if (this.renderer) {
             // Let the renderer re-order the sprite based on its knowledge
             // of what layers are present
@@ -856,7 +868,7 @@ class RenderedTarget extends Target {
     /**
      * Move to the back layer.
      */
-    goToBack () { // This should only ever be used for sprites
+    goToBack () { // This should only ever be used for sprites // used by compiler
         if (this.renderer) {
             // Let the renderer re-order the sprite based on its knowledge
             // of what layers are present
@@ -870,7 +882,7 @@ class RenderedTarget extends Target {
      * Move forward a number of layers.
      * @param {number} nLayers How many layers to go forward.
      */
-    goForwardLayers (nLayers) {
+    goForwardLayers (nLayers) { // used by compiler
         if (this.renderer) {
             this.renderer.setDrawableOrder(this.drawableID, nLayers, StageLayering.SPRITE_LAYER, true);
         }
@@ -882,7 +894,7 @@ class RenderedTarget extends Target {
      * Move backward a number of layers.
      * @param {number} nLayers How many layers to go backward.
      */
-    goBackwardLayers (nLayers) {
+    goBackwardLayers (nLayers) { // used by compiler
         if (this.renderer) {
             this.renderer.setDrawableOrder(this.drawableID, -nLayers, StageLayering.SPRITE_LAYER, true);
         }
@@ -916,10 +928,10 @@ class RenderedTarget extends Target {
         let fence = optFence;
         if (!fence) {
             fence = {
-                left: -this.runtime.constructor.STAGE_WIDTH / 2,
-                right: this.runtime.constructor.STAGE_WIDTH / 2,
-                top: this.runtime.constructor.STAGE_HEIGHT / 2,
-                bottom: -this.runtime.constructor.STAGE_HEIGHT / 2
+                left: -this.runtime.stageWidth / 2,
+                right: this.runtime.stageWidth / 2,
+                top: this.runtime.stageHeight / 2,
+                bottom: -this.runtime.stageHeight / 2
             };
         }
         const bounds = this.getBounds();
@@ -1105,7 +1117,7 @@ class RenderedTarget extends Target {
                 StageLayering.BACKGROUND_LAYER :
                 StageLayering.SPRITE_LAYER);
             if (this.visible) {
-                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.emitFast(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
             }
         }

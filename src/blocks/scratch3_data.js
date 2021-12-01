@@ -1,7 +1,7 @@
-const Cast = require('../util/cast');
+const Cast = require("../util/cast");
 
 class Scratch3DataBlocks {
-    constructor (runtime) {
+    constructor(runtime) {
         /**
          * The runtime instantiating this block package.
          * @type {Runtime}
@@ -13,7 +13,7 @@ class Scratch3DataBlocks {
      * Retrieve the block primitives implemented by this package.
      * @return {object.<string, Function>} Mapping of opcode to Function.
      */
-    getPrimitives () {
+    getPrimitives() {
         return {
             data_variable: this.getVariable,
             data_setvariableto: this.setVariableTo,
@@ -31,68 +31,85 @@ class Scratch3DataBlocks {
             data_lengthoflist: this.lengthOfList,
             data_listcontainsitem: this.listContainsItem,
             data_hidelist: this.hideList,
-            data_showlist: this.showList
+            data_showlist: this.showList,
         };
     }
 
-    getVariable (args, util) {
+    getVariable(args, util) {
         const variable = util.target.lookupOrCreateVariable(
-            args.VARIABLE.id, args.VARIABLE.name);
+            args.VARIABLE.id,
+            args.VARIABLE.name
+        );
         return variable.value;
     }
 
-    setVariableTo (args, util) {
+    setVariableTo(args, util) {
         const variable = util.target.lookupOrCreateVariable(
-            args.VARIABLE.id, args.VARIABLE.name);
+            args.VARIABLE.id,
+            args.VARIABLE.name
+        );
         variable.value = args.VALUE;
 
         if (variable.isCloud) {
-            util.ioQuery('cloud', 'requestUpdateVariable', [variable.name, args.VALUE]);
+            util.ioQuery("cloud", "requestUpdateVariable", [
+                variable.name,
+                args.VALUE,
+            ]);
         }
     }
 
-    changeVariableBy (args, util) {
+    changeVariableBy(args, util) {
         const variable = util.target.lookupOrCreateVariable(
-            args.VARIABLE.id, args.VARIABLE.name);
+            args.VARIABLE.id,
+            args.VARIABLE.name
+        );
         const castedValue = Cast.toNumber(variable.value);
         const dValue = Cast.toNumber(args.VALUE);
         const newValue = castedValue + dValue;
         variable.value = newValue;
 
         if (variable.isCloud) {
-            util.ioQuery('cloud', 'requestUpdateVariable', [variable.name, newValue]);
+            util.ioQuery("cloud", "requestUpdateVariable", [
+                variable.name,
+                newValue,
+            ]);
         }
     }
 
-    changeMonitorVisibility (id, visible) {
+    changeMonitorVisibility(id, visible) {
         // Send the monitor blocks an event like the flyout checkbox event.
         // This both updates the monitor state and changes the isMonitored block flag.
-        this.runtime.monitorBlocks.changeBlock({
-            id: id, // Monitor blocks for variables are the variable ID.
-            element: 'checkbox', // Mimic checkbox event from flyout.
-            value: visible
-        }, this.runtime);
+        this.runtime.monitorBlocks.changeBlock(
+            {
+                id: id, // Monitor blocks for variables are the variable ID.
+                element: "checkbox", // Mimic checkbox event from flyout.
+                value: visible,
+            },
+            this.runtime
+        );
     }
 
-    showVariable (args) {
+    showVariable(args) {
         this.changeMonitorVisibility(args.VARIABLE.id, true);
     }
 
-    hideVariable (args) {
+    hideVariable(args) {
         this.changeMonitorVisibility(args.VARIABLE.id, false);
     }
 
-    showList (args) {
+    showList(args) {
         this.changeMonitorVisibility(args.LIST.id, true);
     }
 
-    hideList (args) {
+    hideList(args) {
         this.changeMonitorVisibility(args.LIST.id, false);
     }
 
-    getListContents (args, util) {
+    getListContents(args, util) {
         const list = util.target.lookupOrCreateList(
-            args.LIST.id, args.LIST.name);
+            args.LIST.id,
+            args.LIST.name
+        );
 
         // If block is running for monitors, return copy of list as an array if changed.
         if (util.thread.updateMonitor) {
@@ -110,46 +127,57 @@ class Scratch3DataBlocks {
         let allSingleLetters = true;
         for (let i = 0; i < list.value.length; i++) {
             const listItem = list.value[i];
-            if (!((typeof listItem === 'string') &&
-                  (listItem.length === 1))) {
+            if (!(typeof listItem === "string" && listItem.length === 1)) {
                 allSingleLetters = false;
                 break;
             }
         }
         if (allSingleLetters) {
-            return list.value.join('');
+            return list.value.join("");
         }
-        return list.value.join(' ');
-
+        return list.value.join(" ");
     }
 
-    addToList (args, util) {
+    addToList(args, util) {
         const list = util.target.lookupOrCreateList(
-            args.LIST.id, args.LIST.name);
-        if (list.value.length < (
+            args.LIST.id,
+            args.LIST.name
+        );
+        if (
+            list.value.length <
             // 云列表限制长度更小
-            list.isCloud ? Scratch3DataBlocks.CLOUD_LIST_ITEM_LIMIT : Scratch3DataBlocks.LIST_ITEM_LIMIT)
+            (list.isCloud
+                ? Scratch3DataBlocks.CLOUD_LIST_ITEM_LIMIT
+                : Scratch3DataBlocks.LIST_ITEM_LIMIT)
         ) {
             list.value.push(args.ITEM);
             list._monitorUpToDate = false;
             // powered by xigua start
             if (list.isCloud) {
-                util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+                util.ioQuery("cloud", "requestUpdateVariable", [
+                    list.name,
+                    list.value,
+                ]);
             }
             // powered by xigua end
         }
     }
 
-    deleteOfList (args, util) {
+    deleteOfList(args, util) {
         const list = util.target.lookupOrCreateList(
-            args.LIST.id, args.LIST.name);
+            args.LIST.id,
+            args.LIST.name
+        );
         const index = Cast.toListIndex(args.INDEX, list.value.length, true);
         if (index === Cast.LIST_INVALID) {
             return;
         } else if (index === Cast.LIST_ALL) {
             list.value = [];
             if (list.isCloud) {
-                util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+                util.ioQuery("cloud", "requestUpdateVariable", [
+                    list.name,
+                    list.value,
+                ]);
             }
             return;
         }
@@ -157,54 +185,70 @@ class Scratch3DataBlocks {
         list._monitorUpToDate = false;
         // powered by xigua start
         if (list.isCloud) {
-            util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+            util.ioQuery("cloud", "requestUpdateVariable", [
+                list.name,
+                list.value,
+            ]);
         }
         // powered by xigua end
     }
 
-    deleteAllOfList (args, util) {
+    deleteAllOfList(args, util) {
         const list = util.target.lookupOrCreateList(
-            args.LIST.id, args.LIST.name);
+            args.LIST.id,
+            args.LIST.name
+        );
         list.value = [];
         // powered by xigua start
         if (list.isCloud) {
-            util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+            util.ioQuery("cloud", "requestUpdateVariable", [
+                list.name,
+                list.value,
+            ]);
         }
         // powered by xigua end
         return;
     }
 
-    insertAtList (args, util) {
+    insertAtList(args, util) {
         const item = args.ITEM;
         const list = util.target.lookupOrCreateList(
-            args.LIST.id, args.LIST.name);
-        const index = Cast.toListIndex(args.INDEX, list.value.length + 1, false);
+            args.LIST.id,
+            args.LIST.name
+        );
+        const index = Cast.toListIndex(
+            args.INDEX,
+            list.value.length + 1,
+            false
+        );
         if (index === Cast.LIST_INVALID) {
             return;
         }
         // powered by xigua start
-        const listLimit = list.isCloud ? Scratch3DataBlocks.CLOUD_LIST_ITEM_LIMIT : Scratch3DataBlocks.LIST_ITEM_LIMIT;
+        const listLimit = list.isCloud
+            ? Scratch3DataBlocks.CLOUD_LIST_ITEM_LIMIT
+            : Scratch3DataBlocks.LIST_ITEM_LIMIT;
         // powered by xigua end
         if (index > listLimit) return;
         list.value.splice(index - 1, 0, item);
-        if (list.value.length > listLimit) {
-            // If inserting caused the list to grow larger than the limit,
-            // remove the last element in the list
-            list.value.pop();
-        }
         list._monitorUpToDate = false;
 
         // powered by xigua start
         if (list.isCloud) {
-            util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+            util.ioQuery("cloud", "requestUpdateVariable", [
+                list.name,
+                list.value,
+            ]);
         }
         // powered by xigua end
     }
 
-    replaceItemOfList (args, util) {
+    replaceItemOfList(args, util) {
         const item = args.ITEM;
         const list = util.target.lookupOrCreateList(
-            args.LIST.id, args.LIST.name);
+            args.LIST.id,
+            args.LIST.name
+        );
         const index = Cast.toListIndex(args.INDEX, list.value.length, false);
         if (index === Cast.LIST_INVALID) {
             return;
@@ -213,25 +257,32 @@ class Scratch3DataBlocks {
         list._monitorUpToDate = false;
         // powered by xigua start
         if (list.isCloud) {
-            util.ioQuery('cloud', 'requestUpdateVariable', [list.name, list.value]);
+            util.ioQuery("cloud", "requestUpdateVariable", [
+                list.name,
+                list.value,
+            ]);
         }
         // powered by xigua end
     }
 
-    getItemOfList (args, util) {
+    getItemOfList(args, util) {
         const list = util.target.lookupOrCreateList(
-            args.LIST.id, args.LIST.name);
+            args.LIST.id,
+            args.LIST.name
+        );
         const index = Cast.toListIndex(args.INDEX, list.value.length, false);
         if (index === Cast.LIST_INVALID) {
-            return '';
+            return "";
         }
         return list.value[index - 1];
     }
 
-    getItemNumOfList (args, util) {
+    getItemNumOfList(args, util) {
         const item = args.ITEM;
         const list = util.target.lookupOrCreateList(
-            args.LIST.id, args.LIST.name);
+            args.LIST.id,
+            args.LIST.name
+        );
 
         // Go through the list items one-by-one using Cast.compare. This is for
         // cases like checking if 123 is contained in a list [4, 7, '123'] --
@@ -256,16 +307,20 @@ class Scratch3DataBlocks {
         return 0;
     }
 
-    lengthOfList (args, util) {
+    lengthOfList(args, util) {
         const list = util.target.lookupOrCreateList(
-            args.LIST.id, args.LIST.name);
+            args.LIST.id,
+            args.LIST.name
+        );
         return list.value.length;
     }
 
-    listContainsItem (args, util) {
+    listContainsItem(args, util) {
         const item = args.ITEM;
         const list = util.target.lookupOrCreateList(
-            args.LIST.id, args.LIST.name);
+            args.LIST.id,
+            args.LIST.name
+        );
         if (list.value.indexOf(item) >= 0) {
             return true;
         }
@@ -283,7 +338,7 @@ class Scratch3DataBlocks {
      * Type representation for list variables.
      * @const {number}
      */
-    static get LIST_ITEM_LIMIT () {
+    static get LIST_ITEM_LIMIT() {
         return 200000;
     }
 
@@ -292,7 +347,7 @@ class Scratch3DataBlocks {
      * Type representation for list variables.
      * @const {number}
      */
-    static get CLOUD_LIST_ITEM_LIMIT () {
+    static get CLOUD_LIST_ITEM_LIMIT() {
         return 1000;
     }
     // powered by xigua end

@@ -16,6 +16,7 @@ const uid = require('../util/uid');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
 const VariableUtil = require('../util/variable-util');
+const optimize = require('./tw-optimize-sb3');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -498,7 +499,10 @@ const getSimplifiedLayerOrdering = function (targets) {
     return MathUtil.reducedSortOrdering(layerOrders);
 };
 
-const serializeMonitors = function (monitors) {
+const serializeMonitors = function (monitors, runtime) {
+    // Monitors position is always stored as position from top-left corner in 480x360 stage.
+    const xOffset = (runtime.stageWidth - 480) / 2;
+    const yOffset = (runtime.stageHeight - 360) / 2;
     return monitors.valueSeq().map(monitorData => {
         const serializedMonitor = {
             id: monitorData.id,
@@ -506,11 +510,11 @@ const serializeMonitors = function (monitors) {
             opcode: monitorData.opcode,
             params: monitorData.params,
             spriteName: monitorData.spriteName,
-            value: monitorData.value,
+            value: Array.isArray(monitorData.value) ? [] : 0,
             width: monitorData.width,
             height: monitorData.height,
-            x: monitorData.x,
-            y: monitorData.y,
+            x: monitorData.x - xOffset,
+            y: monitorData.y - yOffset,
             visible: monitorData.visible
         };
         if (monitorData.mode !== 'list') {
@@ -528,7 +532,7 @@ const serializeMonitors = function (monitors) {
  * @param {string=} targetId Optional target id if serializing only a single target
  * @return {object} Serialized runtime instance.
  */
-const serialize = function (runtime, targetId) {
+const serialize = function (runtime, targetId, {allowOptimization = false} = {}) {
     // Fetch targets
     const obj = Object.create(null);
     // Create extension set to hold extension ids found while serializing targets
@@ -558,7 +562,7 @@ const serialize = function (runtime, targetId) {
 
     obj.targets = serializedTargets;
 
-    obj.monitors = serializeMonitors(runtime.getMonitorState());
+    obj.monitors = serializeMonitors(runtime.getMonitorState(), runtime);
 
     // Assemble extension list
     obj.extensions = Array.from(extensions);
@@ -572,11 +576,17 @@ const serialize = function (runtime, targetId) {
     }
 
     // Attach full user agent string to metadata if available
-    meta.agent = 'none';
-    if (typeof navigator !== 'undefined') meta.agent = navigator.userAgent;
+    meta.agent = '';
+    // TW: Never include full user agent to slightly improve user privacy
+    // if (typeof navigator !== 'undefined') meta.agent = navigator.userAgent;
 
     // Assemble payload and return
     obj.meta = meta;
+
+    if (allowOptimization) {
+        optimize(obj);
+    }
+
     return obj;
 };
 
@@ -1103,6 +1113,14 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
 };
 
 const deserializeMonitor = function (monitorData, runtime, targets, extensions) {
+    // Monitors position is always stored as position from top-left corner in 480x360 stage.
+    const xOffset = (runtime.stageWidth - 480) / 2;
+    const yOffset = (runtime.stageHeight - 360) / 2;
+    monitorData.x += xOffset;
+    monitorData.y += yOffset;
+    monitorData.x = MathUtil.clamp(monitorData.x, 0, runtime.stageWidth);
+    monitorData.y = MathUtil.clamp(monitorData.y, 0, runtime.stageHeight);
+
     // If the serialized monitor has spriteName defined, look up the sprite
     // by name in the given list of targets and update the monitor's targetId
     // to match the sprite's id.

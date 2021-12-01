@@ -1047,12 +1047,32 @@ test('toJSON encodes Infinity/NaN as 0, not null', t => {
 
     runtime.targets = [stage];
 
-    const json = JSON.parse(vm.toJSON());
+    const json = JSON.parse(vm.toJSON({allowOptimization: false}));
     t.equal(json.targets[0].volume, 0);
     t.equal(json.targets[0].tempo, 0);
     t.equal(json.targets[0].variables.id1[1], 0);
     t.equal(json.targets[0].variables.id2[1], 0);
     t.equal(json.targets[0].variables.id3[1], 0);
 
+    t.end();
+});
+
+test('emitTargetsUpdate targetList is lazy', t => {
+    const vm = new VirtualMachine();
+    let calledToJSON = false;
+    vm.runtime.targets = [{
+        toJSON () {
+            calledToJSON = true;
+            return {};
+        }
+    }];
+    let targetsUpdateEvent;
+    vm.on('targetsUpdate', e => {
+        targetsUpdateEvent = e;
+    });
+    vm.emitTargetsUpdate();
+    t.equal(calledToJSON, false);
+    void targetsUpdateEvent.targetList; // should trigger lazy compute
+    t.equal(calledToJSON, true);
     t.end();
 });

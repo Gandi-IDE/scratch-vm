@@ -17,6 +17,7 @@ const StageLayering = require('./stage-layering');
 const Variable = require('./variable');
 const xmlEscape = require('../util/xml-escape');
 const ScratchLinkWebSocket = require('../util/scratch-link-websocket');
+const ExtendedJSON = require('../util/tw-extended-json');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -42,7 +43,11 @@ const defaultBlockPackages = {
     scratch3_procedures: require('../blocks/scratch3_procedures')
 };
 
+const interpolate = require('./tw-interpolate');
+
 const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];
+
+const COMMENT_CONFIG_MAGIC = ' // _twconfig_';
 
 /**
  * Information used for converting Scratch argument types into scratch-blocks data.
@@ -139,14 +144,15 @@ const ArgumentTypeMap = (() => {
  * and remove an existing cloud variable.
  * These are to be called whenever attempting to create or delete
  * a cloud variable.
+ * @param {Object} cloudOptions
+ * @param {number} cloudOptions.limit Maximum number of cloud variables
  * @return {CloudDataManager} The functions to be used when adding or removing a
  * cloud variable.
  */
-const cloudDataManager = () => {
-    const limit = 10;
+const cloudDataManager = cloudOptions => {
     let count = 0;
 
-    const canAddCloudVariable = () => count < limit;
+    const canAddCloudVariable = () => count < cloudOptions.limit;
 
     const addCloudVariable = () => {
         count++;
@@ -184,6 +190,14 @@ let stepThreadsProfilerId = -1;
  */
 let rendererDrawProfilerId = -1;
 
+// Use setTimeout to polyfill requestAnimationFrame in Node environments
+const _requestAnimationFrame = typeof requestAnimationFrame === 'function' ?
+    requestAnimationFrame :
+    (f => setTimeout(f, 1000 / 60));
+const _cancelAnimationFrame = typeof requestAnimationFrame === 'function' ?
+    cancelAnimationFrame :
+    clearTimeout;
+
 /**
  * Manages targets, scripts, and the sequencer.
  * @constructor
@@ -210,6 +224,8 @@ class Runtime extends EventEmitter {
          * @type {Array.<Thread>}
          */
         this.threads = [];
+
+        this.threadMap = new Map();
 
         /** @type {!Sequencer} */
         this.sequencer = new Sequencer(this);
@@ -311,12 +327,6 @@ class Runtime extends EventEmitter {
         this.turboMode = false;
 
         /**
-         * Whether the project is in "compatibility mode" (30 TPS).
-         * @type {Boolean}
-         */
-        this.compatibilityMode = false;
-
-        /**
          * A reference to the current runtime stepping interval, set
          * by a `setInterval`.
          * @type {!number}
@@ -371,7 +381,11 @@ class Runtime extends EventEmitter {
          */
         this.profiler = null;
 
-        const newCloudDataManager = cloudDataManager();
+        this.cloudOptions = {
+            limit: 100
+        };
+
+        const newCloudDataManager = cloudDataManager(this.cloudOptions);
 
         /**
          * Check wether the runtime has any cloud data.
@@ -413,6 +427,35 @@ class Runtime extends EventEmitter {
          * @type {?string}
          */
         this.origin = null;
+
+        this._stageTarget = null;
+
+        // 60 to match default of compatibility mode off
+        // scratch-gui will set this to 30
+        this.framerate = 60;
+
+        this.addonBlocks = {};
+
+        this.stageWidth = Runtime.STAGE_WIDTH;
+        this.stageHeight = Runtime.STAGE_HEIGHT;
+
+        this.runtimeOptions = {
+            maxClones: Runtime.MAX_CLONES,
+            miscLimits: true,
+            fencing: true
+        };
+
+        this.compilerOptions = {
+            enabled: true,
+            warpTimer: false
+        };
+
+        this.debug = false;
+
+        this._animationFrame = this._animationFrame.bind(this);
+        this._animationFrameId = null;
+        this._lastStepTime = Date.now();
+        this.interpolationEnabled = false;
     }
 
     /**
@@ -420,6 +463,7 @@ class Runtime extends EventEmitter {
      * @const {number}
      */
     static get STAGE_WIDTH () {
+        // tw: stage size is set per-runtime, this is only the initial value
         return 480;
     }
 
@@ -428,6 +472,7 @@ class Runtime extends EventEmitter {
      * @const {number}
      */
     static get STAGE_HEIGHT () {
+        // tw: stage size is set per-runtime, this is only the initial value
         return 360;
     }
 
@@ -486,6 +531,46 @@ class Runtime extends EventEmitter {
      */
     static get TURBO_MODE_OFF () {
         return 'TURBO_MODE_OFF';
+    }
+
+    /**
+     * Event name for runtime options changing.
+     * @const {string}
+     */
+    static get RUNTIME_OPTIONS_CHANGED () {
+        return 'RUNTIME_OPTIONS_CHANGED';
+    }
+
+    /**
+     * Event name for compiler options changing.
+     * @const {string}
+     */
+    static get COMPILER_OPTIONS_CHANGED () {
+        return 'COMPILER_OPTIONS_CHANGED';
+    }
+
+    /**
+     * Event name for framerate changing.
+     * @const {string}
+     */
+    static get FRAMERATE_CHANGED () {
+        return 'FRAMERATE_CHANGED';
+    }
+
+    /**
+     * Event name for interpolation changing.
+     * @const {string}
+     */
+    static get INTERPOLATION_CHANGED () {
+        return 'INTERPOLATION_CHANGED';
+    }
+
+    /**
+     * Event name for compiler errors.
+     * @const {string}
+     */
+    static get COMPILE_ERROR () {
+        return 'COMPILE_ERROR';
     }
 
     /**
@@ -708,6 +793,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name when the runtime tick loop has been stopped.
+     * @const {string}
+     */
+    static get RUNTIME_STOPPED () {
+        return 'RUNTIME_STOPPED';
+    }
+
+    /**
      * Event name when the runtime dispose has been called.
      * @const {string}
      */
@@ -727,6 +820,7 @@ class Runtime extends EventEmitter {
      * How rapidly we try to step threads by default, in ms.
      */
     static get THREAD_STEP_INTERVAL () {
+        // tw: not used, only exists for compatibility
         return 1000 / 60;
     }
 
@@ -734,6 +828,7 @@ class Runtime extends EventEmitter {
      * In compatibility mode, how rapidly we try to step threads, in ms.
      */
     static get THREAD_STEP_INTERVAL_COMPATIBILITY () {
+        // tw: not used, only exists for compatibility
         return 1000 / 30;
     }
 
@@ -742,6 +837,7 @@ class Runtime extends EventEmitter {
      * @const {number}
      */
     static get MAX_CLONES () {
+        // tw: clone limit is set per-runtime in runtimeOptions, this is only the initial value
         return 300;
     }
 
@@ -804,8 +900,14 @@ class Runtime extends EventEmitter {
                 if (packageObject.getMonitored) {
                     this.monitorBlockInfo = Object.assign({}, this.monitorBlockInfo, packageObject.getMonitored());
                 }
+
+                this.compilerRegisterExtension(packageName, packageObject);
             }
         }
+    }
+
+    compilerRegisterExtension (name, extensionObject) {
+        this[`ext_${name}`] = extensionObject;
     }
 
     getMonitorState () {
@@ -932,6 +1034,31 @@ class Runtime extends EventEmitter {
                 );
 
                 categoryInfo.customFieldTypes[fieldTypeName] = fieldTypeInfo;
+            }
+        }
+
+        if (extensionInfo.docsURI) {
+            try {
+                const url = new URL(extensionInfo.docsURI);
+                if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+                    throw new Error('invalid protocol');
+                }
+                const xml = '<button ' +
+                    `text="${xmlEscape(maybeFormatMessage({
+                        // note: this translation is hardcoded in translation upload scripts
+                        id: 'tw.blocks.openDocs',
+                        default: 'Open Documentation',
+                        description: 'Button to open extensions docsURI'
+                    }))}" ` +
+                    'callbackKey="OPEN_DOCUMENTATION" ' +
+                    `web-class="docs-uri-${xmlEscape(extensionInfo.docsURI)}"></button>`;
+                const block = {
+                    info: {},
+                    xml
+                };
+                categoryInfo.blocks.push(block);
+            } catch (e) {
+                log.warn('cannot create docsURI button', e);
             }
         }
 
@@ -1595,6 +1722,7 @@ class Runtime extends EventEmitter {
      */
     attachAudioEngine (audioEngine) {
         this.audioEngine = audioEngine;
+        require('./tw-experimental-audio-optimizations')(audioEngine);
     }
 
     /**
@@ -1604,6 +1732,7 @@ class Runtime extends EventEmitter {
     attachRenderer (renderer) {
         this.renderer = renderer;
         this.renderer.setLayerGroupOrdering(StageLayering.LAYER_GROUPS);
+        this.renderer.offscreenTouching = !this.runtimeOptions.fencing;
     }
 
     /**
@@ -1652,6 +1781,15 @@ class Runtime extends EventEmitter {
 
         thread.pushStack(id);
         this.threads.push(thread);
+        if (!thread.stackClick && !thread.updateMonitor) {
+            this.threadMap.set(thread.getId(), thread);
+        }
+
+        // tw: compile new threads. Do not attempt to compile monitor threads.
+        if (!(opts && opts.updateMonitor) && this.compilerOptions.enabled) {
+            thread.tryCompile();
+        }
+
         return thread;
     }
 
@@ -1680,6 +1818,13 @@ class Runtime extends EventEmitter {
         newThread.updateMonitor = thread.updateMonitor;
         newThread.blockContainer = thread.blockContainer;
         newThread.pushStack(thread.topBlock);
+        // tw: when a thread is restarted, we have to check whether the previous script was attempted to be compiled.
+        if (thread.triedToCompile && this.compilerOptions.enabled) {
+            newThread.tryCompile();
+        }
+        if (!newThread.stackClick && !newThread.updateMonitor) {
+            this.threadMap.set(newThread.getId(), newThread);
+        }
         const i = this.threads.indexOf(thread);
         if (i > -1) {
             this.threads[i] = newThread;
@@ -1687,6 +1832,10 @@ class Runtime extends EventEmitter {
         }
         this.threads.push(thread);
         return thread;
+    }
+
+    emitCompileError (target, error) {
+        this.emit(Runtime.COMPILE_ERROR, target, error);
     }
 
     /**
@@ -1826,6 +1975,10 @@ class Runtime extends EventEmitter {
             optMatchFields[opts] = optMatchFields[opts].toUpperCase();
         }
 
+        // tw: By assuming that all new threads will not interfere with eachother, we can optimize the loops
+        // inside the allScriptsByOpcodeDo callback below.
+        const startingThreadListLength = this.threads.length;
+
         // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
         this.allScriptsByOpcodeDo(requestedHatOpcode, (script, target) => {
             const {
@@ -1848,19 +2001,15 @@ class Runtime extends EventEmitter {
             if (hatMeta.restartExistingThreads) {
                 // If `restartExistingThreads` is true, we should stop
                 // any existing threads starting with the top block.
-                for (let i = 0; i < this.threads.length; i++) {
-                    if (this.threads[i].target === target &&
-                        this.threads[i].topBlock === topBlockId &&
-                        // stack click threads and hat threads can coexist
-                        !this.threads[i].stackClick) {
-                        newThreads.push(this._restartThread(this.threads[i]));
-                        return;
-                    }
+                const existingThread = this.threadMap.get(Thread.getIdFromTargetAndBlock(target, topBlockId));
+                if (existingThread) {
+                    newThreads.push(this._restartThread(existingThread));
+                    return;
                 }
             } else {
                 // If `restartExistingThreads` is false, we should
                 // give up if any threads with the top block are running.
-                for (let j = 0; j < this.threads.length; j++) {
+                for (let j = 0; j < startingThreadListLength; j++) {
                     if (this.threads[j].target === target &&
                         this.threads[j].topBlock === topBlockId &&
                         // stack click threads and hat threads can coexist
@@ -1877,8 +2026,11 @@ class Runtime extends EventEmitter {
         // For compatibility with Scratch 2, edge triggered hats need to be processed before
         // threads are stepped. See ScratchRuntime.as for original implementation
         newThreads.forEach(thread => {
-            execute(this.sequencer, thread);
-            thread.goToNextBlock();
+            // tw: do not step compiled threads, the hat block can't be executed
+            if (!thread.isCompiled) {
+                execute(this.sequencer, thread);
+                thread.goToNextBlock();
+            }
         });
         return newThreads;
     }
@@ -1895,7 +2047,12 @@ class Runtime extends EventEmitter {
         });
 
         this.targets.map(this.disposeTarget, this);
-        this._monitorState = OrderedMap({});
+        // tw: explicitly emit a MONITORS_UPDATE instead of relying on implicit behavior of _step()
+        const emptyMonitorState = OrderedMap({});
+        if (!emptyMonitorState.equals(this._monitorState)) {
+            this._monitorState = emptyMonitorState;
+            this.emit(Runtime.MONITORS_UPDATE, this._monitorState);
+        }
         this.emit(Runtime.RUNTIME_DISPOSED);
         this.ioDevices.clock.resetProjectTimer();
         // @todo clear out extensions? turboMode? etc.
@@ -1912,7 +2069,7 @@ class Runtime extends EventEmitter {
         this.ioDevices.cloud.clear();
 
         // Reset runtime cloud data info
-        const newCloudDataManager = cloudDataManager();
+        const newCloudDataManager = cloudDataManager(this.cloudOptions);
         this.hasCloudData = newCloudDataManager.hasCloudVariables;
         this.canAddCloudVariable = newCloudDataManager.canAddCloudVariable;
         this.addCloudVariable = this._initializeAddCloudVariable(newCloudDataManager);
@@ -1940,6 +2097,9 @@ class Runtime extends EventEmitter {
     addTarget (target) {
         this.targets.push(target);
         this.executableTargets.push(target);
+        if (target.isStage && !this._stageTarget) {
+            this._stageTarget = target;
+        }
     }
 
     /**
@@ -2008,6 +2168,9 @@ class Runtime extends EventEmitter {
             // Remove from list of targets.
             return false;
         });
+        if (this._stageTarget === disposingTarget) {
+            this._stageTarget = null;
+        }
     }
 
     /**
@@ -2036,6 +2199,7 @@ class Runtime extends EventEmitter {
     greenFlag () {
         this.stopAll();
         this.emit(Runtime.PROJECT_START);
+        this.updateCurrentMSecs();
         this.ioDevices.clock.resetProjectTimer();
         this.targets.forEach(target => target.clearEdgeActivatedValues());
         // Inform all targets of the green flag.
@@ -2070,6 +2234,31 @@ class Runtime extends EventEmitter {
         }
         // Remove all remaining threads from executing in the next tick.
         this.threads = [];
+        this.threadMap.clear();
+    }
+
+    _animationFrame () {
+        this._animationFrameId = _requestAnimationFrame(this._animationFrame);
+
+        const frameStarted = this._lastStepTime;
+        const now = Date.now();
+        const timeSinceStart = now - frameStarted;
+        const progressInFrame = Math.min(1, Math.max(0, timeSinceStart / this.currentStepTime));
+
+        interpolate.interpolate(this, progressInFrame);
+
+        if (this.renderer) {
+            this.renderer.draw();
+        }
+    }
+
+    updateThreadMap () {
+        this.threadMap.clear();
+        for (const thread of this.threads) {
+            if (!thread.stackClick && !thread.updateMonitor) {
+                this.threadMap.set(thread.getId(), thread);
+            }
+        }
     }
 
     /**
@@ -2077,6 +2266,10 @@ class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step () {
+        if (this.interpolationEnabled) {
+            interpolate.setupInitialState(this);
+        }
+
         if (this.profiler !== null) {
             if (stepProfilerId === -1) {
                 stepProfilerId = this.profiler.idByName('Runtime._step');
@@ -2086,6 +2279,7 @@ class Runtime extends EventEmitter {
 
         // Clean up threads that were told to stop during or since the last step
         this.threads = this.threads.filter(thread => !thread.isKilled);
+        this.updateThreadMap();
 
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
@@ -2124,7 +2318,10 @@ class Runtime extends EventEmitter {
                 }
                 this.profiler.start(rendererDrawProfilerId);
             }
-            this.renderer.draw();
+            // tw: do not draw if document is hidden or a rAF loop is running
+            if (!document.hidden && this._animationFrameId === null) {
+                this.renderer.draw();
+            }
             if (this.profiler !== null) {
                 this.profiler.stop();
             }
@@ -2143,6 +2340,10 @@ class Runtime extends EventEmitter {
         if (this.profiler !== null) {
             this.profiler.stop();
             this.profiler.reportFrames();
+        }
+
+        if (this.interpolationEnabled) {
+            this._lastStepTime = Date.now();
         }
     }
 
@@ -2188,12 +2389,228 @@ class Runtime extends EventEmitter {
      * @param {boolean} compatibilityModeOn True iff in compatibility mode.
      */
     setCompatibilityMode (compatibilityModeOn) {
-        this.compatibilityMode = compatibilityModeOn;
+        // tw: "compatibility mode" is replaced with a generic framerate setter,
+        // but this method is kept for compatibility
+        if (compatibilityModeOn) {
+            this.setFramerate(30);
+        } else {
+            this.setFramerate(60);
+        }
+    }
+
+    /**
+     * tw: Change runtime target frames per second
+     * @param {number} framerate Target frames per second
+     */
+    setFramerate (framerate) {
+        // Setting framerate to anything greater than this is unnecessary and can break the sequencer
+        // Additonally, the JS spec says intervals can't run more than once every 4ms anyways
+        if (framerate > 250) framerate = 250;
+        this.framerate = framerate;
         if (this._steppingInterval) {
             clearInterval(this._steppingInterval);
             this._steppingInterval = null;
             this.start();
         }
+        this.emit(Runtime.FRAMERATE_CHANGED, framerate);
+    }
+
+    /**
+     * tw: Enable or disable interpolation.
+     * @param {boolean} interpolationEnabled True if interpolation should be enabled.
+     */
+    setInterpolation (interpolationEnabled) {
+        this.interpolationEnabled = interpolationEnabled;
+        if (this._steppingInterval) {
+            this.stop();
+            this.start();
+        }
+        this.emit(Runtime.INTERPOLATION_CHANGED, interpolationEnabled);
+    }
+
+    /**
+     * tw: Update runtime options
+     * @param {*} runtimeOptions New options
+     */
+    setRuntimeOptions (runtimeOptions) {
+        this.runtimeOptions = Object.assign({}, this.runtimeOptions, runtimeOptions);
+        this.emit(Runtime.RUNTIME_OPTIONS_CHANGED, this.runtimeOptions);
+        if (this.renderer) {
+            this.renderer.offscreenTouching = !this.runtimeOptions.fencing;
+        }
+    }
+
+    /**
+     * tw: Update compiler options
+     * @param {*} compilerOptions New options
+     */
+    setCompilerOptions (compilerOptions) {
+        this.compilerOptions = Object.assign({}, this.compilerOptions, compilerOptions);
+        this.resetAllCaches();
+        this.emit(Runtime.COMPILER_OPTIONS_CHANGED, this.compilerOptions);
+    }
+
+    /**
+     * tw: Reset the cache of all block containers.
+     */
+    resetAllCaches () {
+        for (const target of this.targets) {
+            if (target.isOriginal) {
+                target.blocks.resetCache();
+            }
+        }
+        this.flyoutBlocks.resetCache();
+        this.monitorBlocks.resetCache();
+    }
+
+    /**
+     * Add an "addon block"
+     * @param {object} options Options object
+     * @param {string} options.procedureCode The ID of the block
+     * @param {function} options.callback The callback, called with (args, BlockUtility)
+     * @param {string[]} options.arguments Names of the arguments accepted
+     * @param {string} options.color Primary color
+     * @param {string} options.secondaryColor Secondary color
+     */
+    addAddonBlock (options) {
+        const procedureCode = options.procedureCode;
+        const names = options.arguments;
+        const ids = options.arguments.map((_, i) => `arg${i}`);
+        const defaults = options.arguments.map(() => '');
+        this.addonBlocks[procedureCode] = {
+            namesIdsDefaults: [names, ids, defaults],
+            ...options
+        };
+
+        const ID = 'a-b';
+        let blockInfo = this._blockInfo.find(i => i.id === ID);
+        if (!blockInfo) {
+            blockInfo = {
+                id: ID,
+                name: 'Addons',
+                color1: options.color,
+                color2: options.secondaryColor,
+                color3: options.secondaryColor,
+                blocks: [],
+                customFieldTypes: {},
+                menus: []
+            };
+            this._blockInfo.unshift(blockInfo);
+        }
+        blockInfo.blocks.push({
+            info: {},
+            xml:
+               '<block type="procedures_call" gap="16"><mutation generateshadows="true" warp="false"' +
+                ` proccode="${xmlEscape(procedureCode)}"` +
+                ` argumentnames="${xmlEscape(JSON.stringify(names))}"` +
+                ` argumentids="${xmlEscape(JSON.stringify(ids))}"` +
+                ` argumentdefaults="${xmlEscape(JSON.stringify(defaults))}"` +
+                '></mutation></block>'
+        });
+
+        this.resetAllCaches();
+    }
+
+    getAddonBlock (procedureCode) {
+        if (Object.prototype.hasOwnProperty.call(this.addonBlocks, procedureCode)) {
+            return this.addonBlocks[procedureCode];
+        }
+        return null;
+    }
+
+    findProjectOptionsComment () {
+        const target = this.getTargetForStage();
+        const comments = target.comments;
+        for (const comment of Object.values(comments)) {
+            if (comment.text.includes(COMMENT_CONFIG_MAGIC)) {
+                return comment;
+            }
+        }
+        return null;
+    }
+
+    parseProjectOptions () {
+        const comment = this.findProjectOptionsComment();
+        if (!comment) return;
+        const lineWithMagic = comment.text.split('\n').find(i => i.endsWith(COMMENT_CONFIG_MAGIC));
+        if (!lineWithMagic) {
+            log.warn('Config comment does not contain valid line');
+            return;
+        }
+
+        const jsonText = lineWithMagic.substr(0, lineWithMagic.length - COMMENT_CONFIG_MAGIC.length);
+        let parsed;
+        try {
+            parsed = ExtendedJSON.parse(jsonText);
+            if (!parsed || typeof parsed !== 'object') {
+                throw new Error('Invalid object');
+            }
+        } catch (e) {
+            log.warn('Config comment has invalid JSON', e);
+            return;
+        }
+
+        if (typeof parsed.framerate === 'number') {
+            this.setFramerate(parsed.framerate);
+        }
+        if (parsed.turbo) {
+            this.turboMode = true;
+            this.emit(Runtime.TURBO_MODE_ON);
+        }
+        if (parsed.interpolation) {
+            this.setInterpolation(true);
+        }
+        if (parsed.runtimeOptions) {
+            this.setRuntimeOptions(parsed.runtimeOptions);
+        }
+        if (parsed.hq && this.renderer) {
+            this.renderer.setUseHighQualityRender(true);
+        }
+    }
+
+    generateProjectOptions () {
+        const options = {};
+        options.framerate = this.framerate;
+        options.runtimeOptions = this.runtimeOptions;
+        options.interpolation = this.interpolationEnabled;
+        options.turbo = this.turboMode;
+        options.hq = this.renderer ? this.renderer.useHighQualityRender : false;
+        return options;
+    }
+
+    storeProjectOptions () {
+        const options = this.generateProjectOptions();
+        // TODO: translate
+        const text = `Configuration for https://turbowarp.org/\nYou can move, resize, and minimize this comment, but don't edit it by hand. This comment can be deleted to remove the stored settings.\n${ExtendedJSON.stringify(options)}${COMMENT_CONFIG_MAGIC}`;
+        const existingComment = this.findProjectOptionsComment();
+        if (existingComment) {
+            existingComment.text = text;
+        } else {
+            const target = this.getTargetForStage();
+            // TODO: smarter position logic
+            target.createComment(uid(), null, text, 50, 50, 350, 170, false);
+        }
+        this.emitProjectChanged();
+    }
+
+    /**
+     * Eagerly (re)compile all scripts within this project.
+     */
+    precompile () {
+        this.allScriptsDo((topBlockId, target) => {
+            const topBlock = target.blocks.getBlock(topBlockId);
+            if (this.getIsHat(topBlock.opcode)) {
+                const thread = new Thread(topBlockId);
+                thread.target = target;
+                thread.blockContainer = target.blocks;
+                thread.tryCompile();
+            }
+        });
+    }
+
+    enableDebug () {
+        this.resetAllCaches();
+        this.debug = true;
     }
 
     /**
@@ -2466,10 +2883,10 @@ class Runtime extends EventEmitter {
 
     /**
      * Return whether there are clones available.
-     * @return {boolean} True until the number of clones hits Runtime.MAX_CLONES.
+     * @return {boolean} True until the number of clones hits runtimeOptions.maxClones
      */
     clonesAvailable () {
-        return this._cloneCounter < Runtime.MAX_CLONES;
+        return this._cloneCounter < this.runtimeOptions.maxClones;
     }
 
     /**
@@ -2510,9 +2927,13 @@ class Runtime extends EventEmitter {
      * @return {?Target} The target, if found.
      */
     getTargetForStage () {
+        if (this._stageTarget) {
+            return this._stageTarget;
+        }
         for (let i = 0; i < this.targets.length; i++) {
             const target = this.targets[i];
             if (target.isStage) {
+                this._stageTarget = target;
                 return target;
             }
         }
@@ -2618,15 +3039,36 @@ class Runtime extends EventEmitter {
         // Do not start if we are already running
         if (this._steppingInterval) return;
 
-        let interval = Runtime.THREAD_STEP_INTERVAL;
-        if (this.compatibilityMode) {
-            interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
+        if (this.interpolationEnabled) {
+            this._animationFrameId = _requestAnimationFrame(this._animationFrame);
         }
+
+        const interval = 1000 / this.framerate;
         this.currentStepTime = interval;
         this._steppingInterval = setInterval(() => {
             this._step();
         }, interval);
         this.emit(Runtime.RUNTIME_STARTED);
+    }
+
+    /**
+     * tw: Stop the tick loop
+     * Note: This only stops the loop. It will not stop any threads the next time the VM starts
+     */
+    stop () {
+        if (!this._steppingInterval) {
+            return;
+        }
+        clearInterval(this._steppingInterval);
+        this._steppingInterval = null;
+
+        // tw: also cancel the animation frame loop
+        if (this._animationFrameId !== null) {
+            _cancelAnimationFrame(this._animationFrameId);
+            this._animationFrameId = null;
+        }
+
+        this.emit(Runtime.RUNTIME_STOPPED);
     }
 
     /**

@@ -10,7 +10,20 @@ const KEY_NAME = {
     UP: 'up arrow',
     RIGHT: 'right arrow',
     DOWN: 'down arrow',
-    ENTER: 'enter'
+    ENTER: 'enter',
+    // tw: extra keys
+    BACKSPACE: 'backspace',
+    DELETE: 'delete',
+    SHIFT: 'shift',
+    CAPS_LOCK: 'caps lock',
+    SCROLL_LOCK: 'scroll lock',
+    CONTROL: 'control',
+    ESCAPE: 'escape',
+    INSERT: 'insert',
+    HOME: 'home',
+    END: 'end',
+    PAGE_UP: 'page up',
+    PAGE_DOWN: 'page down'
 };
 
 /**
@@ -37,6 +50,9 @@ class Keyboard {
          * @type{!Runtime}
          */
         this.runtime = runtime;
+        // tw: track last pressed key
+        this.lastKeyPressed = '';
+        this._numeralKeyCodesToStringKey = new Map();
     }
 
     /**
@@ -58,12 +74,26 @@ class Keyboard {
         case 'Down':
         case 'ArrowDown': return KEY_NAME.DOWN;
         case 'Enter': return KEY_NAME.ENTER;
+        // tw: extra keys
+        case 'Backspace': return KEY_NAME.BACKSPACE;
+        case 'Delete': return KEY_NAME.DELETE;
+        case 'Shift': return KEY_NAME.SHIFT;
+        case 'CapsLock': return KEY_NAME.CAPS_LOCK;
+        case 'ScrollLock': return KEY_NAME.SCROLL_LOCK;
+        case 'Control': return KEY_NAME.CONTROL;
+        case 'Escape': return KEY_NAME.ESCAPE;
+        case 'Insert': return KEY_NAME.INSERT;
+        case 'Home': return KEY_NAME.HOME;
+        case 'End': return KEY_NAME.END;
+        case 'PageUp': return KEY_NAME.PAGE_UP;
+        case 'PageDown': return KEY_NAME.PAGE_DOWN;
         }
         // Ignore modifier keys
         if (keyString.length > 1) {
             return '';
         }
-        return keyString.toUpperCase();
+        // tw: toUpperCase() happens later. We need to track key case.
+        return keyString;
     }
 
     /**
@@ -104,6 +134,15 @@ class Keyboard {
         if (keyArg === ' ') {
             return KEY_NAME.SPACE;
         }
+        // tw: support Scratch 2 hacked blocks
+        // There are more hacked blocks but most of them get mangled by Scratch 2 -> Scratch 3 conversion
+        if (keyArg === '\r') {
+            // this probably belongs upstream
+            return KEY_NAME.ENTER;
+        }
+        if (keyArg === '\u001b') {
+            return KEY_NAME.ESCAPE;
+        }
 
         return keyArg.toUpperCase();
     }
@@ -114,10 +153,14 @@ class Keyboard {
      */
     postData (data) {
         if (!data.key) return;
-        const scratchKey = this._keyStringToScratchKey(data.key);
+        // tw: convert single letter keys to uppercase because of changes in _keyStringToScratchKey
+        const scratchKeyCased = this._keyStringToScratchKey(data.key);
+        const scratchKey = scratchKeyCased.length === 1 ? scratchKeyCased.toUpperCase() : scratchKeyCased;
         if (scratchKey === '') return;
         const index = this._keysPressed.indexOf(scratchKey);
         if (data.isDown) {
+            // tw: track last pressed key
+            this.lastKeyPressed = scratchKeyCased;
             this.runtime.emit('KEY_PRESSED', scratchKey);
             // If not already present, add to the list.
             if (index < 0) {
@@ -126,6 +169,20 @@ class Keyboard {
         } else if (index > -1) {
             // If already present, remove from the list.
             this._keysPressed.splice(index, 1);
+        }
+        // Fix for https://github.com/LLK/scratch-vm/issues/2271
+        if (data.hasOwnProperty('keyCode')) {
+            const keyCode = data.keyCode;
+            if (this._numeralKeyCodesToStringKey.has(keyCode)) {
+                const lastKeyOfSameCode = this._numeralKeyCodesToStringKey.get(keyCode);
+                if (lastKeyOfSameCode !== scratchKey) {
+                    const indexToUnpress = this._keysPressed.indexOf(lastKeyOfSameCode);
+                    if (indexToUnpress !== -1) {
+                        this._keysPressed.splice(indexToUnpress, 1);
+                    }
+                }
+            }
+            this._numeralKeyCodesToStringKey.set(keyCode, scratchKey);
         }
     }
 
@@ -140,6 +197,11 @@ class Keyboard {
         }
         const scratchKey = this._keyArgToScratchKey(keyArg);
         return this._keysPressed.indexOf(scratchKey) > -1;
+    }
+
+    // tw: expose last pressed key
+    getLastKeyPressed () {
+        return this.lastKeyPressed;
     }
 }
 

@@ -127,7 +127,11 @@ class SharedDispatch {
             const responseId = this._storeCallbacks(resolve, reject);
 
             /** @TODO: remove this hack! this is just here so we don't try to send `util` to a worker */
-            if ((args.length > 0) && (typeof args[args.length - 1].yield === 'function')) {
+            // tw: upstream's logic is broken
+            // Args is actually a 3 length list of [args, util, real block info]
+            // We only want to send args. The others will throw errors when they try to be cloned
+            if ((args.length > 0) && (typeof args[args.length - 1].func === 'function')) {
+                args.pop();
                 args.pop();
             }
 
@@ -168,7 +172,7 @@ class SharedDispatch {
                 resolve(message.result);
             }
         } catch (e) {
-            log.error(`Dispatch callback failed: ${JSON.stringify(e)}`);
+            log.error(`Dispatch callback failed: ${e}`);
         }
     }
 
@@ -200,7 +204,7 @@ class SharedDispatch {
             } else {
                 promise.then(
                     result => worker.postMessage({responseId: message.responseId, result}),
-                    error => worker.postMessage({responseId: message.responseId, error})
+                    error => worker.postMessage({responseId: message.responseId, error: `${error}`})
                 );
             }
         }

@@ -3,7 +3,23 @@
 const ArgumentType = require('../extension-support/argument-type');
 const BlockType = require('../extension-support/block-type');
 const dispatch = require('../dispatch/worker-dispatch');
+const log = require('../util/log');
 const TargetType = require('../extension-support/target-type');
+const {isWorker} = require('./tw-extension-worker-context');
+
+const loadScripts = url => {
+    if (isWorker) {
+        importScripts(url);
+    } else {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Cannot run script'));
+            script.src = url;
+            document.body.appendChild(script);
+        });
+    }
+};
 
 class ExtensionWorker {
     constructor () {
@@ -11,20 +27,26 @@ class ExtensionWorker {
 
         this.initialRegistrations = [];
 
+        this.firstRegistrationPromise = new Promise(resolve => {
+            this.firstRegistrationCallback = resolve;
+        });
+
         dispatch.waitForConnection.then(() => {
-            dispatch.call('extensions', 'allocateWorker').then(x => {
+            dispatch.call('extensions', 'allocateWorker').then(async x => {
                 const [id, extension] = x;
                 this.workerId = id;
 
                 try {
-                    importScripts(extension);
+                    await loadScripts(extension);
+                    await this.firstRegistrationPromise;
 
                     const initialRegistrations = this.initialRegistrations;
                     this.initialRegistrations = null;
 
                     Promise.all(initialRegistrations).then(() => dispatch.call('extensions', 'onWorkerInit', id));
                 } catch (e) {
-                    dispatch.call('extensions', 'onWorkerInit', id, e);
+                    log.error(e);
+                    dispatch.call('extensions', 'onWorkerInit', id, `${e}`);
                 }
             });
         });
@@ -39,6 +61,7 @@ class ExtensionWorker {
         const promise = dispatch.setService(serviceName, extensionObject)
             .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName));
         if (this.initialRegistrations) {
+            this.firstRegistrationCallback();
             this.initialRegistrations.push(promise);
         }
         return promise;

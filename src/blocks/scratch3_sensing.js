@@ -14,7 +14,7 @@ class Scratch3SensingBlocks {
          * The "answer" block value.
          * @type {string}
          */
-        this._answer = '';
+        this._answer = ''; // used by compiler
 
         /**
          * The timer utility.
