@@ -1,7 +1,7 @@
 {
   "name": "@xigua/scratch-vm",
-  "version": "0.2.1",
-  "description": "Virtual Machine for Scratch 3.0",
+  "version": "1.0.0",
+  "description": "Virtual Machine for Scratch 3.0 merged tw-vm",
   "author": "Massachusetts Institute of Technology",
   "license": "LGPL-3.0-only",
   "homepage": "https://github.com/LLK/scratch-vm#readme",
