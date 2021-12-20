@@ -771,33 +771,53 @@ class JSGenerator {
             break;
 
         case 'list.add': {
+
             const list = this.referenceVariable(node.list);
-            this.source += `${list}.value.push(${this.descendInput(node.item).asSafe()});\n`;
+            const value = this.descendInput(node.item).asSafe();
+            this.source += `${list}.value.push(${value});\n`;
             this.source += `${list}._monitorUpToDate = false;\n`;
+
+            // powered by xigua start <cloud list>
+            if (node.list.isCloud) {
+                this.source += `runtime.ioDevices.cloud.requestUpdateVariable("${sanitize(node.list.name)}", ${list}.value);\n`;
+            }
+            // powered by xigua end
             break;
         }
         case 'list.delete': {
             const list = this.referenceVariable(node.list);
             const index = this.descendInput(node.index);
-            if (index instanceof ConstantInput) {
+            if (index instanceof ConstantInput) { // optimize delete at first and last
                 if (index.constantValue === 'last') {
                     this.source += `${list}.value.pop();\n`;
                     this.source += `${list}._monitorUpToDate = false;\n`;
-                    break;
-                }
-                if (+index.constantValue === 1) {
+                } else if (+index.constantValue === 1) {
                     this.source += `${list}.value.shift();\n`;
                     this.source += `${list}._monitorUpToDate = false;\n`;
-                    break;
+                } else {
+                    this.source += `listDelete(${list}, ${index.asUnknown()});\n`;
                 }
                 // do not need a special case for all as that is handled in IR generation (list.deleteAll)
+            } else {
+                this.source += `listDelete(${list}, ${index.asUnknown()});\n`;
             }
-            this.source += `listDelete(${list}, ${index.asUnknown()});\n`;
+            // powered by xigua start <cloud list>
+            if (node.list.isCloud) {
+                this.source += `runtime.ioDevices.cloud.requestUpdateVariable("${sanitize(node.list.name)}", ${list}.value);\n`;
+            }
+            // powered by xigua end
             break;
         }
-        case 'list.deleteAll':
-            this.source += `${this.referenceVariable(node.list)}.value = [];\n`;
+        case 'list.deleteAll': {
+            const list = this.referenceVariable(node.list);
+            this.source += `${list}.value = [];\n`;
+            // powered by xigua start <cloud list>
+            if (node.list.isCloud) {
+                this.source += `runtime.ioDevices.cloud.requestUpdateVariable("${sanitize(node.list.name)}", ${list}.value);\n`;
+            }
+            // powered by xigua end
             break;
+        }
         case 'list.hide':
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.list.id)}", element: "checkbox", value: false }, runtime);\n`;
             break;
@@ -805,17 +825,30 @@ class JSGenerator {
             const list = this.referenceVariable(node.list);
             const index = this.descendInput(node.index);
             const item = this.descendInput(node.item);
-            if (index instanceof ConstantInput && +index.constantValue === 1) {
+            if (index instanceof ConstantInput && +index.constantValue === 1) { // optimize insert at first
                 this.source += `${list}.value.unshift(${item.asSafe()});\n`;
                 this.source += `${list}._monitorUpToDate = false;\n`;
-                break;
+            } else {
+                this.source += `listInsert(${list}, ${index.asUnknown()}, ${item.asSafe()});\n`;
             }
-            this.source += `listInsert(${list}, ${index.asUnknown()}, ${item.asSafe()});\n`;
+            // powered by xigua start <cloud list>
+            if (node.list.isCloud) {
+                this.source += `runtime.ioDevices.cloud.requestUpdateVariable("${sanitize(node.list.name)}", ${list}.value);\n`;
+            }
+            // powered by xigua end
             break;
         }
-        case 'list.replace':
-            this.source += `listReplace(${this.referenceVariable(node.list)}, ${this.descendInput(node.index).asUnknown()}, ${this.descendInput(node.item).asSafe()});\n`;
+        case 'list.replace': {
+            const list = this.referenceVariable(node.list);
+            this.source += `listReplace(${list}, ${this.descendInput(node.index).asUnknown()}, ${this.descendInput(node.item).asSafe()});\n`;
+            // powered by xigua start <cloud list>
+            if (node.list.isCloud) {
+                this.source += `runtime.ioDevices.cloud.requestUpdateVariable("${sanitize(node.list.name)}", ${list}.value);\n`;
+            }
+            // powered by xigua end
             break;
+        }
+
         case 'list.show':
             this.source += `runtime.monitorBlocks.changeBlock({ id: "${sanitize(node.list.id)}", element: "checkbox", value: true }, runtime);\n`;
             break;
