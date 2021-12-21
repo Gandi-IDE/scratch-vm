@@ -292,6 +292,14 @@ class VirtualMachine extends EventEmitter {
         this.runtime.setRuntimeOptions(runtimeOptions);
     }
 
+    /**
+     * ccw: Set ccw API to runtime support ccw block extensions
+     * @param {*} ccwAPI ccw API
+     */
+    setCCWAPI (ccwAPI) {
+        this.runtime.setCCWAPI(ccwAPI);
+    }
+
     setCompilerOptions(compilerOptions) {
         this.runtime.setCompilerOptions(compilerOptions);
     }

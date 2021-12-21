@@ -445,10 +445,16 @@ class Runtime extends EventEmitter {
             fencing: true
         };
 
+
         this.compilerOptions = {
             enabled: true,
             warpTimer: false
         };
+
+        /** ccw: add ccwAPI init value {}
+         *
+         */
+        this.ccwAPI = {};
 
         this.debug = false;
 
@@ -2438,6 +2444,14 @@ class Runtime extends EventEmitter {
         if (this.renderer) {
             this.renderer.offscreenTouching = !this.runtimeOptions.fencing;
         }
+    }
+
+    /**
+     * ccw: Set ccw API to runtime support ccw block extensions
+     * @param {*} ccwAPI ccw API
+     */
+    setCCWAPI (ccwAPI) {
+        this.ccwAPI = ccwAPI;
     }
 
     /**
