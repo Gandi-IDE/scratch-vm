@@ -205,10 +205,10 @@ class ExtensionManager {
             return Promise.resolve();
         }
 
-        this.runtime.emit('EXTENSION_DATA_LOADING', true);
+        this.runtime.emit('EXTENSION_DATA_LOADING', true); // ccw start loading remote extension event
 
         return this.runtime
-            .loadOnlineExtensionsLibrary()
+            .loadOnlineExtensionsLibrary() // ccw remote extensions library
             .then(lib => lib.default())
             .then(({default: remoteExtensions}) => {
                 const remoteExtensionConfig = remoteExtensions[extensionURL];
@@ -216,9 +216,7 @@ class ExtensionManager {
                     return remoteExtensionConfig
                         .Extension()
                         .then(({default: remoteExtension}) => {
-                            const extensionInstance = new remoteExtension(
-                                this.runtime
-                            );
+                            const extensionInstance = new remoteExtension(this.runtime);
                             const serviceName = this._registerInternalExtension(extensionInstance);
                             this._loadedExtensions.set(extensionURL, serviceName);
                             return Promise.resolve();
@@ -226,33 +224,34 @@ class ExtensionManager {
                 }
 
                 // eslint-disable-next-line no-console
-                console.warn(`扩展[${extensionURL}]未找到`);
+                log.warn(`ccw: [${extensionURL}] not found in remote extensions library,try load as URL`);
                 this.runtime.emit('EXTENSION_NOT_FOUND', extensionURL);
 
+                // TW
+                this.loadingAsyncExtensions++;
                 return new Promise((resolve, reject) => {
-                    // If we `require` this at the global level it breaks non-webpack targets, including tests
-                    const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
-                    this.pendingExtensions.push({
-                        extensionURL,
-                        resolve,
-                        reject
-                    });
-                    dispatch.addWorker(new ExtensionWorker());
+                    this.pendingExtensions.push({extensionURL, resolve, reject});
+                    this.createExtensionWorker()
+                        .then(worker => dispatch.addWorker(worker))
+                        .catch(error => reject(error));
                 });
+
+                // original
+                // return new Promise((resolve, reject) => {
+                //     // If we `require` this at the global level it breaks non-webpack targets, including tests
+                //     const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
+
+                //     this.pendingExtensions.push({
+                //         extensionURL,
+                //         resolve,
+                //         reject
+                //     });
+                //     dispatch.addWorker(new ExtensionWorker());
+                // });
             })
             .finally(() => {
-                this.runtime.emit('EXTENSION_DATA_LOADING', false);
+                this.runtime.emit('EXTENSION_DATA_LOADING', false); // ccw end loading remote extension event
             });
-
-        // TW
-        // this.loadingAsyncExtensions++;
-
-        // return new Promise((resolve, reject) => {
-        //     this.pendingExtensions.push({extensionURL, resolve, reject});
-        //     this.createExtensionWorker()
-        //         .then(worker => dispatch.addWorker(worker))
-        //         .catch(error => reject(error));
-        // });
     }
 
     /**
