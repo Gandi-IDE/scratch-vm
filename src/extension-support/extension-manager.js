@@ -1,8 +1,8 @@
-const dispatch = require("../dispatch/central-dispatch");
-const log = require("../util/log");
-const maybeFormatMessage = require("../util/maybe-format-message");
+const dispatch = require('../dispatch/central-dispatch');
+const log = require('../util/log');
+const maybeFormatMessage = require('../util/maybe-format-message');
 
-const BlockType = require("./block-type");
+const BlockType = require('./block-type');
 
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
@@ -11,24 +11,24 @@ const BlockType = require("./block-type");
 const builtinExtensions = {
     // This is an example that isn't loaded with the other core blocks,
     // but serves as a reference for loading core blocks as extensions.
-    coreExample: () => require("../blocks/scratch3_core_example"),
+    coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
-    pen: () => require("../extensions/scratch3_pen"),
-    wedo2: () => require("../extensions/scratch3_wedo2"),
+    pen: () => require('../extensions/scratch3_pen'),
+    wedo2: () => require('../extensions/scratch3_wedo2'),
     // powered by xigua start
     // music包太大了，放到异步扩展里去
     // music: () => require('../extensions/scratch3_music'),
     // powered by xigua end
-    microbit: () => require("../extensions/scratch3_microbit"),
-    text2speech: () => require("../extensions/scratch3_text2speech"),
-    translate: () => require("../extensions/scratch3_translate"),
-    videoSensing: () => require("../extensions/scratch3_video_sensing"),
-    ev3: () => require("../extensions/scratch3_ev3"),
-    makeymakey: () => require("../extensions/scratch3_makeymakey"),
-    boost: () => require("../extensions/scratch3_boost"),
-    gdxfor: () => require("../extensions/scratch3_gdx_for"),
+    microbit: () => require('../extensions/scratch3_microbit'),
+    text2speech: () => require('../extensions/scratch3_text2speech'),
+    translate: () => require('../extensions/scratch3_translate'),
+    videoSensing: () => require('../extensions/scratch3_video_sensing'),
+    ev3: () => require('../extensions/scratch3_ev3'),
+    makeymakey: () => require('../extensions/scratch3_makeymakey'),
+    boost: () => require('../extensions/scratch3_boost'),
+    gdxfor: () => require('../extensions/scratch3_gdx_for'),
     // tw: core extension
-    tw: () => require("../extensions/tw"),
+    tw: () => require('../extensions/tw')
 };
 
 // powered by xigua start
@@ -68,7 +68,7 @@ const injectExtensions = {};
  * @property {Function} reject - function to call on failed worker startup
  */
 
-const createExtensionService = (extensionManager) => {
+const createExtensionService = extensionManager => {
     const service = {};
     service.registerExtensionServiceSync =
         extensionManager.registerExtensionServiceSync.bind(extensionManager);
@@ -81,7 +81,7 @@ const createExtensionService = (extensionManager) => {
 };
 
 class ExtensionManager {
-    constructor(runtime) {
+    constructor (runtime) {
         /**
          * The ID number to provide to the next extension worker.
          * @type {int}
@@ -115,7 +115,7 @@ class ExtensionManager {
          *  - "worker" (default)
          *  - "iframe"
          */
-        this.workerMode = "worker";
+        this.workerMode = 'worker';
 
         /**
          * Keep a reference to the runtime so we can construct internal extension objects.
@@ -128,8 +128,8 @@ class ExtensionManager {
         this.asyncExtensionsLoadedCallbacks = [];
 
         dispatch
-            .setService("extensions", createExtensionService(this))
-            .catch((e) => {
+            .setService('extensions', createExtensionService(this))
+            .catch(e => {
                 log.error(
                     `ExtensionManager was unable to register extension service: ${JSON.stringify(
                         e
@@ -145,7 +145,7 @@ class ExtensionManager {
      * @param {string} extensionID - the ID of the extension.
      * @returns {boolean} - true if loaded, false otherwise.
      */
-    isExtensionLoaded(extensionID) {
+    isExtensionLoaded (extensionID) {
         return this._loadedExtensions.has(extensionID);
     }
 
@@ -154,7 +154,7 @@ class ExtensionManager {
      * fail if the provided id is not does not match an internal extension.
      * @param {string} extensionId - the ID of an internal extension
      */
-    loadExtensionIdSync(extensionId) {
+    loadExtensionIdSync (extensionId) {
         if (!builtinExtensions.hasOwnProperty(extensionId)) {
             log.warn(
                 `Could not find extension ${extensionId} in the built in extensions.`
@@ -181,7 +181,7 @@ class ExtensionManager {
      * @param {string} extensionURL - the URL for the extension to load OR the ID of an internal extension
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
-    loadExtensionURL(extensionURL) {
+    loadExtensionURL (extensionURL) {
         if (
             builtinExtensions.hasOwnProperty(extensionURL) ||
             injectExtensions.hasOwnProperty(extensionURL)
@@ -193,10 +193,7 @@ class ExtensionManager {
                 return Promise.resolve();
             }
 
-            const extension = (
-                builtinExtensions[extensionURL] ||
-                injectExtensions[extensionURL]
-            )();
+            const extension = (builtinExtensions[extensionURL] ||injectExtensions[extensionURL])();
             const extensionInstance = new extension(this.runtime);
             const serviceName =
                 this._registerInternalExtension(extensionInstance);
@@ -208,50 +205,43 @@ class ExtensionManager {
             return Promise.resolve();
         }
 
-        this.runtime.emit("EXTENSION_DATA_LOADING", true);
+        this.runtime.emit('EXTENSION_DATA_LOADING', true);
 
         return this.runtime
             .loadOnlineExtensionsLibrary()
-            .then((lib) => lib.default())
-            .then(({ default: remoteExtensions }) => {
+            .then(lib => lib.default())
+            .then(({default: remoteExtensions}) => {
                 const remoteExtensionConfig = remoteExtensions[extensionURL];
                 if (remoteExtensionConfig && remoteExtensionConfig.Extension) {
                     return remoteExtensionConfig
                         .Extension()
-                        .then(({ default: remoteExtension }) => {
+                        .then(({default: remoteExtension}) => {
                             const extensionInstance = new remoteExtension(
                                 this.runtime
                             );
-                            const serviceName =
-                                this._registerInternalExtension(
-                                    extensionInstance
-                                );
-                            this._loadedExtensions.set(
-                                extensionURL,
-                                serviceName
-                            );
+                            const serviceName = this._registerInternalExtension(extensionInstance);
+                            this._loadedExtensions.set(extensionURL, serviceName);
                             return Promise.resolve();
                         });
                 }
 
                 // eslint-disable-next-line no-console
                 console.warn(`扩展[${extensionURL}]未找到`);
-                this.runtime.emit("EXTENSION_NOT_FOUND", extensionURL);
+                this.runtime.emit('EXTENSION_NOT_FOUND', extensionURL);
 
                 return new Promise((resolve, reject) => {
                     // If we `require` this at the global level it breaks non-webpack targets, including tests
-                    const ExtensionWorker = require("worker-loader?name=extension-worker.js!./extension-worker");
-
+                    const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
                     this.pendingExtensions.push({
                         extensionURL,
                         resolve,
-                        reject,
+                        reject
                     });
                     dispatch.addWorker(new ExtensionWorker());
                 });
             })
             .finally(() => {
-                this.runtime.emit("EXTENSION_DATA_LOADING", false);
+                this.runtime.emit('EXTENSION_DATA_LOADING', false);
             });
 
         // TW
@@ -269,11 +259,11 @@ class ExtensionManager {
      * Wait until all async extensions have loaded
      * @returns {Promise} resolved when all async extensions have loaded
      */
-    allAsyncExtensionsLoaded() {
+    allAsyncExtensionsLoaded () {
         if (this.loadingAsyncExtensions === 0) {
             return;
         }
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             this.asyncExtensionsLoadedCallbacks.push(resolve);
         });
     }
@@ -282,37 +272,37 @@ class ExtensionManager {
      * Creates a new extension worker.
      * @returns {Promise}
      */
-    createExtensionWorker() {
-        if (this.workerMode === "worker") {
+    createExtensionWorker () {
+        if (this.workerMode === 'worker') {
             // eslint-disable-next-line max-len
-            const ExtensionWorker = require("worker-loader?name=js/extension-worker/extension-worker.[hash].js!./extension-worker");
+            const ExtensionWorker = require('worker-loader?name=js/extension-worker/extension-worker.[hash].js!./extension-worker');
             return Promise.resolve(new ExtensionWorker());
-        } else if (this.workerMode === "iframe") {
+        } else if (this.workerMode === 'iframe') {
             return import(
-                /* webpackChunkName: "iframe-extension-worker" */ "./tw-iframe-extension-worker"
-            ).then((mod) => new mod.default());
+                /* webpackChunkName: "iframe-extension-worker" */ './tw-iframe-extension-worker'
+            ).then(mod => new mod.default());
         }
-        return Promise.reject(new Error("Unknown extension worker mode"));
+        return Promise.reject(new Error('Unknown extension worker mode'));
     }
 
     /**
      * Regenerate blockinfo for any loaded extensions
      * @returns {Promise} resolved once all the extensions have been reinitialized
      */
-    refreshBlocks() {
+    refreshBlocks () {
         const allPromises = Array.from(this._loadedExtensions.values()).map(
-            (serviceName) =>
+            serviceName =>
                 dispatch
-                    .call(serviceName, "getInfo")
-                    .then((info) => {
+                    .call(serviceName, 'getInfo')
+                    .then(info => {
                         info = this._prepareExtensionInfo(serviceName, info);
                         dispatch.call(
-                            "runtime",
-                            "_refreshExtensionPrimitives",
+                            'runtime',
+                            '_refreshExtensionPrimitives',
                             info
                         );
                     })
-                    .catch((e) => {
+                    .catch(e => {
                         log.error(
                             `Failed to refresh built-in extension primitives: ${JSON.stringify(
                                 e
@@ -323,7 +313,7 @@ class ExtensionManager {
         return Promise.all(allPromises);
     }
 
-    allocateWorker() {
+    allocateWorker () {
         const id = this.nextExtensionWorker++;
         const workerInfo = this.pendingExtensions.shift();
         this.pendingWorkers[id] = workerInfo;
@@ -334,8 +324,8 @@ class ExtensionManager {
      * Synchronously collect extension metadata from the specified service and begin the extension registration process.
      * @param {string} serviceName - the name of the service hosting the extension.
      */
-    registerExtensionServiceSync(serviceName) {
-        const info = dispatch.callSync(serviceName, "getInfo");
+    registerExtensionServiceSync (serviceName) {
+        const info = dispatch.callSync(serviceName, 'getInfo');
         this._registerExtensionInfo(serviceName, info);
     }
 
@@ -343,14 +333,14 @@ class ExtensionManager {
      * Collect extension metadata from the specified service and begin the extension registration process.
      * @param {string} serviceName - the name of the service hosting the extension.
      */
-    registerExtensionService(serviceName) {
-        dispatch.call(serviceName, "getInfo").then((info) => {
+    registerExtensionService (serviceName) {
+        dispatch.call(serviceName, 'getInfo').then(info => {
             this._loadedExtensions.set(info.id, serviceName);
             this._registerExtensionInfo(serviceName, info);
 
             this.loadingAsyncExtensions--;
             if (this.loadingAsyncExtensions === 0) {
-                this.asyncExtensionsLoadedCallbacks.forEach((i) => i());
+                this.asyncExtensionsLoadedCallbacks.forEach(i => i());
                 this.asyncExtensionsLoadedCallbacks = [];
             }
         });
@@ -361,7 +351,7 @@ class ExtensionManager {
      * @param {int} id - the worker ID.
      * @param {*?} e - the error encountered during initialization, if any.
      */
-    onWorkerInit(id, e) {
+    onWorkerInit (id, e) {
         const workerInfo = this.pendingWorkers[id];
         delete this.pendingWorkers[id];
         if (e) {
@@ -376,14 +366,14 @@ class ExtensionManager {
      * @param {object} extensionObject - the extension object to register
      * @returns {string} The name of the registered extension service
      */
-    _registerInternalExtension(extensionObject) {
+    _registerInternalExtension (extensionObject) {
         const extensionInfo = extensionObject.getInfo();
         const fakeWorkerId = this.nextExtensionWorker++;
         const serviceName = `extension_${fakeWorkerId}_${extensionInfo.id}`;
         dispatch.setServiceSync(serviceName, extensionObject);
         dispatch.callSync(
-            "extensions",
-            "registerExtensionServiceSync",
+            'extensions',
+            'registerExtensionServiceSync',
             serviceName
         );
         return serviceName;
@@ -395,11 +385,11 @@ class ExtensionManager {
      * @param {ExtensionInfo} extensionInfo - the extension's metadata
      * @private
      */
-    _registerExtensionInfo(serviceName, extensionInfo) {
+    _registerExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = this._prepareExtensionInfo(serviceName, extensionInfo);
         dispatch
-            .call("runtime", "_registerExtensionPrimitives", extensionInfo)
-            .catch((e) => {
+            .call('runtime', '_registerExtensionPrimitives', extensionInfo)
+            .catch(e => {
                 log.error(
                     `Failed to register primitives for extension on service ${serviceName}:`,
                     e
@@ -413,8 +403,8 @@ class ExtensionManager {
      * @returns {string} - the sanitized text
      * @private
      */
-    _sanitizeID(text) {
-        return text.toString().replace(/[<"&]/, "_");
+    _sanitizeID (text) {
+        return text.toString().replace(/[<"&]/, '_');
     }
 
     /**
@@ -425,10 +415,10 @@ class ExtensionManager {
      * @returns {ExtensionInfo} - a new extension info object with cleaned-up values
      * @private
      */
-    _prepareExtensionInfo(serviceName, extensionInfo) {
+    _prepareExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = Object.assign({}, extensionInfo);
         if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
-            throw new Error("Invalid extension id");
+            throw new Error('Invalid extension id');
         }
         extensionInfo.name = extensionInfo.name || extensionInfo.id;
         extensionInfo.blocks = extensionInfo.blocks || [];
@@ -438,16 +428,16 @@ class ExtensionManager {
                 try {
                     let result;
                     switch (blockInfo) {
-                        case "---": // separator
-                            result = "---";
-                            break;
-                        default:
-                            // an ExtensionBlockMetadata object
-                            result = this._prepareBlockInfo(
-                                serviceName,
-                                blockInfo
-                            );
-                            break;
+                    case '---': // separator
+                        result = '---';
+                        break;
+                    default:
+                        // an ExtensionBlockMetadata object
+                        result = this._prepareBlockInfo(
+                            serviceName,
+                            blockInfo
+                        );
+                        break;
                     }
                     results.push(result);
                 } catch (e) {
@@ -477,7 +467,7 @@ class ExtensionManager {
      * @returns {Array.<MenuInfo>} - a menuInfo object with all preprocessing done.
      * @private
      */
-    _prepareMenuInfo(serviceName, menus) {
+    _prepareMenuInfo (serviceName, menus) {
         const menuNames = Object.getOwnPropertyNames(menus);
         for (let i = 0; i < menuNames.length; i++) {
             const menuName = menuNames[i];
@@ -487,13 +477,13 @@ class ExtensionManager {
             // its items listed in an `items` property.
             if (!menuInfo.items) {
                 menuInfo = {
-                    items: menuInfo,
+                    items: menuInfo
                 };
                 menus[menuName] = menuInfo;
             }
             // If `items` is a string, it should be the name of a function in the extension object. Calling the
             // function should return an array of items to populate the menu when it is opened.
-            if (typeof menuInfo.items === "string") {
+            if (typeof menuInfo.items === 'string') {
                 const menuItemFunctionName = menuInfo.items;
                 const serviceObject = dispatch.services[serviceName];
                 // Bind the function here so we can pass a simple item generation function to Scratch Blocks later.
@@ -514,7 +504,7 @@ class ExtensionManager {
      * @returns {Array} menu items ready for scratch-blocks.
      * @private
      */
-    _getExtensionMenuItems(extensionObject, menuItemFunctionName) {
+    _getExtensionMenuItems (extensionObject, menuItemFunctionName) {
         // Fetch the items appropriate for the target currently being edited. This assumes that menus only
         // collect items when opened by the user while editing a particular target.
         const editingTarget =
@@ -527,21 +517,21 @@ class ExtensionManager {
         const menuFunc = extensionObject[menuItemFunctionName];
         const menuItems = menuFunc
             .call(extensionObject, editingTargetID)
-            .map((item) => {
+            .map(item => {
                 item = maybeFormatMessage(item, extensionMessageContext);
                 switch (typeof item) {
-                    case "object":
-                        return [
-                            maybeFormatMessage(
-                                item.text,
-                                extensionMessageContext
-                            ),
-                            item.value,
-                        ];
-                    case "string":
-                        return [item, item];
-                    default:
-                        return item;
+                case 'object':
+                    return [
+                        maybeFormatMessage(
+                            item.text,
+                            extensionMessageContext
+                        ),
+                        item.value
+                    ];
+                case 'string':
+                    return [item, item];
+                default:
+                    return item;
                 }
             });
 
@@ -560,14 +550,14 @@ class ExtensionManager {
      * @returns {ExtensionBlockMetadata} - a new block info object which has values for all relevant optional fields.
      * @private
      */
-    _prepareBlockInfo(serviceName, blockInfo) {
+    _prepareBlockInfo (serviceName, blockInfo) {
         blockInfo = Object.assign(
             {},
             {
                 blockType: BlockType.COMMAND,
                 terminal: false,
                 blockAllThreads: false,
-                arguments: {},
+                arguments: {}
             },
             blockInfo
         );
@@ -576,70 +566,70 @@ class ExtensionManager {
         blockInfo.text = blockInfo.text || blockInfo.opcode;
 
         switch (blockInfo.blockType) {
-            case BlockType.EVENT:
-                if (blockInfo.func) {
-                    log.warn(
-                        `Ignoring function "${blockInfo.func}" for event block ${blockInfo.opcode}`
-                    );
-                }
-                break;
-            case BlockType.BUTTON:
-                if (blockInfo.opcode) {
-                    log.warn(
-                        `Ignoring opcode "${blockInfo.opcode}" for button with text: ${blockInfo.text}`
-                    );
-                }
-                break;
-            default: {
-                if (!blockInfo.opcode) {
-                    throw new Error("Missing opcode for block");
-                }
-
-                const funcName = blockInfo.func
-                    ? this._sanitizeID(blockInfo.func)
-                    : blockInfo.opcode;
-
-                const getBlockInfo = blockInfo.isDynamic
-                    ? (args) => args && args.mutation && args.mutation.blockInfo
-                    : () => blockInfo;
-                const callBlockFunc = (() => {
-                    if (dispatch._isRemoteService(serviceName)) {
-                        return (args, util, realBlockInfo) =>
-                            dispatch.call(
-                                serviceName,
-                                funcName,
-                                args,
-                                util,
-                                realBlockInfo
-                            );
-                    }
-
-                    // avoid promise latency if we can call direct
-                    const serviceObject = dispatch.services[serviceName];
-                    if (!serviceObject[funcName]) {
-                        // The function might show up later as a dynamic property of the service object
-                        log.warn(
-                            `Could not find extension block function called ${funcName}`
-                        );
-                    }
-                    return (args, util, realBlockInfo) =>
-                        serviceObject[funcName](args, util, realBlockInfo);
-                })();
-
-                blockInfo.func = (args, util) => {
-                    const realBlockInfo = getBlockInfo(args);
-                    // TODO: filter args using the keys of realBlockInfo.arguments? maybe only if sandboxed?
-                    return callBlockFunc(args, util, realBlockInfo);
-                };
-                break;
+        case BlockType.EVENT:
+            if (blockInfo.func) {
+                log.warn(
+                    `Ignoring function "${blockInfo.func}" for event block ${blockInfo.opcode}`
+                );
             }
+            break;
+        case BlockType.BUTTON:
+            if (blockInfo.opcode) {
+                log.warn(
+                    `Ignoring opcode "${blockInfo.opcode}" for button with text: ${blockInfo.text}`
+                );
+            }
+            break;
+        default: {
+            if (!blockInfo.opcode) {
+                throw new Error('Missing opcode for block');
+            }
+
+            const funcName = blockInfo.func ?
+                this._sanitizeID(blockInfo.func) :
+                blockInfo.opcode;
+
+            const getBlockInfo = blockInfo.isDynamic ?
+                args => args && args.mutation && args.mutation.blockInfo :
+                () => blockInfo;
+            const callBlockFunc = (() => {
+                if (dispatch._isRemoteService(serviceName)) {
+                    return (args, util, realBlockInfo) =>
+                        dispatch.call(
+                            serviceName,
+                            funcName,
+                            args,
+                            util,
+                            realBlockInfo
+                        );
+                }
+
+                // avoid promise latency if we can call direct
+                const serviceObject = dispatch.services[serviceName];
+                if (!serviceObject[funcName]) {
+                    // The function might show up later as a dynamic property of the service object
+                    log.warn(
+                        `Could not find extension block function called ${funcName}`
+                    );
+                }
+                return (args, util, realBlockInfo) =>
+                    serviceObject[funcName](args, util, realBlockInfo);
+            })();
+
+            blockInfo.func = (args, util) => {
+                const realBlockInfo = getBlockInfo(args);
+                // TODO: filter args using the keys of realBlockInfo.arguments? maybe only if sandboxed?
+                return callBlockFunc(args, util, realBlockInfo);
+            };
+            break;
+        }
         }
 
         return blockInfo;
     }
 
     // powered by xigua start
-    injectExtension(extensionId, extension) {
+    injectExtension (extensionId, extension) {
         if (
             builtinExtensions.hasOwnProperty(extensionId) ||
             injectExtensions.hasOwnProperty(extensionId)
@@ -649,7 +639,7 @@ class ExtensionManager {
         injectExtensions[extensionId] = () => extension;
     }
 
-    clearLoadedExtensions() {
+    clearLoadedExtensions () {
         this._loadedExtensions.clear();
     }
     // powered by xigua end
