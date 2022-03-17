@@ -182,6 +182,7 @@ class ExtensionManager {
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL) {
+
         if (
             builtinExtensions.hasOwnProperty(extensionURL) ||
             injectExtensions.hasOwnProperty(extensionURL)
@@ -193,7 +194,8 @@ class ExtensionManager {
                 return Promise.resolve();
             }
 
-            const extension = (builtinExtensions[extensionURL] ||injectExtensions[extensionURL])();
+
+            const extension = (builtinExtensions[extensionURL] || injectExtensions[extensionURL])();
             const extensionInstance = new extension(this.runtime);
             const serviceName =
                 this._registerInternalExtension(extensionInstance);
@@ -225,15 +227,16 @@ class ExtensionManager {
 
                 // eslint-disable-next-line no-console
                 log.warn(`ccw: [${extensionURL}] not found in remote extensions library,try load as URL`);
-                this.runtime.emit('EXTENSION_NOT_FOUND', extensionURL);
-
                 // TW
                 this.loadingAsyncExtensions++;
                 return new Promise((resolve, reject) => {
                     this.pendingExtensions.push({extensionURL, resolve, reject});
                     this.createExtensionWorker()
                         .then(worker => dispatch.addWorker(worker))
-                        .catch(error => reject(error));
+                        .catch(error => {
+                            this.runtime.emit('EXTENSION_NOT_FOUND', extensionURL);
+                            return reject(error);
+                        });
                 });
 
                 // original
@@ -274,7 +277,7 @@ class ExtensionManager {
     createExtensionWorker () {
         if (this.workerMode === 'worker') {
             // eslint-disable-next-line max-len
-            const ExtensionWorker = require('worker-loader?name=js/extension-worker/extension-worker.[hash].js!./extension-worker');
+            const ExtensionWorker = require('worker-loader?inline=true!./extension-worker');
             return Promise.resolve(new ExtensionWorker());
         } else if (this.workerMode === 'iframe') {
             return import(
