@@ -15,15 +15,16 @@ class Scratch3ProcedureBlocks {
         return {
             procedures_definition: this.definition,
             procedures_call: this.call,
+            procedures_call_with_return: this.call,
             argument_reporter_string_number: this.argumentReporterStringNumber,
-            argument_reporter_boolean: this.argumentReporterBoolean
+            argument_reporter_boolean: this.argumentReporterBoolean,
+            procedures_return: this.proceduresReturn
         };
     }
 
     definition () {
         // No-op: execute the blocks.
     }
-
     call (args, util) {
         if (!util.stackFrame.executed) {
             const procedureCode = args.mutation.proccode;
@@ -53,6 +54,10 @@ class Scratch3ProcedureBlocks {
             util.stackFrame.executed = true;
             util.startProcedure(procedureCode);
         }
+    }
+
+    proceduresReturn (args) {
+        return args.RETURN;
     }
 
     argumentReporterStringNumber (args, util) {

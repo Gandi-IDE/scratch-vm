@@ -476,11 +476,17 @@ const execute = function (sequencer, thread) {
                 // Cast it to a string. We don't need an id here.
                 argValues.BROADCAST_OPTION.id = null;
                 argValues.BROADCAST_OPTION.name = cast.toString(inputValue);
-            } else {
+            } else if (argValues && inputName) {
+                // pass value to parent argument if has parent
                 argValues[inputName] = inputValue;
             }
 
             i += 1;
+            if (i >= length) {
+                // there no more operations to execute meaning click procedures_call_with_return block separately
+                // show value bubble
+                handleReport(inputValue, sequencer, thread, opCached, true);
+            }
         }
 
         currentStackFrame.reporting = null;
@@ -512,9 +518,12 @@ const execute = function (sequencer, thread) {
 
         const primitiveReportedValue = blockFunction(argValues, blockUtility);
 
+        const isPromiseReportedValue = isPromise(primitiveReportedValue);
         // If it's a promise, wait until promise resolves.
-        if (isPromise(primitiveReportedValue)) {
-            handlePromise(primitiveReportedValue, sequencer, thread, opCached, lastOperation);
+        if (isPromiseReportedValue || opCached.opcode === 'procedures_call_with_return') {
+            if (isPromiseReportedValue) {
+                handlePromise(primitiveReportedValue, sequencer, thread, opCached, lastOperation);
+            }
 
             // Store the already reported values. They will be thawed into the
             // future versions of the same operations by block id. The reporting

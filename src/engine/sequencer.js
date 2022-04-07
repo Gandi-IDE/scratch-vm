@@ -277,6 +277,15 @@ class Sequencer {
                     // This means a reporter has just returned - so don't go
                     // to the next block for this level of the stack.
                     return;
+                } else if (stackFrame.reporting) {
+                    // ccw
+                    // in original scratch
+                    // stackFrame.reporting only used in isPromiseReporter in execute.js
+                    // but promise waiting is depends on thread.status
+                    // so we use it for procedures_call_with_return
+                    // procedures_return is not a promise, dont need thread waiting
+                    // just continue to next stack of reporting
+                    continue;
                 }
                 // Get next block of existing block on the stack.
                 thread.goToNextBlock();
