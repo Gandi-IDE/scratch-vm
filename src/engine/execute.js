@@ -462,9 +462,10 @@ const execute = function (sequencer, thread) {
         }
 
         // The reporting block must exist and must be the next one in the sequence of operations.
-        if (thread.justReported !== null && ops[i] && ops[i].id === currentStackFrame.reporting) {
+        // CCW: return '' thread.justReported === null
+        if (ops[i] && ops[i].id === currentStackFrame.reporting) {
             const opCached = ops[i];
-            const inputValue = thread.justReported;
+            const inputValue = thread.justReported === null ? '' : thread.justReported;
 
             thread.justReported = null;
 
