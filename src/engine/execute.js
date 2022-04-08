@@ -520,6 +520,7 @@ const execute = function (sequencer, thread) {
 
         const isPromiseReportedValue = isPromise(primitiveReportedValue);
         // If it's a promise, wait until promise resolves.
+        // CCW: procedures_call_with_return make stack frame waiting report like promise
         if (isPromiseReportedValue || opCached.opcode === 'procedures_call_with_return') {
             if (isPromiseReportedValue) {
                 handlePromise(primitiveReportedValue, sequencer, thread, opCached, lastOperation);
@@ -568,6 +569,12 @@ const execute = function (sequencer, thread) {
                     parentValues[inputName] = primitiveReportedValue;
                 }
             }
+        }
+        if (opCached.opcode === 'procedures_return') {
+            // CCW: when a procedure returns, we need to stop op chain execution
+            // pop stack until we find the procedures_call_with_return block
+            thread.stopThisScript();
+            break;
         }
     }
 

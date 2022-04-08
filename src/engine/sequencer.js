@@ -278,7 +278,7 @@ class Sequencer {
                     // to the next block for this level of the stack.
                     return;
                 } else if (stackFrame.reporting) {
-                    // ccw
+                    // CCW:
                     // in original scratch
                     // stackFrame.reporting only used in isPromiseReporter in execute.js
                     // but promise waiting is depends on thread.status

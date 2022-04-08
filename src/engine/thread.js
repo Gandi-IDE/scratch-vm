@@ -312,7 +312,17 @@ class Thread {
         let blockID = this.peekStack();
         while (blockID !== null) {
             const block = this.target.blocks.getBlock(blockID);
-            if (typeof block !== 'undefined' && block.opcode === 'procedures_call') {
+
+            // CCW: when stack is or waiting procedures_call_with_return, dont pop
+            let isWaitingProceduresReturn = false;
+            const stackFrame = this.peekStackFrame();
+            if (stackFrame.reporting) {
+                const reportBlock = this.target.blocks.getBlock(stackFrame.reporting);
+                isWaitingProceduresReturn = reportBlock.opcode === 'procedures_call_with_return';
+            }
+
+            if (typeof block !== 'undefined' &&
+                (block.opcode === 'procedures_call' || isWaitingProceduresReturn)) {
                 break;
             }
             this.popStack();
