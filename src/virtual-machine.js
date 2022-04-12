@@ -118,6 +118,12 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.PROJECT_RUN_STOP, () => {
             this.emit(Runtime.PROJECT_RUN_STOP);
         });
+        this.runtime.on(Runtime.PROJECT_RUN_PAUSE, () => {
+            this.emit(Runtime.PROJECT_RUN_PAUSE);
+        });
+        this.runtime.on(Runtime.PROJECT_RUN_RESUME, () => {
+            this.emit(Runtime.PROJECT_RUN_RESUME);
+        });
         this.runtime.on(Runtime.PROJECT_CHANGED, () => {
             this.emit(Runtime.PROJECT_CHANGED);
         });

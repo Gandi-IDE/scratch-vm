@@ -607,6 +607,25 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for pause.
+     * Used by the UI to indicate pause status.
+     * @const {string}
+     */
+    static get PROJECT_RUN_PAUSE () {
+        return 'PROJECT_RUN_PAUSE';
+    }
+
+
+    /**
+     * Event name for resume
+     * Used by the UI to indicate resume status.
+     * @const {string}
+     */
+    static get PROJECT_RUN_RESUME () {
+        return 'PROJECT_RUN_RESUME';
+    }
+
+    /**
      * Event name for project being stopped or restarted by the user.
      * Used by blocks that need to reset state.
      * @const {string}
