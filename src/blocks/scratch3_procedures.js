@@ -26,7 +26,7 @@ class Scratch3ProcedureBlocks {
         // No-op: execute the blocks.
     }
     call (args, util) {
-        if (!util.stackFrame.executed) {
+        // if (!util.stackFrame.executed) {// CCW: allow custom procedure nesting in one stack frame
             const procedureCode = args.mutation.proccode;
             const paramNamesIdsAndDefaults = util.getProcedureParamNamesIdsAndDefaults(procedureCode);
 
@@ -51,7 +51,7 @@ class Scratch3ProcedureBlocks {
                 }
             }
 
-            util.stackFrame.executed = true;
+            // util.stackFrame.executed = true;// CCW: allow custom procedure nesting in stack frame
             util.startProcedure(procedureCode);
         }
     }
