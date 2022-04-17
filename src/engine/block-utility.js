@@ -136,7 +136,7 @@ class BlockUtility {
      * executed block.
      */
     stopOtherTargetThreads () {
-        this.sequencer.runtime.stopForTarget(this.thread.target, this.thread);
+        this.sequencer.runtime.stopForTarget(this.target, this.thread);
     }
 
     /**
@@ -150,13 +150,13 @@ class BlockUtility {
      * Start a specified procedure on this thread.
      * @param {string} procedureCode Procedure code for procedure to start.
      */
-    startProcedure (procedureCode) {
+    startProcedure (procedureCode, globalTarget) {
         const addonBlock = this.runtime.getAddonBlock(procedureCode);
         if (addonBlock) {
             addonBlock.callback(this.thread.getAllparams(), this.thread);
             return;
         }
-        this.sequencer.stepToProcedure(this.thread, procedureCode);
+        this.sequencer.stepToProcedure(this.thread, procedureCode, globalTarget);
     }
 
     /**
@@ -165,7 +165,7 @@ class BlockUtility {
      * @return {Array.<string>} List of param names for a procedure.
      */
     getProcedureParamNamesAndIds (procedureCode) {
-        return this.thread.target.blocks.getProcedureParamNamesAndIds(procedureCode);
+        return this.target.blocks.getProcedureParamNamesAndIds(procedureCode);
     }
 
     /**
@@ -174,7 +174,7 @@ class BlockUtility {
      * @return {Array.<string>} List of param names for a procedure.
      */
     getProcedureParamNamesIdsAndDefaults (procedureCode) {
-        return this.thread.target.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
+        return this.target.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
     }
 
     /**

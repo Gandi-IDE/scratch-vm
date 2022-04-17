@@ -30,34 +30,54 @@ class Scratch3ProcedureBlocks {
         // No-op: execute the blocks.
     }
     call (args, util) {
-        // if (!util.stackFrame.executed) {// CCW: allow custom procedure nesting in one stack frame
-        const procedureCode = args.mutation.proccode;
-        const paramNamesIdsAndDefaults = util.getProcedureParamNamesIdsAndDefaults(procedureCode);
-
-        // If null, procedure could not be found, which can happen if custom
-        // block is dragged between sprites without the definition.
-        // Match Scratch 2.0 behavior and noop.
-        if (paramNamesIdsAndDefaults === null) {
-            return;
-        }
-
-        const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
-
-        // Initialize params for the current stackFrame to {}, even if the procedure does
-        // not take any arguments. This is so that `getParam` down the line does not look
-        // at earlier stack frames for the values of a given parameter (#1729)
-        util.initParams();
-        for (let i = 0; i < paramIds.length; i++) {
-            if (args.hasOwnProperty(paramIds[i])) {
-                util.pushParam(paramNames[i], args[paramIds[i]]);
+        if (!util.stackFrame.executed) {
+            const procedureCode = args.mutation.proccode;
+            const isGlobal = args.mutation.isglobal;
+            let paramNamesIdsAndDefaults = null;
+            let globalTarget = null;
+            if (isGlobal) {
+                // CCW find global procedure from runtime targets
+                // TODO: cache target id in mutation can improve efficiency
+                for (let index = 0; index < this.runtime.targets.length; index++) {
+                    const target = this.runtime.targets[index];
+                    paramNamesIdsAndDefaults = target.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
+                    if (paramNamesIdsAndDefaults) {
+                        globalTarget = target;
+                        break;
+                    }
+                }
             } else {
-                util.pushParam(paramNames[i], paramDefaults[i]);
+                paramNamesIdsAndDefaults = util.getProcedureParamNamesIdsAndDefaults(procedureCode);
             }
-        }
 
-        // util.stackFrame.executed = true;// CCW: allow custom procedure nesting in stack frame
-        util.startProcedure(procedureCode);
-        // }
+            // If null, procedure could not be found, which can happen if custom
+            // block is dragged between sprites without the definition.
+            // Match Scratch 2.0 behavior and noop.
+            if (paramNamesIdsAndDefaults === null) {
+                return;
+            }
+
+            const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
+
+            // Initialize params for the current stackFrame to {}, even if the procedure does
+            // not take any arguments. This is so that `getParam` down the line does not look
+            // at earlier stack frames for the values of a given parameter (#1729)
+            util.initParams();
+            for (let i = 0; i < paramIds.length; i++) {
+                if (args.hasOwnProperty(paramIds[i])) {
+                    util.pushParam(paramNames[i], args[paramIds[i]]);
+                } else {
+                    util.pushParam(paramNames[i], paramDefaults[i]);
+                }
+
+                util.stackFrame.executed = true;
+                // CCW: pass global target to procedure if isGlobal === true
+                util.startProcedure(procedureCode, globalTarget);
+            }
+
+            // util.stackFrame.executed = true;// CCW: allow custom procedure nesting in stack frame
+            util.startProcedure(procedureCode);
+        }
     }
 
 
