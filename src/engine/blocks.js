@@ -88,7 +88,7 @@ class Blocks {
              * @type {object.<string, object>}
              */
             compiledScripts: {},
-            
+
             /**
              * tw: A cache of procedure code opcodes to a parsed intermediate representation
              * @type {object.<string, object>}
@@ -270,6 +270,23 @@ class Blocks {
             block = this._blocks[block.parent];
         }
         return block.id;
+    }
+
+    // CCW: get all Global Procedures mutation
+    getGlobalProceduresXML () {
+        const globalProcedures = [];
+        for (const id in this._blocks) {
+            if (!this._blocks.hasOwnProperty(id)) continue;
+            const block = this._blocks[id];
+            if (block.opcode === 'procedures_definition') {
+                const internal = this._getCustomBlockInternal(block);
+                if (internal && internal.mutation.isglobal === 'true') {
+                    this._cache.procedureDefinitions[internal.mutation.proccode] = id; // The outer define block id
+                    globalProcedures.push(this.mutationToXML(internal.mutation));
+                }
+            }
+        }
+        return globalProcedures;
     }
 
     /**

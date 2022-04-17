@@ -408,7 +408,15 @@ const execute = function (sequencer, thread) {
     const currentBlockId = thread.peekStack();
     const currentStackFrame = thread.peekStackFrame();
 
-    let blockContainer = thread.blockContainer;
+    // CCW: for global procedure
+    const globalTarget = thread.getCurrentGlobalTarget();
+    let blockContainer;
+    if (globalTarget) {
+        blockContainer = globalTarget.blocks;
+    } else {
+        blockContainer = thread.blockContainer;
+    }
+
     let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
     if (blockCached === null) {
         blockContainer = runtime.flyoutBlocks;

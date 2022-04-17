@@ -321,9 +321,16 @@ class Sequencer {
      * Step a procedure.
      * @param {!Thread} thread Thread object to step to procedure.
      * @param {!string} procedureCode Procedure code of procedure to step to.
+     * @param {!Target} Target CCW: for globalProcedure.
      */
-    stepToProcedure (thread, procedureCode) {
-        const definition = thread.target.blocks.getProcedureDefinition(procedureCode);
+    stepToProcedure (thread, procedureCode, globalTarget) {
+        let target = thread.target;
+        if (globalTarget) {
+            target = globalTarget;
+        }
+
+        const definition = target.blocks.getProcedureDefinition(procedureCode);
+
         if (!definition) {
             return;
         }
@@ -335,7 +342,9 @@ class Sequencer {
         // and on to the main definition of the procedure.
         // When that set of blocks finishes executing, it will be popped
         // from the stack by the sequencer, returning control to the caller.
-        thread.pushStack(definition);
+        // CCW: pass target of procedure definition when procedure is global
+        // target will maintain in stackframe to make sure get definition to execute
+        thread.pushStack(definition, target);
         // In known warp-mode threads, only yield when time is up.
         if (thread.peekStackFrame().warpMode &&
             thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
@@ -343,8 +352,8 @@ class Sequencer {
         } else {
             // Look for warp-mode flag on definition, and set the thread
             // to warp-mode if needed.
-            const definitionBlock = thread.target.blocks.getBlock(definition);
-            const innerBlock = thread.target.blocks.getBlock(
+            const definitionBlock = target.blocks.getBlock(definition);
+            const innerBlock = target.blocks.getBlock(
                 definitionBlock.inputs.custom_block.block);
             let doWarp = false;
             if (innerBlock && innerBlock.mutation) {

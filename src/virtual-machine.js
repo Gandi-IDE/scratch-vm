@@ -1737,6 +1737,18 @@ class VirtualMachine extends EventEmitter {
         const localVariables = Object.keys(localVarMap).map(
             k => localVarMap[k]
         );
+
+        // CCW: globalProcedures
+        // get all global procedures and pass to target
+        let globalProcedures = [];
+        for (let i = 0; i < this.runtime.targets.length; i++) {
+            const target = this.runtime.targets[i];
+            if (target === this.editingTarget) {
+                // skip self avoid duplicate procedure
+                continue;
+            }
+            globalProcedures = globalProcedures.concat(target.blocks.getGlobalProceduresXML());
+        }
         const workspaceComments = Object.keys(this.editingTarget.comments)
             .map(k => this.editingTarget.comments[k])
             .filter(c => c.blockId === null);
@@ -1744,10 +1756,11 @@ class VirtualMachine extends EventEmitter {
         const xmlString = `<xml xmlns="http://www.w3.org/1999/xhtml">
                             <variables>
                                 ${globalVariables.map(v => v.toXML()).join()}
-                                ${localVariables
-        .map(v => v.toXML(true))
-        .join()}
+                                ${localVariables.map(v => v.toXML(true)).join()}
                             </variables>
+                            <procedures>
+                            ${globalProcedures.join()}
+                            </procedures>
                             ${workspaceComments.map(c => c.toXML()).join()}
                             ${this.editingTarget.blocks.toXML(
         this.editingTarget.comments
