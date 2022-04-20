@@ -1318,7 +1318,7 @@ class VirtualMachine extends EventEmitter {
                 const oldName = sprite.name;
                 const newUnusedName = StringUtil.unusedName(newName, names);
                 sprite.name = newUnusedName;
-                if (oldName === newUnusedName) {
+                if (oldName === newUnusedName || newUnusedName.startsWith('#modules/')) {
                     return;
                 }
                 const allTargets = this.runtime.targets;
