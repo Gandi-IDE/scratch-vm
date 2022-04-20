@@ -72,16 +72,16 @@ class RenderedTarget extends Target {
         this.isStage = false;
 
         /**
-         * Scratch X coordinate. Currently should range from -240 to 240.
-         * @type {Number}
-         */
-        this.x = 0;
+        * Scratch X coordinate. Currently should range from -240 to 240.
+        * @type {Number}
+        */
+        this._x = 0;
 
         /**
-         * Scratch Y coordinate. Currently should range from -180 to 180.
-         * @type {number}
-         */
-        this.y = 0;
+        * Scratch Y coordinate. Currently should range from -180 to 180.
+        * @type {number}
+        */
+        this._y = 0;
 
         /**
          * Scratch direction. Currently should range from -179 to 180.
@@ -96,16 +96,16 @@ class RenderedTarget extends Target {
         this.draggable = false;
 
         /**
-         * Whether the rendered target is currently visible.
-         * @type {boolean}
-         */
-        this.visible = true;
+        * Whether the rendered target is currently visible.
+        * @type {boolean}
+        */
+        this._visible = true;
 
         /**
-         * Size of rendered target as a percent of costume size.
-         * @type {number}
-         */
-        this.size = 100;
+        * Size of rendered target as a percent of costume size.
+        * @type {number}
+        */
+        this._size = 100;
 
         /**
          * Currently selected costume index.
@@ -163,6 +163,22 @@ class RenderedTarget extends Target {
         this.textToSpeechLanguage = null;
 
         this.interpolationData = null;
+
+        // CCW: module sprite
+        this.isModule = sprite.name.startsWith('#modules/');
+    }
+
+    get size () {
+        return this.isModule ? 0 : this._size;
+    }
+    get visible () {
+        return this.isModule ? false : this._visible;
+    }
+    get x () {
+        return this.isModule ? 0 : this._x;
+    }
+    get y () {
+        return this.isModule ? 0 : this._y;
     }
 
     /**
@@ -349,7 +365,7 @@ class RenderedTarget extends Target {
      * @param {!boolean} visible True if should be shown.
      */
     setVisible (visible) { // used by compiler
-        if (this.isStage) {
+        if (this.isStage || this.isModule) {
             return;
         }
         this.visible = !!visible;
