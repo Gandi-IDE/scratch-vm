@@ -171,14 +171,32 @@ class RenderedTarget extends Target {
     get size () {
         return this.isModule ? 0 : this._size;
     }
+    set size (size) {
+        this._size = size;
+    }
+
     get visible () {
         return this.isModule ? false : this._visible;
     }
+
+    set visible (visible) {
+        this._visible = visible;
+    }
+
     get x () {
         return this.isModule ? 0 : this._x;
     }
+
+    set x (x) {
+        this._x = x;
+    }
+
     get y () {
         return this.isModule ? 0 : this._y;
+    }
+
+    set y (y) {
+        this._y = y;
     }
 
     /**
