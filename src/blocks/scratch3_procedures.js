@@ -33,23 +33,7 @@ class Scratch3ProcedureBlocks {
         if (!util.stackFrame.executed) {
             const procedureCode = args.mutation.proccode;
             const isGlobal = args.mutation.isglobal;
-            let paramNamesIdsAndDefaults = null;
-            let globalTarget = null;
-            if (isGlobal) {
-                // CCW find global procedure from runtime targets
-                // TODO: cache target id in mutation can improve efficiency
-                for (let index = 0; index < this.runtime.targets.length; index++) {
-                    const target = this.runtime.targets[index];
-                    paramNamesIdsAndDefaults = target.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
-                    if (paramNamesIdsAndDefaults) {
-                        globalTarget = target;
-                        break;
-                    }
-                }
-            } else {
-                paramNamesIdsAndDefaults = util.getProcedureParamNamesIdsAndDefaults(procedureCode);
-            }
-
+            const [paramNamesIdsAndDefaults, globalTarget] = util.getProcedureParamNamesIdsAndDefaults(procedureCode, isGlobal);
             // If null, procedure could not be found, which can happen if custom
             // block is dragged between sprites without the definition.
             // Match Scratch 2.0 behavior and noop.

@@ -317,13 +317,25 @@ class Blocks {
         return null;
     }
 
+    // CCW: global procedures
+    getGlobalProcedureAndTarget (name) {
+        for (let index = 0; index < this.runtime.targets.length; index++) {
+            const target = this.runtime.targets[index];
+            const definition = target.blocks.getProcedureDefinition(name);
+            if (definition) {
+                return [definition, target];
+            }
+        }
+        return [null, null];
+    }
+
     /**
      * Get names and ids of parameters for the given procedure.
      * @param {?string} name Name of procedure to query.
      * @return {?Array.<string>} List of param names for a procedure.
      */
     getProcedureParamNamesAndIds (name) {
-        return this.getProcedureParamNamesIdsAndDefaults(name).slice(0, 2);
+        return this._getProcedureParamNamesIdsAndDefaults(name).slice(0, 2);
     }
 
     /**
@@ -331,7 +343,7 @@ class Blocks {
      * @param {?string} name Name of procedure to query.
      * @return {?Array.<string>} List of param names for a procedure.
      */
-    getProcedureParamNamesIdsAndDefaults (name) {
+    _getProcedureParamNamesIdsAndDefaults (name) {
         const cachedNames = this._cache.procedureParamNames[name];
         if (typeof cachedNames !== 'undefined') {
             return cachedNames;
@@ -360,6 +372,30 @@ class Blocks {
 
         this._cache.procedureParamNames[name] = null;
         return null;
+    }
+
+    /** CCW: for global procedure
+     * Get names, ids, and defaults of parameters for the given procedure.
+     * @param {?string} name Name of procedure to query.
+     * @param {?boolean} isGlobal need look up procedures from all runtime targets
+     * @return {?Array.<any>} List of param names for a procedure.
+     */
+    getProcedureParamNamesIdsAndDefaults (name, isGlobal) {
+        if (isGlobal) {
+            // CCW find global procedure from runtime targets
+            // TODO: cache target id in mutation can improve efficiency
+            for (let index = 0; index < this.runtime.targets.length; index++) {
+                const target = this.runtime.targets[index];
+                const paramNamesIdsAndDefaults = target.blocks._getProcedureParamNamesIdsAndDefaults(name);
+                if (paramNamesIdsAndDefaults) {
+                    return [paramNamesIdsAndDefaults, target];
+                }
+            }
+        } else {
+            const paramNamesIdsAndDefaults = this._getProcedureParamNamesIdsAndDefaults(name);
+            return [paramNamesIdsAndDefaults, null];
+        }
+        return [null, null];
     }
 
     /**

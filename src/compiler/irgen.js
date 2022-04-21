@@ -74,14 +74,22 @@ class ScriptTreeGenerator {
         this.variableCache = {};
     }
 
-    setProcedureCode (procedureCode) {
+    setProcedureCode (procedureCode, globalTarget) {
         this.script.procedureCode = procedureCode;
         this.script.isProcedure = true;
         this.script.yields = false;
+        // CCW: for global procedures
+        this.script.target = globalTarget;
+        let paramNamesIdsAndDefaults;
+        if (globalTarget) {
+            [paramNamesIdsAndDefaults] = globalTarget.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
+        } else {
+            [paramNamesIdsAndDefaults] = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
+        }
 
-        const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
         if (paramNamesIdsAndDefaults === null) {
-            throw new Error(`IR: cannot find procedure: ${procedureCode}`);
+
+            throw new Error(`IR: cannot find procedure: ${pocedureCode}`);
         }
 
         const [paramNames, _paramIds, _paramDefaults] = paramNamesIdsAndDefaults;
@@ -93,8 +101,12 @@ class ScriptTreeGenerator {
     }
 
     getBlockById (blockId) {
+        if (this.script.target) {
+            return this.script.target.blocks.getBlock(blockId);
+        }
         // Flyout blocks are stored in a special container.
         return this.blocks.getBlock(blockId) || this.blocks.runtime.flyoutBlocks.getBlock(blockId);
+
     }
 
     getBlockInfo (fullOpcode) {
@@ -1104,12 +1116,15 @@ class ScriptTreeGenerator {
             // setting of yields will be handled later in the analysis phase
 
             const procedureCode = block.mutation.proccode;
+            const isGlobal = block.mutation.isglobal === 'true';
             if (procedureCode === 'tw:debugger;') {
                 return {
                     kind: 'tw.debugger'
                 };
             }
-            const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
+
+            const [paramNamesIdsAndDefaults, _target] = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode, isGlobal);
+
             if (paramNamesIdsAndDefaults === null) {
                 return {
                     kind: 'noop'
@@ -1411,7 +1426,14 @@ class ScriptTreeGenerator {
 
         this.script.topBlockId = topBlockId;
 
-        const topBlock = this.getBlockById(topBlockId);
+        // CCW: when script has global target
+        let topBlock;
+        if (this.script.target) {
+            topBlock = this.script.target.blocks.getBlock(topBlockId);
+        } else {
+            topBlock = this.getBlockById(topBlockId);
+        }
+
         if (!topBlock) {
             if (this.script.isProcedure) {
                 // Empty procedure
@@ -1471,7 +1493,15 @@ class IRGenerator {
                 continue;
             }
             const definition = this.blocks.getProcedureDefinition(procedureCode);
-            this.proceduresToCompile.set(procedureCode, definition);
+            if (definition) {
+                this.proceduresToCompile.set(procedureCode, [definition, null]);
+            } else {
+                // CCW: try to find definition in global procedures
+                const globalProceduresDefinition = this.blocks.getGlobalProcedureAndTarget(procedureCode);
+                if (globalProceduresDefinition) {
+                    this.proceduresToCompile.set(procedureCode, globalProceduresDefinition);
+                }
+            }
         }
     }
 
@@ -1525,9 +1555,18 @@ class IRGenerator {
             this.compilingProcedures = this.proceduresToCompile;
             this.proceduresToCompile = new Map();
 
-            for (const [procedureCode, definitionId] of this.compilingProcedures.entries()) {
-                const definitionBlock = this.blocks.getBlock(definitionId);
-                const innerDefinition = this.blocks.getBlock(definitionBlock.inputs.custom_block.block);
+            for (const [procedureCode, procedure] of this.compilingProcedures.entries()) {
+                let definitionBlock;
+                let innerDefinition;
+                const [definitionId, target] = procedure;
+                if (target) {
+                    definitionBlock = target.blocks.getBlock(definitionId);
+                    innerDefinition = target.blocks.getBlock(definitionBlock.inputs.custom_block.block);
+                } else {
+                    definitionBlock = this.blocks.getBlock(definitionId);
+                    innerDefinition = this.blocks.getBlock(definitionBlock.inputs.custom_block.block);
+                }
+
 
                 // Extract the function's warp mode.
                 // See Sequencer.stepToProcedure
@@ -1547,7 +1586,7 @@ class IRGenerator {
                     this.addProcedureDependencies(result.dependedProcedures);
                 } else {
                     const generator = new ScriptTreeGenerator(this.thread);
-                    generator.setProcedureCode(procedureCode);
+                    generator.setProcedureCode(procedureCode, target);
                     if (isWarp) generator.enableWarp();
                     const compiledProcedure = this.generateScriptTree(generator, definitionId);
                     this.procedures[procedureCode] = compiledProcedure;
