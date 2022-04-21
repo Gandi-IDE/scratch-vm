@@ -85,6 +85,10 @@ class IntermediateScript {
          * @type {Function|null}
          */
         this.cachedCompileResult = null;
+
+        // CCW:  for global procedure compilation
+        // global procedure target
+        this.target = null;
     }
 }
 
