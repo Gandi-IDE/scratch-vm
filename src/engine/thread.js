@@ -79,7 +79,7 @@ class _StackFrame {
         this.waitingReporter = null;
         this.params = null;
         this.executionContext = null;
-        this.reporting = null; // CCW: use reporting for custom procedure_return
+        this.reporting = ''; // CCW: use reporting for custom procedure_return
         return this;
     }
 
