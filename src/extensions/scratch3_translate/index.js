@@ -57,7 +57,7 @@ const serverTimeoutMs = 10000; // 10 seconds (chosen arbitrarily).
  * @constructor
  */
 class Scratch3TranslateBlocks {
-    constructor(runtime) {
+    constructor (runtime) {
         /**
          * Language code of the viewer, based on their locale.
          * @type {string}
@@ -325,7 +325,7 @@ class Scratch3TranslateBlocks {
     }
 
     runWithCCWAPI (args, lang) {
-        const url = this.host;;
+        const url = this.host;
 
         const tempThis = this;
         // powered by xigua start
