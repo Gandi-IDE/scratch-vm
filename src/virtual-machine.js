@@ -1814,18 +1814,20 @@ class VirtualMachine extends EventEmitter {
      *     2 for double-resolution bitmaps
      * @param {string} targetId ID of a target.
      */
-    updateBitmap (costumeIndex, bitmap, rotationCenterX, rotationCenterY, bitmapResolution) {
+    updateBitmap (costumeIndex, bitmap, rotationCenterX, rotationCenterY, bitmapResolution, targetId) {
         return this._updateBitmap(
             this.editingTarget.getCostumes()[costumeIndex],
             bitmap,
             rotationCenterX,
             rotationCenterY,
-            bitmapResolution
+            bitmapResolution,
+            targetId
         );
     }
 
-    _updateBitmap (costume, bitmap, rotationCenterX, rotationCenterY, bitmapResolution) {
+    _updateBitmap (costume, bitmap, rotationCenterX, rotationCenterY, bitmapResolution, targetId) {
         if (!(costume && this.runtime && this.runtime.renderer)) return;
+        const target = targetId ? this.runtime.getTargetById(targetId) : this.editingTarget;
         if (costume && costume.broken) delete costume.broken;
 
         costume.rotationCenterX = rotationCenterX;
