@@ -205,6 +205,24 @@ class Keyboard {
     getLastKeyPressed () {
         return this.lastKeyPressed;
     }
+
+    /**
+     * Reset the cache of currently pressed keys.
+     *
+     * In certain special scenarios, the system may swallow keydown or keyup events directly
+     * (for example, macOS's Cmd + Space, three-finger swipe up, Ctrl + Up Arrow, etc.).
+     * This can cause the data in `_keysPressed` to become inconsistent or stuck.
+     * This method provides a way to manually reset the cache to handle such anomalies.
+     *
+     * @example
+     * // When you detect that the key state is abnormal, call this method to clear the cache:
+     * keyboard.resetKeyPressedCache();
+     *
+     * @returns {void}
+     */
+    resetKeyPressedCache () {
+        this._keysPressed = [];
+    }
 }
 
 module.exports = Keyboard;

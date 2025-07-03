@@ -155,6 +155,20 @@ const ArgumentTypeMap = (() => {
 })();
 
 /**
+ * Type definition for all virtual I/O devices used by the runtime.
+ * This allows type-safe access to each device, e.g. runtime.ioDevices.keyboard.
+ * @typedef {Object} RuntimeIODevices
+ * @property {Joystick} joystick
+ * @property {Clock} clock
+ * @property {Cloud} cloud
+ * @property {Keyboard} keyboard
+ * @property {Mouse} mouse
+ * @property {MouseWheel} mouseWheel
+ * @property {UserData} userData
+ * @property {Video} video
+ */
+
+/**
  * A pair of functions used to manage the cloud variable limit,
  * to be used when adding (or attempting to add) or removing a cloud variable.
  * @typedef {object} CloudDataManager
@@ -389,9 +403,12 @@ class Runtime extends EventEmitter {
         // Register all given block packages.
         this._registerBlockPackages();
 
-        // Register and initialize "IO devices", containers for processing
-        // I/O related data.
-        /** @type {Object.<string, Object>} */
+        /**
+         * Virtual I/O devices used by the runtime.
+         * Each property represents a specific input/output device abstraction,
+         * providing access to hardware or simulated hardware features.
+         * @type {RuntimeIODevices}
+         */
         this.ioDevices = {
             joystick: new Joystick(this),
             clock: new Clock(this),
@@ -2895,6 +2912,7 @@ class Runtime extends EventEmitter {
         this.emit(Runtime.PROJECT_START);
         this.updateCurrentMSecs();
         this.ioDevices.clock.resetProjectTimer();
+        this.ioDevices.keyboard.resetKeyPressedCache();
         this.targets.forEach(target => target.clearEdgeActivatedValues());
         // Inform all targets of the green flag.
         for (let i = 0; i < this.targets.length; i++) {
