@@ -380,7 +380,7 @@ class ExtensionManager {
         }
 
         if (this.isValidExtensionURL(extFileURL)) {
-            if (this.isExtensionURLLoaded(extensionURL)) {
+            if (this.isExtensionURLLoaded(extensionURL) && !shouldReplace) {
                 // Extension is already loaded.
                 // TODO: should let user choose if they want to reload it?
                 return;
