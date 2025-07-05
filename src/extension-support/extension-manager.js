@@ -223,8 +223,9 @@ class ExtensionManager {
         }
         const extensionInstance = isConstructor(extension) ? new extension(this.runtime) : extension;
         if (loadedExtServiceName && shouldReplace) {
-            const incomingBlocks = extensionInstance.getInfo().blocks;
-            const incomingOpsSet = new Set(incomingBlocks.map(b => b.opcode));
+            const incomingBlocks = extensionInstance.getInfo().blocks;//It only gets block from extension without the menus.
+            const incomingMenus = Object.keys(extensionInstance.getInfo().menus || {});//This can get menus from extension. It's an array of menus' names.
+            const incomingOpsSet = new Set(incomingBlocks.map(b => b.opcode).concat(incomingMenus.map(m =>`menu_${m}`)));
             const opsInUseSet = new Set(this.runtime.targets
                 .map(({blocks}) => Object.values(blocks._blocks).map(b => b.opcode))
                 .flat()
