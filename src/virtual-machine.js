@@ -1123,8 +1123,13 @@ class VirtualMachine extends EventEmitter {
                 if (this.extensionManager.isExtensionLoaded(extensionID)) return;
                 // 跳过 builtin
                 if (this.extensionManager.isBuiltinExtension(extensionID)) return;
-                // 记录了URL的扩展
-                const url = extensions.extensionURLs.get(extensionID);
+                // 检查是否记录了URL
+                let url = extensions.extensionURLs.get(extensionID);
+                if (!url) {
+                    // 检查 wildExtensions 是否有记录
+                    url = this.runtime.gandi?.wildExtensions?.[extensionID]?.url;
+                }
+                // 记录了 URL
                 if (url) {
                     extInfo.push({id: extensionID, url});
                     return;
