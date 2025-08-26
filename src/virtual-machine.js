@@ -1110,11 +1110,40 @@ class VirtualMachine extends EventEmitter {
         await this.extensionManager.allAsyncExtensionsLoaded();
         const addedGandiObject = this.runtime.gandi.merge(gandiObject);
         const extensionPromises = [];
+        // 可选的确认非官方扩展安装回调
+        // 在加载扩展前，收集即将加载的非官方扩展信息并等待确认
+        const confirmExtensionsCallBack = options?.confirmExtensionsCallBack;
+        if (confirmExtensionsCallBack) {
+            /**
+             * @type {[{id: string; url?: string}]}
+             */
+            const extInfo = [];
+            extensions.extensionIDs.forEach(extensionID => {
+                // 跳过已加载
+                if (this.extensionManager.isExtensionLoaded(extensionID)) return;
+                // 跳过 builtin
+                if (this.extensionManager.isBuiltinExtension(extensionID)) return;
+                // 记录了URL的扩展
+                const url = extensions.extensionURLs.get(extensionID);
+                if (url) {
+                    extInfo.push({id: extensionID, url});
+                    return;
+                }
+                // 跳过官方扩展
+                if (this.extensionManager._officialExtensionInfo[extensionID]) return;
+                // 剩余情况 - 非官方扩展ID
+                extInfo.push({id: extensionID});
+            });
+            if (extInfo.length > 0) {
+                // 等待确认
+                await confirmExtensionsCallBack(extInfo);
+            }
+        }
         extensions.extensionIDs.forEach(extensionID => {
             if (!this.extensionManager.isExtensionLoaded(extensionID)) {
                 let extensionURL = extensionID;
                 if (!this.extensionManager.isBuiltinExtension(extensionID) && extensions.extensionURLs.get(extensionID)) {
-                    extensionURL = extensions.extensionURLs.get(extensionID)
+                    extensionURL = extensions.extensionURLs.get(extensionID);
                 }
                 extensionPromises.push(
                     this.extensionManager.loadExtensionURL(extensionURL)
