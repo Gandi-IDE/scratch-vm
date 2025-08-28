@@ -1,6 +1,6 @@
 {
   "name": "@xigua/scratch-vm",
-  "version": "1.25.4",
+  "version": "1.25.5",
   "description": "Virtual Machine for Scratch 3.0 merged tw-vm",
   "author": "Massachusetts Institute of Technology",
   "license": "LGPL-3.0-only",
@@ -8,7 +8,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Gandi-IDE/scratch-vm.git",
-    "sha": "a9f7e451066566430450e2b7c988855b422340bc"
+    "sha": "90fb7e25ca89be7fa6002f6eb470db2e69983b7d"
   },
   "main": "./src/index.js",
   "browser": "./src/index.js",
