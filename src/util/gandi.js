@@ -53,6 +53,7 @@ class Gandi {
         const isDuplicateId = id =>
             this.assets.find(obj => obj.id === id);
 
+        // TODO: should allow duplicate asset content but not the same assetId?
         const newAssets = data.assets.filter(obj => !isDuplicateAsset(obj));
         newAssets.forEach(obj => {
             let newName = `${obj.name}`;
@@ -358,13 +359,28 @@ class Gandi {
     }
 
     getExtensionAssets () {
-        const AssetType = this.runtime.storage.AssetType;
-        return this.assets.filter(item => item.asset.assetType.name === AssetType.Extension.name);
+                const AssetType = this.runtime.storage.AssetType;
+        return this.assets.filter(item => {
+            const type = item.asset?.assetType?.name || item.assetType?.name;
+            return type === AssetType.Extension.name;
+        });
     }
 
     isExtensionURLInGandiAssets (url) {
         const sb3Exts = this.getExtensionAssets();
         return sb3Exts.find(v => url.endsWith(v.md5));
+    }
+
+    addAsset (asset) {
+        // check if the asset is already in the assets
+        const isDuplicateAssetId = assetId =>
+            this.assets.find(obj => obj.assetId === assetId);
+        if (isDuplicateAssetId(asset.assetId)) {
+            log.warn(`addAsset - Duplicate asset found: ${asset.name}.${asset.dataFormat}. Skipping`);
+            return false;
+        }
+        this.assets.push(asset);
+        return true;
     }
 }
 
