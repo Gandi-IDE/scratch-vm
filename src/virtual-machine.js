@@ -878,7 +878,7 @@ class VirtualMachine extends EventEmitter {
         obj.assetId = obj.asset.assetId;
         obj.md5 = `${obj.assetId}.${obj.dataFormat}`;
 
-        this.runtime.gandi.assets.push(obj);
+        this.runtime.gandi.addAsset(obj);
         this.emitGandiAssetsUpdate({type: 'add', data: obj});
     }
 
@@ -1301,8 +1301,9 @@ class VirtualMachine extends EventEmitter {
                         }
                         if (Array.isArray(addedGandiObject.assets)) {
                             addedGandiObject.assets.forEach(obj => {
-                                this.runtime.gandi.assets.push(obj);
-                                this.runtime.emitGandiAssetsUpdate({type: 'add', data: obj});
+                                if (this.runtime.gandi.addAsset(obj)) {
+                                    this.runtime.emitGandiAssetsUpdate({type: 'add', data: obj});
+                                }
                             });
                         }
                     }
@@ -2029,8 +2030,9 @@ class VirtualMachine extends EventEmitter {
             dataFormat: newAsset.dataFormat
         };
         loadGandiAsset(newAsset.md5ext, file, this.runtime).then(gandiAssetObj => {
-            this.runtime.gandi.assets.push(gandiAssetObj);
-            this.runtime.emitGandiAssetsUpdateFromServer({type: 'add', data: gandiAssetObj});
+            if (this.runtime.gandi.addAsset(gandiAssetObj)) {
+                this.runtime.emitGandiAssetsUpdateFromServer({type: 'add', data: gandiAssetObj});
+            }
         });
     }
 
