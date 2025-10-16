@@ -2714,7 +2714,7 @@ class Runtime extends EventEmitter {
     /**
      * CCW
         startHatsWithParams is only used in block utility for extension,
-        WhitExtraMsg means skip field check when start a hat block.
+        WithExtraMsg means skip field check when start a hat block.
         define here is only for debug
      * @param {!string} requestedHatOpcode Opcode of hats to start.
      * @param {object} data Optionally, contains fields to match on the hat and parameters to ccw_hat_parameter.
