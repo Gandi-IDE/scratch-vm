@@ -375,7 +375,7 @@ class Gandi {
         // check if the asset is already in the assets
         const isDuplicateAsset = b =>
             this.assets.find(obj => obj.name === b.name && obj.dataFormat === b.dataFormat && obj.md5 === b.md5);
-        if (isDuplicateAsset(asset.assetId)) {
+        if (isDuplicateAsset(asset)) {
             log.warn(`addAsset - Duplicate asset found: ${asset.name}.${asset.dataFormat}. Skipping`);
             return false;
         }
