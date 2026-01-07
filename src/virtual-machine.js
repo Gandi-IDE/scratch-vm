@@ -834,12 +834,16 @@ class VirtualMachine extends EventEmitter {
             this.runtime.gandi.assets.map(obj => obj.asset).filter(obj => obj) : [];
 
         const allAssets = this.runtime.targets.reduce(
-            (acc, target) =>
-                acc
-                    .concat(target.sprite.sounds.filter(sound => !sound.isRuntimeAsyncLoad).map(sound => sound.asset))
-                    .concat(
-                        target.sprite.costumes.filter(costume => !costume.isRuntimeAsyncLoad).map(costume => costume.asset)
-                    ),
+            (acc, target) => {
+                if (target.isOriginal) {
+                    return acc
+                        .concat(target.sprite.sounds.filter(sound => !sound.isRuntimeAsyncLoad).map(sound => sound.asset))
+                        .concat(
+                            target.sprite.costumes.filter(costume => !costume.isRuntimeAsyncLoad).map(costume => costume.asset)
+                        );
+                }
+                return acc;
+            },
             []
         ).concat(gandiAssets);
         return allAssets;
