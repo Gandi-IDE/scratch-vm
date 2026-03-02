@@ -63,11 +63,12 @@ const setupScratchAPI = (vm, id) => {
             ...openVM
         };
     }
-    if (!translate) {
-        translate = createTranslate(vm);
-    }
+    // 需要重复创建，因为每个 extension 都需要一个独立的 translate
+    translate = createTranslate(vm);
 
-    const scratch = {
+    // 需要创建新的 Scratch Object
+    // 否则所有 extension 都共享一个 Scratch 对象 → 共享同一个 translate
+    global.Scratch = {
         ArgumentType,
         BlockType,
         TargetType,
@@ -82,7 +83,6 @@ const setupScratchAPI = (vm, id) => {
         runtime: openVM.runtime,
         renderer: openVM.runtime.renderer
     };
-    global.Scratch = Object.assign(global.Scratch || {}, scratch);
     needSetup = false;
 };
 
