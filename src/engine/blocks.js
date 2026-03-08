@@ -813,7 +813,35 @@ class Blocks {
     /**
      * Reset all runtime caches.
      */
-    resetCache () {
+    resetCache (checkGlobalProcedures = true) {
+        // CCW: 检查要重置的缓存是否有全局积木
+        if (checkGlobalProcedures) {
+            /**
+             * Check if a block is a global procedure.
+             * @param {*} id Block ID
+             * @returns {boolean} Whether the block is a global procedure
+             */
+            const isGlobalProcedure = (id) => {
+                if (!id) return false;
+                if (!this._blocks.hasOwnProperty(id)) return false;
+                const block = this._blocks[id];
+                if (block.opcode !== 'procedures_definition') {
+                    return false;
+                }
+                const internal = this._getCustomBlockInternal(block);
+                return internal && internal.mutation && internal.mutation.isglobal === 'true';
+            }
+            const procedureIds = Object.values(this._cache.procedureDefinitions);
+            // 有全局积木，需要同时清空所有角色的缓存
+            if (procedureIds.some(isGlobalProcedure)) {
+                // TODO: 记录全局积木依赖关系，只清空受影响的角色的缓存
+                for (const target of this.runtime.targets) {
+                    if (target.isOriginal) {
+                        target.blocks.resetCache(false); // 避免递归调用
+                    }
+                }
+            }
+        }
         this._cache.inputs = {};
         this._cache.procedureParamNames = {};
         this._cache.procedureDefinitions = {};
