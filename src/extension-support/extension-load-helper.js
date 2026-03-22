@@ -6,18 +6,14 @@ const Cast = require('../util/cast');
 const Color = require('../util/color');
 const createTranslate = require('./tw-l10n');
 const log = require('../util/log');
+const AsyncLimiter = require('../util/async-limiter');
 
 let openVM = null;
 let translate = null;
-let needSetup = true;
-const pending = new Set();
 
-const clearScratchAPI = id => {
-    pending.delete(id);
-    if (global.IIFEExtensionInfoList && id) {
-        global.IIFEExtensionInfoList = global.IIFEExtensionInfoList.filter(({extensionObject}) => extensionObject.info.extensionId !== id);
-    }
-    if (global.Scratch && pending.size === 0) {
+const clearScratchAPI = () => {
+    delete global.IIFEExtensionInfoList;
+    if (global.Scratch) {
         global.Scratch.extensions = {
             unsandboxed: true,
             register: extensionInstance => {
@@ -28,15 +24,10 @@ const clearScratchAPI = id => {
         global.Scratch.vm = null;
         global.Scratch.runtime = null;
         global.Scratch.renderer = null;
-        needSetup = true;
     }
 };
 
-const setupScratchAPI = (vm, id) => {
-    pending.add(id);
-    if (!needSetup) {
-        return;
-    }
+const setupScratchAPI = (vm) => {
     const registerExt = extensionInstance => {
         const info = extensionInstance.getInfo();
         const extensionId = info.id;
@@ -83,7 +74,6 @@ const setupScratchAPI = (vm, id) => {
         runtime: openVM.runtime,
         renderer: openVM.runtime.renderer
     };
-    needSetup = false;
 };
 
 const createdScriptLoader = ({url, onSuccess, onError}) => {
@@ -144,4 +134,24 @@ const createdScriptLoader = ({url, onSuccess, onError}) => {
     return script;
 };
 
-module.exports = {setupScratchAPI, clearScratchAPI, createdScriptLoader};
+// Because setupScratchAPI requires messing with global state (global.Scratch),
+// only let one extension load at a time.
+const limiter = new AsyncLimiter(async (vm, callback) => {
+    setupScratchAPI(vm);
+    try {
+        const res = await callback();
+        return res;
+    } finally {
+        clearScratchAPI();
+    }
+}, 1);
+/**
+ * Sets up the Scratch API and ensures that only one is executing at a time to prevent race conditions.
+ * @async
+ * @param {Object} vm - The virtual machine to use.
+ * @param {() => Promise} callback - Async callback to execute with Scratch API.
+ * @returns {Promise} - The promise that resolves when the callback completes.
+ */
+const withScratchAPI = async (vm, callback) => limiter.do(vm, callback);
+
+module.exports = {withScratchAPI, createdScriptLoader};
