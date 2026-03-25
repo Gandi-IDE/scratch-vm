@@ -6,6 +6,7 @@ const Cast = require('../util/cast');
 const Color = require('../util/color');
 const createTranslate = require('./tw-l10n');
 const log = require('../util/log');
+const Patcher = require('./patcher');
 const AsyncLimiter = require('../util/async-limiter');
 
 let openVM = null;
@@ -65,6 +66,7 @@ const setupScratchAPI = (vm) => {
         TargetType,
         Cast,
         Color,
+        Patcher,
         translate,
         extensions: {
             unsandboxed: true,
