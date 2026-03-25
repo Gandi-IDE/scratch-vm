@@ -39,6 +39,7 @@ const StringUtil = require('../util/string-util');
 const LogSystem = require('../util/log-system');
 const Gandi = require('../util/gandi');
 const uid = require('../util/uid');
+const Color = require('../util/color');
 
 const defaultBlockPackages = {
     scratch3_control: require('../blocks/scratch3_control'),
@@ -1211,6 +1212,13 @@ class Runtime extends EventEmitter {
     static get PLATFORM_MISMATCH () {
         return 'PLATFORM_MISMATCH';
     }
+    /**
+     * Event name for reporting that the locale has changed.
+     * @const {string}
+     */
+    static get LOCALE_CHANGED () {
+        return 'LOCALE_CHANGED';
+    }
 
     /**
      * How rapidly we try to step threads by default, in ms.
@@ -2087,7 +2095,6 @@ class Runtime extends EventEmitter {
         return `%${argNum}`;
     }
 
-
     /**
      * @returns {Array.<object>} scratch-blocks XML for each category of extension blocks, in category order.
      * @param {?Target} [target] - the active editing target (optional)
@@ -2097,7 +2104,7 @@ class Runtime extends EventEmitter {
     getBlocksXML (target) {
         // eslint-disable-next-line max-len
         return this._blockInfo/* powered by xigua start */.filter(({onlyVisibleOnShortcut}) => global.__XIGUA_SHORTCUT || Boolean(!onlyVisibleOnShortcut))/* powered by xigua end */.map(categoryInfo => {
-            const {name, color1, color2} = categoryInfo;
+            const {name, color1, color2=Color.darkenHex(color1, 0.1)} = categoryInfo;
             // Filter out blocks that aren't supposed to be shown on this target, as determined by the block info's
             // `hideFromPalette` and `filter` properties.
             const paletteBlocks = categoryInfo.blocks.filter(block => {
@@ -4067,10 +4074,19 @@ class Runtime extends EventEmitter {
     getFormatMessage (message) {
         const globalFormatMessage = require('format-message');
         const formatMessage = globalFormatMessage.namespace();
+        let lastLocale = null;
         return (...args) => {
-            formatMessage.setup({locale: globalFormatMessage.setup().locale, translations: message});
+            const currentLocale = globalFormatMessage.setup().locale;
+            const needSetup = lastLocale !== currentLocale;
+            if (needSetup) {
+                lastLocale = currentLocale;
+                formatMessage.setup({
+                    locale: currentLocale,
+                    translations: message
+                });
+            }
             return formatMessage(...args);
-        };
+        }
     }
 
     getOriginalFormatMessage () {

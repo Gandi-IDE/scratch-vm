@@ -3,7 +3,7 @@ const log = require('../util/log');
 const maybeFormatMessage = require('../util/maybe-format-message');
 const formatMessage = require('format-message');
 const BlockType = require('./block-type');
-const {setupScratchAPI, clearScratchAPI, createdScriptLoader} = require('./extension-load-helper');
+const {withScratchAPI, createdScriptLoader} = require('./extension-load-helper');
 const SecurityManager = require('./tw-security-manager');
 
 // These extensions are currently built into the VM repository but should not be loaded at startup.
@@ -890,12 +890,10 @@ class ExtensionManager {
             // avoid init extension twice if it already loaded
             return;
         }
-        setupScratchAPI(this.vm, extensionId);
-        return this.getExternalExtensionConstructor(extensionId)
-            .then(extension => this.registerExtension(extensionId, extension, shouldReplace))
-            .finally(() => {
-                clearScratchAPI(extensionId);
-            });
+        return withScratchAPI(this.vm, async () => {
+            return this.getExternalExtensionConstructor(extensionId)
+                .then(extension => this.registerExtension(extensionId, extension, shouldReplace));
+        });
     }
 
     isValidExtensionURL (extensionURL) {
@@ -1015,8 +1013,7 @@ class ExtensionManager {
         const onlyAdded = [];
         const addedAndLoaded = []; // exts use Scratch.extensions.register
         const rewritten = await this.securityManager.rewriteExtensionURL(url);
-        return new Promise((resolve, reject) => {
-            setupScratchAPI(this.vm, rewritten);
+        return withScratchAPI(this.vm, ()=> new Promise((resolve, reject) => { 
             createdScriptLoader({
                 url: rewritten,
                 onSuccess: async () => {
@@ -1071,10 +1068,9 @@ class ExtensionManager {
                 },
                 onError: reject
             });
-        })
+        }))
             // .catch(e => log.error('LoadRemoteExtensionError: ', e))
             .finally(() => {
-                clearScratchAPI(url);
                 if (onlyAdded.length > 0 || addedAndLoaded.length > 0) {
                     this.runtime.emit('EXTENSION_LIBRARY_UPDATED');
                 }
