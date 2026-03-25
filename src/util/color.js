@@ -213,6 +213,22 @@ class Color {
             b: (fraction0 * rgb0.b) + (fraction1 * rgb1.b)
         };
     }
+
+    /**
+     * Darken an hex color by a given amount.
+     * @param {!string} hex Hex representation of the color.
+     * @param {number} amount - Amount to darken the color by. default 0.1 (10%)
+     * @returns {string} The darken color.
+     */
+    static darkenHex(hex, amount = 0.1) {
+        const {r, g, b} = Color.hexToRgb(hex);
+        const darkenRgb = {
+            r: Math.max(0, Math.round(r * (1 - amount))),
+            g: Math.max(0, Math.round(g * (1 - amount))),
+            b: Math.max(0, Math.round(b * (1 - amount)))
+        };
+        return Color.rgbToHex(darkenRgb);
+    }
 }
 
 module.exports = Color;

@@ -341,6 +341,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.ASSET_PROGRESS, (finished, total) => {
             this.emit(Runtime.ASSET_PROGRESS, finished, total);
         });
+        this.runtime.on(Runtime.LOCALE_CHANGED, locale => {
+            this.emit(Runtime.LOCALE_CHANGED, locale);
+        });
 
         this.extensionManager = new ExtensionManager(this);
         this.securityManager = this.extensionManager.securityManager;
@@ -2316,7 +2319,7 @@ class VirtualMachine extends EventEmitter {
                 translations: {[locale]: messages}
             });
         }
-        this.emit('LOCALE_CHANGED', locale);
+        this.runtime.emit(Runtime.LOCALE_CHANGED, locale);
         return this.extensionManager.refreshBlocks();
     }
 
