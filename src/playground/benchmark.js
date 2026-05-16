@@ -58,10 +58,10 @@ const PROJECT_SERVER = 'https://cdn.projects.scratch.mit.edu/';
 
 const SLOW = .1;
 
-const projectInput = document.querySelector('#project-id');
-if (location.hash) {
-    projectInput.value = location.hash.substring(1);
-}
+/**
+ * @type {HTMLInputElement}
+ */
+const projectInput = document.querySelector('#project');
 
 const enableCompiler = new URLSearchParams(location.search).get('compiler') === 'true';
 const compilerInput = document.querySelector('#enable-compiler');
@@ -69,9 +69,10 @@ compilerInput.checked = enableCompiler;
 
 document.querySelector('.run')
     .addEventListener('click', () => {
-        const params = new URLSearchParams(location.search);
-        params.set('compiler', compilerInput.checked);
-        location.href = `${location.pathname}?${params}#${projectInput.value}`;
+        window.profiler.run();
+        // const params = new URLSearchParams(location.search);
+        // params.set('compiler', compilerInput.checked);
+        // location.href = `${location.pathname}?${params}#${projectInput.value}`;
     }, false);
 
 const setShareLink = function (json) {
@@ -81,7 +82,7 @@ const setShareLink = function (json) {
         .href = `suite.html`;
 };
 
-const getProjectMetadata = async projectId => {
+const _getProjectMetadata = async projectId => {
     const response = await fetch(`https://trampoline.turbowarp.org/api/projects/${projectId}`);
     if (response.status === 404) {
         throw new Error('The project is unshared or does not exist');
@@ -93,10 +94,15 @@ const getProjectMetadata = async projectId => {
     return json;
 };
 
-const getProjectData = async projectId => {
-    const metadata = await getProjectMetadata(projectId);
-    const token = metadata.project_token;
-    const response = await fetch(`https://projects.scratch.mit.edu/${projectId}?token=${token}`);
+const _getProjectData = async () => {
+    // const metadata = await getProjectMetadata(projectId);
+    // const token = metadata.project_token;
+    // const response = await fetch(`https://projects.scratch.mit.edu/${projectId}?token=${token}`);
+    // if (!response.ok) {
+    //     throw new Error(`HTTP error ${response.status} fetching project data`);
+    // }
+    // eslint-disable-next-line no-alert, quotes
+    const response = await fetch(prompt("输入m.ccw.site sb3") ?? "");
     if (!response.ok) {
         throw new Error(`HTTP error ${response.status} fetching project data`);
     }
@@ -104,13 +110,18 @@ const getProjectData = async projectId => {
     return data;
 };
 
-const loadProject = function () {
-    let id = location.hash.substring(1).split(',')[0];
-    if (id.length < 1 || !isFinite(id)) {
-        id = projectInput.value;
-    }
-    getProjectData(id).then(data => Scratch.vm.loadProject(data));
-    return id;
+const loadProject = function (vm) {
+    // let id = location.hash.substring(1).split(',')[0];
+    // if (id.length < 1 || !isFinite(id)) {
+    //     id = projectInput.value;
+    // }
+    // getProjectData(id)
+    new Promise(resolve => {
+        if (projectInput.files[0]){
+            projectInput.files[0].arrayBuffer().then(dat => resolve(dat));
+        }
+    }).then(data => vm.loadProject(data));
+    return '';
 };
 
 /**
@@ -539,7 +550,7 @@ class ProfilerRun {
     }
 
     run () {
-        this.projectId = loadProject();
+        this.projectId = loadProject(this.vm);
 
         window.parent.postMessage({
             type: 'BENCH_MESSAGE_LOADING'
@@ -671,11 +682,12 @@ const runBenchmark = function () {
         maxRecordedTime = Number(split[2] || '0') || 6000;
     }
 
-    new ProfilerRun({
+    window.profiler = new ProfilerRun({
         vm,
         warmUpTime,
         maxRecordedTime
-    }).run();
+    });
+    window.profiler.run();
 
     // Instantiate the renderer and connect it to the VM.
     const canvas = document.getElementById('scratch-stage');
@@ -695,7 +707,7 @@ const runBenchmark = function () {
             canvasWidth: rect.width,
             canvasHeight: rect.height
         };
-        Scratch.vm.postIOData('mouse', coordinates);
+        vm.postIOData('mouse', coordinates);
     });
     canvas.addEventListener('mousedown', e => {
         const rect = canvas.getBoundingClientRect();
@@ -706,7 +718,7 @@ const runBenchmark = function () {
             canvasWidth: rect.width,
             canvasHeight: rect.height
         };
-        Scratch.vm.postIOData('mouse', data);
+        vm.postIOData('mouse', data);
         e.preventDefault();
     });
     canvas.addEventListener('mouseup', e => {
@@ -718,7 +730,7 @@ const runBenchmark = function () {
             canvasWidth: rect.width,
             canvasHeight: rect.height
         };
-        Scratch.vm.postIOData('mouse', data);
+        vm.postIOData('mouse', data);
         e.preventDefault();
     });
 
@@ -728,7 +740,7 @@ const runBenchmark = function () {
         if (e.target !== document && e.target !== document.body) {
             return;
         }
-        Scratch.vm.postIOData('keyboard', {
+        vm.postIOData('keyboard', {
             keyCode: e.keyCode,
             isDown: true
         });
@@ -737,7 +749,7 @@ const runBenchmark = function () {
     document.addEventListener('keyup', e => {
         // Always capture up events,
         // even those that have switched to other targets.
-        Scratch.vm.postIOData('keyboard', {
+        vm.postIOData('keyboard', {
             keyCode: e.keyCode,
             isDown: false
         });
