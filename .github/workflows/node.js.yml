@@ -14,7 +14,35 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      - name: Install dependencies
+        run: |
+          mkdir packages
+          cd packages
+          git clone --depth=1 https://github.com/Gandi-IDE/scratch-storage
+          cd scratch-storage
+          npx json -f package.json -I -e "this.name='scratch-storage'"
+          npm install
+          npm run build > /dev/null
+          echo "build end"
+          npm link
+          cd ..
+          git clone --depth=1 https://github.com/Gandi-IDE/scratch-parser
+          cd scratch-parser
+          npx json -f package.json -I -e "this.dependencies.ajv='^6.3.0'"
+          rm package-lock.json
+          npm install
+          npm link
+          echo "linked"
+          cd ../..
+          npx json -f package.json -I -e "this.dependencies['@babel/runtime']='^7.29.2';this.devDependencies['scratch-render-fonts']='^1.0.0-prerelease.20231017225105';delete this['scratch-parser']"
+          cat package.json
+          rm yarn.lock
+          ls
+          npm install --verbose
+          echo "third-party module installed"
+          npm link scratch-storage scratch-parser
+          ls ./packages
+          echo "packages/*" >> .eslintignore
       - run: npm run lint
       - run: npm run build
       - run: npm run test
