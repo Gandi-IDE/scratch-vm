@@ -602,6 +602,11 @@ class Runtime extends EventEmitter {
          * Total number of finished or errored scratch-storage load() requests since the runtime was created or cleared.
          */
         this.finishedAssetRequests = 0;
+
+        /**
+         * @type {ScratchStorage}
+         */
+        this.storage = {};
     }
 
     /**
@@ -1880,19 +1885,6 @@ class Runtime extends EventEmitter {
             xml: `<sep gap="36"/><label text="${blockInfo.slice(3)}"/>`
         };
 
-    }
-
-    /**
-     * Generate a label between blocks categories or sub-categories.
-     * @param {ExtensionBlockMetadata} blockInfo - the block to convert
-     * @returns {ConvertedBlockInfo} - the converted & original block information
-     * @private
-     */
-    _convertLabelForScratchBlocks (blockInfo) {
-        return {
-            info: blockInfo,
-            xml: `<label text="${xmlEscape(blockInfo.text)}"></label>`
-        };
     }
 
     /**
