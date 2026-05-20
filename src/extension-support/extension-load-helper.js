@@ -22,9 +22,29 @@ const clearScratchAPI = () => {
                 throw new Error(`ScratchAPI: ${info.id} call extensions.register too late`);
             }
         };
+        // After an extension is loaded, we need to remove vm/runtime/renderer/etc.
+        // from the global Scratch object. But the extension might still hold a reference
+        // to the original object and access those properties later. To avoid breakage,
+        // we clone the global Scratch object first, then only clear the global's APIs.
+        global.Scratch = {...global.Scratch};
         global.Scratch.vm = null;
         global.Scratch.runtime = null;
         global.Scratch.renderer = null;
+        // In theory, translate should also be nulled out, since each extension needs its own translate.
+        // But we keep it for now to avoid errors from extensions that accidentally rely on it.
+        // global.Scratch.translate = null;
+
+        // NOTE: The extension should either:
+        // - keep a reference to the original Scratch object
+        //     (e.g., IIFE style in TurboWarp: `((Scratch)=>{...})(window.Scratch)`,
+        //      or simply `const Scratch = window.Scratch;` at the top)
+        //   → the extension can still access vm/runtime/translate through the saved reference
+        // or:
+        // - not keep a reference, and always access via global.Scratch
+        //   → the extension must NOT access vm/runtime/translate through global.Scratch
+        //     (global.Scratch only provides basic APIs like Cast, ArgumentType, etc.)
+        //     vm/runtime are nulled out, and `global.Scratch.translate` should also not be used,
+        //     since it will be overwritten by the next extension
     }
 };
 
